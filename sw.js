@@ -1,12 +1,14 @@
 // My Notes service worker: lets the installed app start without any server,
 // and works offline. It only stores the app's own files — never your notes.
-const CACHE = 'my-notes-v40-2026-11-11';
+const CACHE = 'my-notes-v41-2026-11-12';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && !k.startsWith('my-notes-mobile-')).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  // v41: the phone version in m/ has its own service worker — never answer for it
+  if (url.pathname.startsWith(new URL('m/', self.registration.scope).pathname)) return;
   const last = url.pathname.split('/').pop();
   const isPage = url.pathname.endsWith('/') || last === 'index.html' || (e.request.mode === 'navigate' && !last.includes('.'));
   // anything that isn't the app itself (manual, video, sample vault on GitHub Pages) goes straight to the network

@@ -2,7 +2,7 @@
 
 A calm, fast notes app for your own computer. Your notes are plain **Markdown files** in a folder you choose. No account, no server, no lock-in.
 
-**▶ [Open My Notes](https://rudivanek.github.io/My_Notes/)** (Chrome or Edge) · [Manual](Manual/My%20Notes%20Manual.md) · [What's new](CHANGES.md) · [Sample vault (zip)](https://github.com/rudivanek/My_Notes/raw/main/My-Notes-Sample-Vault.zip)
+**▶ [Open My Notes](https://rudivanek.github.io/My_Notes/)** (Chrome or Edge) · **📱 [On your phone](https://rudivanek.github.io/My_Notes/m/)** (via Dropbox) · [Manual](Manual/My%20Notes%20Manual.md) · [What's new](CHANGES.md) · [Sample vault (zip)](https://github.com/rudivanek/My_Notes/raw/main/My-Notes-Sample-Vault.zip)
 
 ![My Notes](Manual/images/overview.png)
 
@@ -27,6 +27,7 @@ A calm, fast notes app for your own computer. Your notes are plain **Markdown fi
 - **Tables like Notion:** columns with dropdowns, dates, checkboxes and note links; every row is a note; filters and saved views; send any note to a table
 - **Maps:** mind maps and idea boards made of cards and arrows, stored as plain text
 - **Graph** of how your notes link together
+- **On your phone:** [My Notes Mobile](https://rudivanek.github.io/My_Notes/m/) reads, searches, captures and edits the same vault through Dropbox, works offline, and accepts shares from other Android apps ([manual](Manual/My%20Notes%20Manual.md#my-notes-on-your-phone))
 - **Locked notes:** AES-256 encrypted, one password for all
 - **Version history** and a **Trash** you can restore from
 - **Optional AI (Claude, with your own key):** ask questions about all your notes with sources; ask anything about one note or a selected paragraph; your own AI buttons (summarize, checklist, translate…); tag and folder suggestions; turn a note into a map

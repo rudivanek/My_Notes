@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My Notes Mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1B19" media="(prefers-color-scheme: dark)">
+<meta name="description" content="My Notes on your phone: your notes folder in Dropbox, read, search, capture and edit.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<style>
+:root{
+  --bg:#FAF9F6; --card:#FFFFFF; --soft:#F2F0EB; --line:#E7E3DB; --text:#24221F; --muted:#8C877E;
+  --accent:#B4532A; --accent-soft:#F4E4DA; --high:#C2410C; --med:#D99A06; --low:#B9B3AA;
+  --shadow:0 1px 2px rgba(40,30,20,.06),0 4px 14px rgba(40,30,20,.06);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+  --fs:17px; --navh:64px;
+  --safeb:env(safe-area-inset-bottom,0px); --safet:env(safe-area-inset-top,0px);
+}
+html[data-theme="dark"]{
+  --bg:#1A1917; --card:#23221F; --soft:#2A2825; --line:#34322E; --text:#ECE8E1; --muted:#938D84;
+  --accent:#E0855A; --accent-soft:#3A2A22; --low:#6E6962; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}
+html[data-size="s"]{--fs:15px} html[data-size="l"]{--fs:19.5px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.45 var(--sans);overscroll-behavior-y:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+input,textarea,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;vertical-align:middle}
+.ib{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;color:var(--text);position:relative}
+.ib:active{background:var(--soft)}
+.hidden{display:none!important}
+
+/* ---------- main shell ---------- */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#top{padding:calc(var(--safet) + 6px) 8px 0 18px;display:flex;align-items:center;gap:2px;flex:0 0 auto}
+#ttl{flex:1;font:600 28px/1.15 var(--serif);letter-spacing:-.01em;padding:6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ttl small{display:block;font:500 12px var(--sans);color:var(--muted);letter-spacing:0;margin-top:2px}
+#syncBtn .badge{position:absolute;top:6px;right:5px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:#fff;font:700 10px/16px var(--sans);text-align:center;padding:0 4px}
+#syncBtn.busy .ic{animation:spin 1s linear infinite;color:var(--accent)}
+#syncBtn.off .ic,#syncBtn.err .ic{color:var(--high)}
+@keyframes spin{to{transform:rotate(360deg)}}
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px calc(var(--navh) + var(--safeb) + 24px)}
+#nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--navh) + var(--safeb));padding-bottom:var(--safeb);display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr;align-items:center;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:5}
+#nav .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);height:100%;justify-content:center}
+#nav .tab.on{color:var(--accent)}
+#fab{width:58px;height:58px;margin:-22px auto 0;border-radius:20px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+#fab .ic{width:28px;height:28px;stroke-width:2.3}
+#fab:active{transform:scale(.95)}
+
+/* ---------- lists ---------- */
+.sect{font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 4px 8px}
+.sect:first-child{margin-top:8px}
+.row{display:block;width:100%;background:var(--card);border-radius:16px;padding:13px 16px 12px;margin-bottom:8px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.row:active{background:var(--soft)}
+.row::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:transparent}
+.row.imp-high::before{background:var(--high)}.row.imp-medium::before{background:var(--med)}.row.imp-low::before{background:var(--low)}
+.r-t{font:600 17px/1.3 var(--serif);display:flex;align-items:center;gap:6px;overflow:hidden}
+.r-t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-t .ic{width:15px;height:15px;color:var(--muted)}
+.r-s{color:var(--muted);font-size:14px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.r-s mark{background:var(--accent-soft);color:var(--text);border-radius:3px;padding:0 1px}
+.r-m{display:flex;gap:10px;font-size:12px;color:var(--muted);margin-top:6px;align-items:center;flex-wrap:wrap}
+.r-m .fd{background:var(--soft);border-radius:6px;padding:1px 7px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-m .pend{color:var(--accent);font-weight:600}
+.pins{display:flex;gap:10px;overflow-x:auto;margin:0 -14px;padding:2px 14px 6px;scrollbar-width:none}
+.pins::-webkit-scrollbar{display:none}
+.pin{flex:0 0 auto;width:150px;min-height:84px;background:var(--accent-soft);border-radius:16px;padding:12px 13px;display:flex;flex-direction:column;justify-content:space-between}
+.pin b{font:600 15px/1.25 var(--serif);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pin .ic{width:14px;height:14px;color:var(--accent)}
+.more{display:block;margin:12px auto;padding:10px 18px;border-radius:12px;background:var(--soft);font-weight:600;font-size:14px}
+.empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:15px}
+.empty .ic{width:40px;height:40px;opacity:.5;margin-bottom:10px}
+.fold{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;background:var(--card);border-radius:14px;margin-bottom:6px;box-shadow:var(--shadow)}
+.fold:active{background:var(--soft)}
+.fold .ic{color:var(--accent)}
+.fold span{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fold small{color:var(--muted);font-size:13px}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px;color:var(--muted);margin:6px 4px 12px}
+.crumbs button{color:var(--accent);font-weight:600;padding:4px 2px}
+.sbox{position:sticky;top:0;z-index:2;background:var(--bg);padding:2px 0 10px}
+.sbox label{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 12px;box-shadow:var(--shadow)}
+.sbox input{flex:1;border:0;outline:0;background:none;height:48px;font-size:16px;min-width:0}
+.sbox .ic{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.chip{background:var(--soft);border-radius:999px;padding:7px 13px;font-size:14px;font-weight:600;color:var(--text);display:inline-flex;align-items:center;gap:6px}
+.chip small{color:var(--muted);font-weight:500}
+.chip.on{background:var(--accent);color:#fff}
+.hint{color:var(--muted);font-size:13px;margin:8px 4px;line-height:1.5}
+.hint code{background:var(--soft);padding:1px 5px;border-radius:5px}
+
+/* ---------- pages (note, editor) ---------- */
+.page{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.3,.7,.2,1);visibility:hidden}
+.page.on{transform:none;visibility:visible}
+.pbar{display:flex;align-items:center;gap:2px;padding:calc(var(--safet) + 4px) 6px 4px;flex:0 0 auto;border-bottom:1px solid transparent}
+.pbar.sh{border-bottom-color:var(--line)}
+.pbar .mid{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.pscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.note{max-width:720px;margin:0 auto;padding:6px 22px 120px}
+.ntitle{font:600 29px/1.2 var(--serif);letter-spacing:-.01em;margin:4px 0 8px;word-break:break-word}
+.nmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:16px}
+.nmeta .imp{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.high{background:var(--high)}.dot.medium{background:var(--med)}.dot.low{background:var(--low)}
+.tagc{display:inline;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:0 6px;font-size:.88em;font-weight:600}
+.props{background:var(--soft);border-radius:12px;padding:4px 14px;margin:0 0 18px;font-size:14px}
+.props summary{padding:8px 0;color:var(--muted);font-weight:600;font-size:13px;list-style:none}
+.props summary::-webkit-details-marker{display:none}
+.props div{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
+.props dt{color:var(--muted);min-width:90px}
+.props dd{margin:0;flex:1;word-break:break-word}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:16px}
+.banner .ic{color:var(--accent);width:18px;height:18px;margin-top:1px}
+.md{font-size:var(--fs);line-height:1.62;word-wrap:break-word;overflow-wrap:anywhere}
+.md h1,.md h2,.md h3,.md h4,.md h5,.md h6{font-family:var(--serif);line-height:1.25;margin:1.3em 0 .45em;font-weight:600;scroll-margin-top:12px}
+.md h1{font-size:1.5em}.md h2{font-size:1.3em}.md h3{font-size:1.13em}.md h4,.md h5,.md h6{font-size:1em}
+.md p{margin:0 0 .8em}
+.md .li{display:flex;gap:8px;margin:.18em 0}
+.md .li .mk{flex:0 0 auto;min-width:1em;color:var(--accent);font-weight:700}
+.md .li.ol .mk{font-weight:600;font-size:.9em;min-width:1.4em}
+.md .li > span{flex:1;min-width:0}
+.md .cb{display:flex;gap:10px;align-items:flex-start;flex:1}
+.md .cb input{width:22px;height:22px;margin:.15em 0 0;accent-color:var(--accent);flex:0 0 auto}
+.md .cb.done span{color:var(--muted);text-decoration:line-through}
+.md .list{margin:0 0 .8em}
+.md blockquote{margin:0 0 .9em;padding:.5em .9em;border-left:3px solid var(--line);color:var(--muted);background:var(--soft);border-radius:0 10px 10px 0}
+.md blockquote.callout{border-left-color:var(--accent);color:var(--text)}
+.md blockquote .ct{font-weight:700;margin-bottom:.25em;color:var(--accent)}
+.md blockquote > *:last-child{margin-bottom:0}
+.md pre{background:var(--soft);border-radius:10px;padding:10px 12px;overflow-x:auto;font-size:.82em;line-height:1.5}
+.md code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:var(--soft);border-radius:5px;padding:.05em .3em}
+.md pre code{background:none;padding:0}
+.md hr{border:0;border-top:1px solid var(--line);margin:1.4em 0}
+.md mark{background:#FDE68A;color:#24221F;border-radius:3px;padding:0 2px}
+.md img{max-width:100%;border-radius:10px;display:block;margin:.4em 0}
+.md .imgph{display:inline-block;background:var(--soft);color:var(--muted);font-size:.8em;border-radius:8px;padding:6px 10px}
+.md .tbl{overflow-x:auto;margin:0 -22px .9em;padding:0 22px}
+.md table{border-collapse:collapse;font-size:.88em;min-width:100%}
+.md th,.md td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+.md th{background:var(--soft)}
+.md a.wl{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.md a.wl.missing{color:var(--muted);border-bottom-style:dashed}
+.md .arrow{margin:.1em 0 .1em .2em;color:var(--muted)}
+.md .arrow a{color:var(--accent);text-decoration:none;font-weight:600}
+.md .arrow small{margin-left:4px}
+.backl{margin-top:34px;border-top:1px solid var(--line);padding-top:14px}
+.backl h4{font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.backl button{display:block;color:var(--accent);font-weight:600;padding:6px 0;font-size:15px}
+.efab{position:absolute;right:18px;bottom:calc(22px + var(--safeb));width:58px;height:58px;border-radius:20px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+.lockp{max-width:420px;margin:40px auto;text-align:center;padding:0 20px}
+.lockp .ic{width:42px;height:42px;color:var(--accent)}
+.lockp input{width:100%;margin:16px 0 10px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px}
+
+/* editor */
+#editV .pbar .done{height:40px;padding:0 16px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:15px}
+#edState{font-size:12px}
+#edTa{flex:1;width:100%;border:0;outline:0;resize:none;background:var(--bg);padding:12px 20px 20px;font:var(--fs)/1.6 var(--sans);max-width:760px;margin:0 auto;display:block}
+.edhead{padding:0 20px;max-width:760px;margin:0 auto;width:100%}
+.edhead input{width:100%;border:0;outline:0;background:none;font:600 24px/1.25 var(--serif);padding:6px 0 4px}
+.edhead .edsub{font-size:12px;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--line)}
+.kbar{flex:0 0 auto;display:flex;gap:2px;overflow-x:auto;padding:5px 6px calc(5px + var(--safeb));border-top:1px solid var(--line);background:var(--soft);scrollbar-width:none}
+.kbar::-webkit-scrollbar{display:none}
+.kbar button{min-width:44px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:0 0 auto;padding:0 8px}
+.kbar button:active{background:var(--line)}
+.kbar .ic{width:20px;height:20px}
+.kbar .sep{width:1px;background:var(--line);margin:6px 4px;flex:0 0 auto}
+.fsel{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:6px 0 8px;border-bottom:1px solid var(--line)}
+.fsel select{border:0;background:var(--soft);border-radius:8px;padding:5px 8px;font-size:13px;font-weight:600;max-width:70%}
+
+/* ---------- bottom sheet ---------- */
+#sheetBg{position:fixed;inset:0;background:rgba(20,15,10,.38);z-index:30;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .18s}
+#sheetBg.on{opacity:1;pointer-events:auto}
+#sheet{width:100%;max-height:88%;overflow-y:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:8px 18px calc(18px + var(--safeb));transform:translateY(30px);transition:transform .2s;max-width:640px;margin:0 auto}
+#sheetBg.on #sheet{transform:none}
+#sheet.tall{height:88%}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 12px}
+.sh-t{font:600 20px var(--serif);margin:2px 2px 12px}
+.act{display:flex;align-items:center;gap:14px;width:100%;padding:13px 6px;border-radius:12px;font-size:16px}
+.act:active{background:var(--soft)}
+.act .ic{color:var(--muted)}
+.act.danger,.act.danger .ic{color:var(--high)}
+.seg{display:flex;background:var(--soft);border-radius:12px;padding:3px;gap:3px;margin:4px 0 12px}
+.seg button{flex:1;height:38px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.lbl{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:16px 2px 6px}
+.field{width:100%;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 12px;font-size:16px}
+select.field{appearance:auto}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:14px;background:var(--accent);color:#fff;font-weight:700;font-size:16px;margin-top:12px}
+.btn.sec{background:var(--soft);color:var(--text)}
+.btn:disabled{opacity:.5}
+.card{background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:8px;font-size:15px}
+.card small{display:block;color:var(--muted);font-size:13px;margin-top:2px;word-break:break-all}
+.ver{text-align:center;color:var(--muted);font-size:10px;margin-top:22px;opacity:.8}
+
+/* ---------- setup ---------- */
+#setup{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding:calc(var(--safet) + 24px) 22px 40px}
+#setup .wrap{max-width:520px;margin:0 auto}
+#setup h1{font:600 34px/1.1 var(--serif);margin:10px 0 6px}
+#setup .lead{color:var(--muted);font-size:16px;margin:0 0 22px}
+#setup ol{padding-left:20px;margin:10px 0 16px;font-size:15px;line-height:1.55}
+#setup ol li{margin-bottom:6px}
+#setup code{background:var(--soft);border-radius:6px;padding:1px 6px;font-size:13px;word-break:break-all}
+.copyrow{display:flex;gap:8px;align-items:center;background:var(--soft);border-radius:12px;padding:8px 8px 8px 12px;font-size:13px;margin:6px 0 4px}
+.copyrow span{flex:1;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
+.copyrow button{background:var(--card);border-radius:9px;padding:7px 10px;font-weight:700;font-size:13px}
+.logo{width:64px;height:64px;border-radius:18px}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--navh) + var(--safeb) + 16px);transform:translate(-50%,20px);background:#2A2723;color:#F5F1EA;border-radius:14px;padding:11px 16px;font-size:14px;z-index:40;opacity:0;pointer-events:none;transition:.2s;max-width:min(92vw,520px);box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center}
+#toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{color:#F2B593;font-weight:700;white-space:nowrap}
+.prog{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin:2px 4px 10px}
+.prog i{display:block;height:100%;background:var(--accent);transition:width .2s}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div id="ttl">Recent</div>
+    <button class="ib" id="syncBtn" aria-label="Sync now"></button>
+    <button class="ib" id="setBtn" aria-label="Settings"></button>
+  </header>
+  <main id="main"></main>
+  <nav id="nav">
+    <button class="tab" data-tab="recent"></button>
+    <button class="tab" data-tab="folders"></button>
+    <button id="fab" aria-label="New note"></button>
+    <button class="tab" data-tab="search"></button>
+    <button class="tab" data-tab="tags"></button>
+  </nav>
+</div>
+<section class="page" id="noteV"></section>
+<section class="page" id="editV"></section>
+<div id="sheetBg"><div id="sheet"></div></div>
+<div id="setup" class="hidden"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
+   reached through Dropbox. Single file, no libraries. Notes are cached on the phone
+   (IndexedDB) so it opens instantly and works offline; changes sync when online. */
+const VERSION = 'v41-2026-11-12';
+const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
+const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
+
+/* ---------- small helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ls = {
+  get(k, d){ try { const v = localStorage.getItem('mnm:' + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem('mnm:' + k, JSON.stringify(v)); } catch(e){} },
+  del(k){ try { localStorage.removeItem('mnm:' + k); } catch(e){} }
+};
+const P = {
+  clock:'<circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2"/>',
+  folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  search:'<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/>',
+  plus:'<path d="M5 12h14M12 5v14"/>',
+  sliders:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  back:'<path d="m15 18-6-6 6-6"/>',
+  more:'<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>',
+  pin:'<path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  pinfill:'<path fill="currentColor" d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  pencil:'<path d="M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  cloud:'<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+  cloudok:'<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9.5 13.5 2 2 3.5-3.5"/>',
+  cloudoff:'<path d="m2 2 20 20M5.78 5.78A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.31-.2M21.53 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7 7 0 0 0 10 5.07"/>',
+  refresh:'<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>',
+  trash:'<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>',
+  tag:'<path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.41l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".6"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  copy:'<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  checksq:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  hash:'<path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>',
+  map:'<path d="M14.1 6.3 9.9 3.7a2 2 0 0 0-1.8 0L3.6 6A1 1 0 0 0 3 7v12.8a1 1 0 0 0 1.4.9l4.7-2.4a2 2 0 0 1 1.8 0l4.2 2.6a2 2 0 0 0 1.8 0l4.5-2.3a1 1 0 0 0 .6-.9V4.2a1 1 0 0 0-1.4-.9l-4.7 2.4a2 2 0 0 1-1.8 0z"/><path d="M15 5.8v15M9 3.2v15"/>',
+  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  redo:'<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>',
+  flag:'<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.33 2q2 0 3.67-.8a1 1 0 0 1 1 .2V15a1 1 0 0 1-.4.8A6 6 0 0 1 16 17c-3 0-5-2-8-2a6 6 0 0 0-4 1.53"/>',
+  book:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  ext:'<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+};
+const ic = (n, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
+let toastT;
+function toast(msg, action, fn, ms){
+  const t = $('toast'); t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button>${esc(action)}</button>` : '');
+  if (action) t.querySelector('button').onclick = () => { t.classList.remove('on'); fn(); };
+  t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms || (action ? 6000 : 3200));
+}
+function ago(t){
+  if (!t) return '';
+  const d = Date.now() - t, m = Math.round(d / 60000);
+  if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+  const h = Math.round(m / 60), day = startOfDay(Date.now());
+  if (t >= day) return h + ' h ago';
+  if (t >= day - 864e5) return 'Yesterday ' + new Date(t).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+  if (t >= day - 6 * 864e5) return new Date(t).toLocaleDateString(undefined, { weekday:'long' });
+  return new Date(t).toLocaleDateString(undefined, { day:'numeric', month:'short', year: new Date(t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+}
+function startOfDay(t){ const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+const z2 = x => String(x).padStart(2, '0');
+function stamp(sec){ const d = new Date(); return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()) + ' ' + z2(d.getHours()) + '-' + z2(d.getMinutes()) + (sec ? '-' + z2(d.getSeconds()) : ''); }
+
+/* ---------- state ---------- */
+const S = {
+  notes: new Map(),      // pl (lower-case path inside the vault) -> note
+  folders: new Set(),    // folder paths (display case)
+  files: new Map(),      // other files (images…) pl -> display path
+  byName: new Map(),     // lower-case note name -> pl
+  tab: 'recent', fpath: '', query: '', recentN: 60,
+  cur: null, noteHist: [], sync: 'ok', syncP: null, prog: null,
+  lockPass: null, unlocked: new Map(), imgUrl: new Map()
+};
+let cfg = Object.assign({ appKey: DEFAULT_APP_KEY, vault: null, vaultLower: null, newFolder: null, theme: 'auto', size: 'm', account: '' }, ls.get('cfg', {}));
+const saveCfg = () => ls.set('cfg', cfg);
+
+/* ---------- IndexedDB cache ---------- */
+let _db;
+function idb(){
+  return _db || (_db = new Promise((res, rej) => {
+    const r = indexedDB.open('my-notes-mobile', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('notes', { keyPath:'pl' }); d.createObjectStore('meta'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+}
+const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const done = t => new Promise((res, rej) => { t.oncomplete = res; t.onerror = t.onabort = () => rej(t.error); });
+const rec = n => ({ pl:n.pl, path:n.path, rev:n.rev || null, mtime:n.mtime || 0, text:n.text, dirty:!!n.dirty, base:n.base == null ? null : n.base, snapAt:n.snapAt || 0 });
+async function idbAll(){ const d = await idb(); return req(d.transaction('notes').objectStore('notes').getAll()); }
+async function idbPut(list){ const d = await idb(), t = d.transaction('notes', 'readwrite'), s = t.objectStore('notes'); for (const n of [].concat(list)) s.put(rec(n)); return done(t); }
+async function idbDel(pls){ const d = await idb(), t = d.transaction('notes', 'readwrite'), s = t.objectStore('notes'); for (const p of [].concat(pls)) s.delete(p); return done(t); }
+async function metaGet(k){ const d = await idb(); return req(d.transaction('meta').objectStore('meta').get(k)); }
+async function metaSet(k, v){ const d = await idb(), t = d.transaction('meta', 'readwrite'); t.objectStore('meta').put(v, k); return done(t); }
+async function idbClear(){ const d = await idb(), t = d.transaction(['notes', 'meta'], 'readwrite'); t.objectStore('notes').clear(); t.objectStore('meta').clear(); return done(t); }
+
+/* ---------- note text: header (front matter) and body ---------- */
+// Same rules as the desktop app. The header is kept byte for byte unless you change pin, tags or importance.
+function splitHeader(text){
+  text = text || '';
+  const bom = text.charCodeAt(0) === 0xFEFF ? '﻿' : '', t = bom ? text.slice(1) : text;
+  let m = t.match(/^---(\r?\n)([\s\S]*?)(\r?\n)---([ \t]*(?:\r?\n|$))/);
+  if (m) return { bom, header: text.slice(0, bom.length + m[0].length), fm: m[2].split('\n').map(l => l.replace(/\r$/, '')), body: t.slice(m[0].length), eol: m[1], has: true };
+  m = t.match(/^---(\r?\n)---([ \t]*(?:\r?\n|$))/);
+  if (m) return { bom, header: text.slice(0, bom.length + m[0].length), fm: [], body: t.slice(m[0].length), eol: m[1], has: true };
+  return { bom, header: bom, fm: [], body: t, eol: /\r\n/.test(t) ? '\r\n' : '\n', has: false };
+}
+const unq = s => String(s).trim().replace(/^["']|["']$/g, '').trim();
+function parseProps(lines){
+  const p = {};
+  for (let i = 0; i < lines.length; i++){
+    const m = lines[i].match(/^([^\s:#\-][^:]*):(?:\s+(.*)|\s*)$/); if (!m) continue;
+    const k = m[1].trim(), v = (m[2] || '').trim();
+    if (!v){ const arr = []; while (i + 1 < lines.length && /^\s*-(\s|$)/.test(lines[i + 1])){ i++; arr.push(unq(lines[i].replace(/^\s*-\s*/, ''))); } p[k] = arr.length ? arr.filter(Boolean) : ''; }
+    else if (v.startsWith('[') && v.endsWith(']')) p[k] = v.slice(1, -1).split(',').map(unq).filter(Boolean);
+    else p[k] = unq(v);
+  }
+  return p;
+}
+function setFm(text, key, repl){   // replace (or add / remove) one header field, leave every other line as it is
+  const sp = splitHeader(text), lines = sp.fm.slice(), re = new RegExp('^' + key + ':', 'i');
+  const i = lines.findIndex(l => re.test(l));
+  if (i >= 0){ let j = i + 1; while (j < lines.length && (/^\s+\S/.test(lines[j]) || /^\s*-(\s|$)/.test(lines[j]))) j++; lines.splice(i, j - i, ...(repl || [])); }
+  else if (repl) lines.push(...repl); else return text;
+  const e = sp.eol;
+  return sp.bom + '---' + e + (lines.length ? lines.join(e) + e : '') + '---' + e + sp.body;
+}
+const LOCK_RE = /^﻿?---\r?\nlocked: my-notes\r?\n---\r?\n%% my-notes-locked %%/;
+const isLocked = t => LOCK_RE.test(t || '');
+function tagsOf(props, body){
+  let t = props.tags; t = Array.isArray(t) ? t : t ? String(t).split(/[,\s]+/) : [];
+  t = t.map(x => unq(x).replace(/^#/, '')).filter(Boolean);
+  const inline = (body.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '').match(/(^|\s)#[\p{L}\p{N}_\-\/]*[\p{L}_\-\/][\p{L}\p{N}_\-\/]*/gu) || []).map(x => x.trim().slice(1));
+  return [...new Set([...t, ...inline])];
+}
+function plainSnippet(body){ return plainText(body).slice(0, 220); }
+function plainText(body){
+  return body.replace(/%%[\s\S]*?%%/g, '').replace(/```[\s\S]*?```/g, ' ').replace(/^#{1,6}\s+/gm, '').replace(/^\s*>\s?(\[!\w+\][+-]?)?/gm, '')
+    .replace(/^\s*([-*+]|\d+[.)])\s+(\[.\]\s*)?/gm, '').replace(/!\[\[[^\]]*\]\]/g, '').replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[\[([^\]|#]*)(#[^\]|]*)?\|?([^\]]*)\]\]/g, (_, a, h, b) => b || a).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~=`]/g, '').replace(/^→\s*/gm, '→ ').replace(/\s+/g, ' ').trim();
+}
+function derive(n){
+  n.name = n.path.split('/').pop().replace(/\.md$/i, '');
+  n.folder = n.path.includes('/') ? n.path.slice(0, n.path.lastIndexOf('/')) : '';
+  n.locked = isLocked(n.text);
+  if (n.locked){ n.props = {}; n.tags = []; n.importance = ''; n.pinned = false; n.isMap = false; n.snip = 'Locked note'; n.lc = n.name.toLowerCase(); return n; }
+  const sp = splitHeader(n.text); n.props = parseProps(sp.fm);
+  n.tags = tagsOf(n.props, sp.body);
+  n.importance = ['high', 'medium', 'low'].includes(String(n.props.importance || '').toLowerCase()) ? String(n.props.importance).toLowerCase() : '';
+  n.pinned = /^(true|yes|1)$/i.test(String(n.props.pinned || ''));
+  n.isMap = String(n.props.type || '').toLowerCase() === 'map';
+  n.snip = plainSnippet(sp.body);
+  n.lc = (n.name + '\n' + n.text).toLowerCase();
+  return n;
+}
+function reindex(){
+  S.byName = new Map();
+  for (const n of S.notes.values()){ const k = n.name.toLowerCase(); if (!S.byName.has(k)) S.byName.set(k, n.pl); }
+  for (const n of S.notes.values()) if (n.folder){ const parts = n.folder.split('/'); for (let i = 1; i <= parts.length; i++) S.folders.add(parts.slice(0, i).join('/')); }
+}
+function resolveNote(target){
+  let t = String(target || '').trim().replace(/\.md$/i, '').replace(/^\/+/, ''); if (!t) return null;
+  const lc = t.toLowerCase();
+  if (S.notes.has(lc + '.md')) return S.notes.get(lc + '.md');
+  const pl = S.byName.get(lc.split('/').pop()); return pl ? S.notes.get(pl) : null;
+}
+function resolveFile(target){
+  const lc = String(target || '').trim().replace(/^\.?\//, '').toLowerCase(); if (!lc) return null;
+  if (S.files.has(lc)) return S.files.get(lc);
+  const base = lc.split('/').pop();
+  for (const [pl, path] of S.files) if (pl === base || pl.endsWith('/' + base)) return path;
+  return null;
+}
+
+/* ---------- Dropbox ---------- */
+const DBX_AUTH = 'https://www.dropbox.com/oauth2/authorize', DBX_TOKEN = 'https://api.dropboxapi.com/oauth2/token';
+const API = 'https://api.dropboxapi.com/2/', CONTENT = 'https://content.dropboxapi.com/2/';
+const redirectUri = () => new URL('./', location.href).href.split(/[?#]/)[0];
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const hdrJson = o => JSON.stringify(o).replace(/[\u007f-￿]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+const signedIn = () => !!(ls.get('auth') || {}).refresh;
+class NeedAuth extends Error {}
+
+async function connect(){
+  const key = (cfg.appKey || '').trim(); if (!key) return toast('Paste your Dropbox app key first');
+  const v = b64url(crypto.getRandomValues(new Uint8Array(48))), st = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  const ch = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)));
+  ls.set('pkce', { v, st });
+  location.href = DBX_AUTH + '?' + new URLSearchParams({ client_id:key, response_type:'code', code_challenge:ch, code_challenge_method:'S256', redirect_uri:redirectUri(), token_access_type:'offline', state:st });
+}
+async function tokenReq(params){
+  const r = await fetch(DBX_TOKEN, { method:'POST', body:new URLSearchParams(params) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok){ const e = new Error(j.error_description || j.error || ('Dropbox sign-in failed (' + r.status + ')')); e.status = r.status; e.j = j; throw e; }
+  return j;
+}
+async function finishAuth(q){
+  const p = ls.get('pkce'); ls.del('pkce');
+  if (q.get('error')){ toast('Dropbox: ' + (q.get('error_description') || q.get('error'))); return; }
+  if (!p || p.st !== q.get('state')){ toast('That sign-in link is old — please connect again'); return; }
+  const j = await tokenReq({ code:q.get('code'), grant_type:'authorization_code', client_id:cfg.appKey.trim(), code_verifier:p.v, redirect_uri:redirectUri() });
+  ls.set('auth', { access:j.access_token, exp:Date.now() + (j.expires_in || 14400) * 1000, refresh:j.refresh_token });
+  try { const a = await rpc('users/get_current_account', null); cfg.account = (a.name && a.name.display_name || '') + (a.email ? ' · ' + a.email : ''); saveCfg(); } catch(e){}
+}
+async function accessToken(force){
+  const a = ls.get('auth'); if (!a || !a.refresh) throw new NeedAuth('Not connected to Dropbox');
+  if (!force && a.access && a.exp > Date.now() + 60000) return a.access;
+  try {
+    const j = await tokenReq({ grant_type:'refresh_token', refresh_token:a.refresh, client_id:cfg.appKey.trim() });
+    a.access = j.access_token; a.exp = Date.now() + (j.expires_in || 14400) * 1000; ls.set('auth', a); return a.access;
+  } catch(e){ if (e.status === 400 || e.status === 401){ ls.del('auth'); throw new NeedAuth('Dropbox sign-in expired'); } throw e; }
+}
+async function api(url, opt, tries){
+  tries = tries || 0;
+  const tok = await accessToken(tries > 0 && opt._401);
+  const r = await fetch(url, { method:'POST', headers:Object.assign({}, opt.headers, { Authorization:'Bearer ' + tok }), body:opt.body });
+  if (r.status === 401 && tries < 1){ opt._401 = true; return api(url, opt, tries + 1); }
+  if ((r.status === 429 || r.status >= 500) && tries < 3){ const ra = +r.headers.get('Retry-After') || (1 + tries * 2); await sleep(ra * 1000); return api(url, opt, tries + 1); }
+  return r;
+}
+async function dErr(r){ const txt = await r.text().catch(() => ''); let j; try { j = JSON.parse(txt); } catch(e){ j = { error_summary: txt }; } const e = new Error(j.error_summary || ('Dropbox error ' + r.status)); e.status = r.status; e.j = j; return e; }
+async function rpc(ep, args){
+  const r = await api(API + ep, args === null ? { headers:{} } : { headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(args) });
+  if (!r.ok) throw await dErr(r);
+  return r.json();
+}
+async function download(path){
+  const r = await api(CONTENT + 'files/download', { headers:{ 'Dropbox-API-Arg':hdrJson({ path }) } });
+  if (!r.ok) throw await dErr(r);
+  const meta = JSON.parse(r.headers.get('Dropbox-API-Result') || '{}');
+  const text = new TextDecoder('utf-8', { ignoreBOM:true }).decode(await r.arrayBuffer());   // keep a BOM if the file has one
+  return { meta, text };
+}
+async function upload(path, text, mode, autorename){
+  const arg = { path, mode, autorename:!!autorename, mute:true, strict_conflict:true, client_modified:new Date().toISOString().replace(/\.\d+Z$/, 'Z') };
+  const r = await api(CONTENT + 'files/upload', { headers:{ 'Content-Type':'application/octet-stream', 'Dropbox-API-Arg':hdrJson(arg) }, body:new TextEncoder().encode(text) });
+  if (!r.ok) throw await dErr(r);
+  return r.json();
+}
+const full = p => (cfg.vault || '') + '/' + p;
+function relOf(e){
+  const vl = cfg.vaultLower || '';
+  if (!e.path_lower || !e.path_lower.startsWith(vl + '/')) return null;
+  return { pl: e.path_lower.slice(vl.length + 1), path: e.path_display.slice(vl.length + 1) };
+}
+function hiddenPath(pl){   // like the desktop: skip .trash, .history, .obsidian … and the app's own settings folder
+  const parts = pl.split('/');
+  return parts.some(p => p.startsWith('.')) || parts[0] === 'my notes' || parts[0] === 'quiet notes';
+}
+const isMd = pl => /\.md$/i.test(pl);
+
+/* ---------- sync ---------- */
+function setSync(st, info){
+  S.sync = st; S.syncInfo = info || '';
+  const b = $('syncBtn'), pend = [...S.notes.values()].filter(n => n.dirty).length;
+  b.className = 'ib ' + ({ busy:'busy', off:'off', err:'err', auth:'err' }[st] || '');
+  b.innerHTML = ic(st === 'busy' ? 'refresh' : st === 'off' || st === 'err' || st === 'auth' ? 'cloudoff' : 'cloudok') + (pend && st !== 'busy' ? `<span class="badge">${pend}</span>` : '');
+  b.setAttribute('aria-label', st === 'busy' ? 'Syncing' : 'Sync now');
+}
+function lim(max){
+  let act = 0; const q = [];
+  const next = () => { if (act >= max || !q.length) return; act++; const [fn, res, rej] = q.shift(); fn().then(res, rej).finally(() => { act--; next(); }); };
+  return fn => new Promise((res, rej) => { q.push([fn, res, rej]); next(); });
+}
+async function sync(opts){
+  opts = opts || {};
+  if (!signedIn() || !cfg.vault) return;
+  if (S.syncP) return S.syncP;
+  S.syncP = (async () => {
+    let changed = 0;
+    try {
+      setSync('busy');
+      await pushAll();
+      let cursor = opts.full ? null : await metaGet('cursor');
+      if (cursor){
+        try { let r; do { r = await rpc('files/list_folder/continue', { cursor }); changed += await applyDelta(r.entries); cursor = r.cursor; } while (r.has_more); }
+        catch(e){ if (e.status === 409) cursor = null; else throw e; }
+      }
+      if (!cursor){
+        let r = await rpc('files/list_folder', { path:cfg.vault, recursive:true, include_deleted:false, limit:2000 });
+        const all = r.entries.slice(); while (r.has_more){ r = await rpc('files/list_folder/continue', { cursor:r.cursor }); all.push(...r.entries); }
+        changed += await applyFull(all); cursor = r.cursor;
+      }
+      await metaSet('cursor', cursor);
+      await metaSet('folders', [...S.folders]); await metaSet('files', [...S.files]);
+      ls.set('lastSync', Date.now());
+      await pushAll();          // edits made while we were downloading
+      setSync('ok');
+    } catch(e){ syncError(e); }
+    finally { S.syncP = null; S.prog = null; if (changed) refresh(); else if (S.tab === 'recent' || S.tab === 'folders') renderMain(); }
+  })();
+  return S.syncP;
+}
+function syncError(e){
+  console.warn('[MNM] sync', e);
+  if (e instanceof NeedAuth){ setSync('auth'); toast('Dropbox needs you to sign in again', 'Sign in', () => showSetup()); return; }
+  if (e instanceof TypeError || !navigator.onLine){ setSync('off', 'Offline — changes are kept on this phone and sync later'); return; }
+  if (e.status === 409 && /not_found/.test(e.message)){ setSync('err'); toast('The notes folder was not found in Dropbox', 'Choose folder', () => showSetup(2)); return; }
+  setSync('err', e.message); toast('Sync problem: ' + e.message);
+}
+async function applyFull(entries){
+  const seen = new Set(), get = [];
+  S.folders = new Set(); S.files = new Map();
+  for (const e of entries){
+    const r = relOf(e); if (!r || hiddenPath(r.pl)) continue;
+    if (e['.tag'] === 'folder'){ S.folders.add(r.path); continue; }
+    if (e['.tag'] !== 'file') continue;
+    if (!isMd(r.pl)){ S.files.set(r.pl, r.path); continue; }
+    seen.add(r.pl);
+    const n = S.notes.get(r.pl);
+    if (!n || (n.rev !== e.rev && !n.dirty)) get.push([r, e]);
+    else if (n.path !== r.path && !n.dirty){ n.path = r.path; derive(n); }
+  }
+  const gone = [];
+  for (const n of [...S.notes.values()]) if (!seen.has(n.pl)){
+    if (n.dirty){ n.rev = null; continue; }          // deleted elsewhere but changed here: keep it, it's uploaded as a new file
+    S.notes.delete(n.pl); gone.push(n.pl);
+  }
+  if (gone.length) await idbDel(gone);
+  await fetchMany(get);
+  return get.length + gone.length;
+}
+async function applyDelta(entries){
+  const get = [], gone = [];
+  for (const e of entries){
+    const r = relOf(e); if (!r || hiddenPath(r.pl)) continue;
+    const tag = e['.tag'];
+    if (tag === 'deleted'){
+      S.folders.delete(r.path); S.files.delete(r.pl);
+      for (const n of [...S.notes.values()]) if (n.pl === r.pl || n.pl.startsWith(r.pl + '/')){
+        if (n.dirty){ n.rev = null; continue; }
+        S.notes.delete(n.pl); gone.push(n.pl);
+      }
+      for (const f of [...S.folders]) if (f.toLowerCase().startsWith(r.pl + '/')) S.folders.delete(f);
+    } else if (tag === 'folder') S.folders.add(r.path);
+    else if (tag === 'file'){
+      if (!isMd(r.pl)){ S.files.set(r.pl, r.path); continue; }
+      const n = S.notes.get(r.pl);
+      if (!n || (n.rev !== e.rev && !n.dirty)) get.push([r, e]);
+    }
+  }
+  if (gone.length) await idbDel(gone);
+  await fetchMany(get);
+  return get.length + gone.length;
+}
+async function fetchMany(list){
+  if (!list.length) return;
+  const L = lim(8); let k = 0, batch = [];
+  S.prog = { done:0, all:list.length }; if (list.length > 10) renderMain();
+  await Promise.all(list.map(([r, e]) => L(async () => {
+    const { meta, text } = await download(e.path_lower);
+    let n = S.notes.get(r.pl);
+    if (n && n.dirty) return;                 // edited on the phone meanwhile — handled as a conflict on upload
+    n = n || { pl:r.pl };
+    Object.assign(n, { path:r.path, text, rev:meta.rev || e.rev, mtime:Date.parse(meta.client_modified || e.client_modified) || Date.now(), base:text, dirty:false });
+    S.notes.set(n.pl, derive(n)); batch.push(n);
+    if (batch.length >= 40){ const b = batch; batch = []; await idbPut(b); }
+    S.prog.done = ++k; updateProg();
+  })));
+  if (batch.length) await idbPut(batch);
+  reindex();
+}
+function updateProg(){ const p = document.querySelector('.prog i'), t = document.querySelector('.progt'); if (p && S.prog){ p.style.width = (100 * S.prog.done / S.prog.all) + '%'; if (t) t.textContent = 'Getting your notes… ' + S.prog.done + ' of ' + S.prog.all; } }
+async function pushAll(){ for (const n of [...S.notes.values()]) if (n.dirty) await pushOne(n); }
+async function pushOne(n){
+  if (n._pushing) return n._pushing;
+  n._pushing = (async () => {
+    const text = n.text;
+    try {
+      let meta;
+      if (n.rev){
+        // keep the version that is about to be replaced in .history, like the desktop app does
+        if (n.base != null && n.base !== text && n.base.replace(/\s/g, '') && Date.now() - (n.snapAt || 0) > HIST_EVERY){
+          try { await upload(full('.history/' + n.path + '/' + stamp(true) + '.md'), n.base, 'add', true); n.snapAt = Date.now(); } catch(e){ console.warn('[MNM] history', e); }
+        }
+        meta = await upload(full(n.path), text, { '.tag':'update', update:n.rev }, false);
+      } else {
+        meta = await upload(full(n.path), text, 'add', true);
+        const r = relOf(meta);
+        if (r && r.pl !== n.pl){ S.notes.delete(n.pl); await idbDel(n.pl); if (S.cur === n.pl) S.cur = r.pl; n.pl = r.pl; n.path = r.path; S.notes.set(n.pl, n); derive(n); reindex(); }
+      }
+      n.rev = meta.rev; n.mtime = Date.parse(meta.client_modified) || Date.now(); n.base = text;
+      if (n.text === text) n.dirty = false;
+      await idbPut(n);
+    } catch(e){
+      if (e.status === 409 && /conflict/.test(e.message)) await conflict(n);
+      else throw e;
+    } finally { n._pushing = null; }
+  })();
+  return n._pushing;
+}
+async function conflict(n){
+  // the note was changed somewhere else too: keep both, never lose either version
+  const copyPath = (n.folder ? n.folder + '/' : '') + n.name + ' (phone copy ' + stamp() + ').md';
+  const meta = await upload(full(copyPath), n.text, 'add', true), r = relOf(meta);
+  if (r){ const c = derive({ pl:r.pl, path:r.path, text:n.text, rev:meta.rev, mtime:Date.now(), base:n.text, dirty:false }); S.notes.set(c.pl, c); await idbPut(c); }
+  try {
+    const { meta:m2, text } = await download(full(n.path));
+    Object.assign(n, { text, rev:m2.rev, mtime:Date.parse(m2.client_modified) || Date.now(), base:text, dirty:false }); derive(n); await idbPut(n);
+  } catch(e){ S.notes.delete(n.pl); await idbDel(n.pl); }
+  reindex();
+  toast('“' + n.name + '” was also changed elsewhere. Your phone version is saved as “' + (r ? r.path.split('/').pop().replace(/\.md$/i, '') : 'a copy') + '”.', null, null, 8000);
+  if (S.cur === n.pl && !$('editV').classList.contains('on')) showNote(n.pl, true);
+}
+let pushT;
+function schedulePush(ms){ clearTimeout(pushT); pushT = setTimeout(() => { if (navigator.onLine && signedIn()) sync(); }, ms == null ? 2500 : ms); }
+async function saveText(n, text){
+  if (text === n.text) return;
+  n.text = text; n.dirty = true; n.mtime = Date.now(); derive(n);
+  await idbPut(n); setSync(S.sync === 'busy' ? 'busy' : S.sync); schedulePush();
+}
+
+/* ---------- markdown → html (reading view) ---------- */
+function anchorId(s){ return 'h-' + String(s).toLowerCase().replace(/#[\p{L}\p{N}_\-\/]+/gu, '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, ''); }
+function inl(s){
+  const keep = [], K = h => '\u0000' + (keep.push(h) - 1) + '\u0000';
+  s = s.replace(/`([^`]+)`/g, (_, c) => K(`<code>${esc(c)}</code>`));
+  s = s.replace(/!\[\[([^\]]+)\]\]/g, (_, t) => K(embed(t)));
+  s = s.replace(/!\[([^\]]*)\]\(<?([^)>]+?)>?(?:\s+"[^"]*")?\)/g, (_, alt, u) => K(image(u, alt)));
+  s = s.replace(/\[\[([^\]]+)\]\]/g, (_, t) => K(wiki(t)));
+  s = s.replace(/\[([^\]]+)\]\(<?([^)>\s]+)>?\)/g, (_, t, u) => K(/^https?:|^mailto:|^tel:/i.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>` : wiki(decodeURIComponent(u).replace(/\.md$/i, '') + '|' + t)));
+  s = s.replace(/\bhttps?:\/\/[^\s<>()]*[^\s<>().,;:!?'"]/g, u => K(`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 48) + (u.length > 60 ? '…' : ''))}</a>`));
+  s = esc(s)
+    .replace(/\*\*(?=\S)(.+?)\*\*/g, '<strong>$1</strong>').replace(/__(?=\S)(.+?)__/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*(?=\S)(.+?)\*(?!\w)/g, '$1<em>$2</em>').replace(/(^|[^_\w])_(?=\S)(.+?)_(?!\w)/g, '$1<em>$2</em>')
+    .replace(/~~(.+?)~~/g, '<del>$1</del>').replace(/==(.+?)==/g, '<mark>$1</mark>')
+    .replace(/(^|\s)#([\p{L}\p{N}_\-\/]*[\p{L}_\-\/][\p{L}\p{N}_\-\/]*)/gu, (_, a, t) => `${a}<button class="tagc" data-tag="${t}">#${t}</button>`);
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
+}
+function wiki(t){
+  const [left, alias] = t.split('|'), [target, head] = left.split('#');
+  if (!target.trim() && head) return `<a class="wl" data-anchor="${esc(anchorId(head))}">${esc(alias || head)}</a>`;
+  const n = resolveNote(target);
+  return `<a class="wl${n ? '' : ' missing'}" data-wl="${esc(target.trim())}" data-h="${esc(head || '')}">${esc(alias || (target.trim() + (head ? ' › ' + head : '')))}</a>`;
+}
+const IMG_RE = /\.(png|jpe?g|gif|webp|svg|bmp|avif|heic)$/i;
+function embed(t){
+  const name = t.split('|')[0].trim();
+  if (IMG_RE.test(name)) return image(name, name.split('/').pop());
+  return wiki(t.split('|')[0]);
+}
+function image(u, alt){
+  if (/^https?:|^data:/i.test(u)) return `<img src="${esc(u)}" alt="${esc(alt)}" loading="lazy">`;
+  const p = resolveFile(decodeURIComponent(u));
+  return p ? `<img class="dimg" data-dbx="${esc(p)}" alt="${esc(alt)}">` : `<span class="imgph">🖼 ${esc(alt || u)}</span>`;
+}
+function renderMd(body, n, off){
+  // off = line offset for tappable checkboxes (-1 inside quotes: not tappable)
+  body = body.replace(/%%[\s\S]*?%%/g, m => m.replace(/[^\n]/g, ''));
+  const L = body.split('\n').map(l => l.replace(/\r$/, '')), out = [];
+  const listRe = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/, ln = i => off < 0 ? '' : ` data-ln="${off + i}"`;
+  let i = 0;
+  const blockStart = l => /^\s*(```|~~~)/.test(l) || /^#{1,6}\s/.test(l) || /^\s*>/.test(l) || listRe.test(l) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(l) || /^\s*\|.*\|\s*$/.test(l);
+  while (i < L.length){
+    const l = L[i]; let m;
+    if (/^\s*(```|~~~)/.test(l)){
+      const f = l.trim().slice(0, 3), buf = []; i++;
+      while (i < L.length && !L[i].trim().startsWith(f)){ buf.push(L[i]); i++; } i++;
+      out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`); continue;
+    }
+    if (!l.trim()){ i++; continue; }
+    if ((m = l.match(/^(#{1,6})\s+(.*)$/))){ const lv = m[1].length; out.push(`<h${lv} id="${esc(anchorId(m[2]))}">${inl(m[2])}</h${lv}>`); i++; continue; }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)){ out.push('<hr>'); i++; continue; }
+    if (/^\s*>/.test(l)){
+      const buf = []; while (i < L.length && /^\s*>/.test(L[i])){ buf.push(L[i].replace(/^\s*>\s?/, '')); i++; }
+      let cls = '', title = ''; const cm = buf[0] && buf[0].match(/^\[!(\w+)\][+-]?\s*(.*)$/);
+      if (cm){ cls = 'callout'; title = `<div class="ct">${inl(cm[2] || cm[1].charAt(0).toUpperCase() + cm[1].slice(1))}</div>`; buf.shift(); }
+      out.push(`<blockquote class="${cls}">${title}${renderMd(buf.join('\n'), n, -1)}</blockquote>`); continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < L.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(L[i + 1])){
+      const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const head = cells(l); i += 2; const rows = [];
+      while (i < L.length && /^\s*\|.*\|\s*$/.test(L[i])){ rows.push(cells(L[i])); i++; }
+      out.push(`<div class="tbl"><table><thead><tr>${head.map(c => `<th>${inl(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inl(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      continue;
+    }
+    if (listRe.test(l)){
+      const items = [];
+      while (i < L.length && (m = L[i].match(listRe))){
+        const ind = m[1].replace(/\t/g, '    ').length, lvl = Math.min(6, Math.floor(ind / 2)), ol = /\d/.test(m[2]);
+        let txt = m[3]; const cb = txt.match(/^\[( |x|X|\/|-)\]\s?(.*)$/);
+        const pad = lvl ? ` style="padding-left:${lvl * 1.3}em"` : '';
+        if (cb){ const on = cb[1] !== ' '; items.push(`<div class="li"${pad}><label class="cb${on ? ' done' : ''}"><input type="checkbox"${ln(i)}${on ? ' checked' : ''}${off < 0 ? ' disabled' : ''}><span>${inl(cb[2])}</span></label></div>`); }
+        else items.push(`<div class="li${ol ? ' ol' : ''}"${pad}><span class="mk">${ol ? esc(m[2]) : '•'}</span><span>${inl(txt)}</span></div>`);
+        i++;
+        while (i < L.length && L[i].trim() && !listRe.test(L[i]) && /^\s{2,}/.test(L[i])){ items[items.length - 1] = items[items.length - 1].replace(/<\/span><\/(label|div)>$/, '<br>' + inl(L[i].trim()) + '</span></$1>'); i++; }
+      }
+      out.push(`<div class="list">${items.join('')}</div>`); continue;
+    }
+    const buf = [];
+    while (i < L.length && L[i].trim() && (!buf.length || !blockStart(L[i]))){
+      const a = n && n.isMap && L[i].match(/^\s*→\s*([^:]+?)(?:\s+:\s+(.*))?\s*$/);
+      if (a){ if (buf.length) break; out.push(`<div class="arrow">→ <a data-anchor="${esc(anchorId(a[1]))}">${esc(a[1])}</a>${a[2] ? ` <small>${esc(a[2])}</small>` : ''}</div>`); i++; continue; }
+      buf.push(inl(L[i])); i++;
+    }
+    if (buf.length) out.push(`<p>${buf.join('<br>')}</p>`);
+  }
+  return out.join('');
+}
+async function loadImages(root){
+  for (const img of root.querySelectorAll('img.dimg')){
+    const p = img.dataset.dbx;
+    try {
+      let u = S.imgUrl.get(p);
+      if (!u || u.exp < Date.now()){ const r = await rpc('files/get_temporary_link', { path:full(p) }); u = { url:r.link, exp:Date.now() + 3.5 * 3600e3 }; S.imgUrl.set(p, u); }
+      img.src = u.url;
+    } catch(e){ img.replaceWith(Object.assign(document.createElement('span'), { className:'imgph', textContent:'🖼 ' + (img.alt || p) + (navigator.onLine ? '' : ' (offline)') })); }
+  }
+}
+
+/* ---------- lock (encrypted notes, same format as the desktop) ---------- */
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function unlockText(text, pass){
+  const i = text.indexOf('%% my-notes-locked %%'), o = JSON.parse(text.slice(i + 21).trim());
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name:'PBKDF2', salt:b64d(o.salt), iterations:o.it || 600000, hash:'SHA-256' }, base, { name:'AES-GCM', length:256 }, false, ['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64d(o.iv) }, key, b64d(o.data)));
+}
+
+/* ---------- navigation (Android back button closes the top layer) ---------- */
+const layers = [];
+function pushLayer(close){ layers.push(close); history.pushState({ mnm:layers.length }, ''); }
+function back(){ if (layers.length) history.back(); }
+function backAll(){ if (layers.length) history.go(-layers.length); }
+window.addEventListener('popstate', e => { const to = (e.state && e.state.mnm) || 0; while (layers.length > to){ const f = layers.pop(); f(); } });
+
+/* ---------- main tabs ---------- */
+const TABS = { recent:['clock', 'Recent'], folders:['folder', 'Folders'], search:['search', 'Search'], tags:['tag', 'Tags'] };
+function refresh(){ if (S.tab === 'search') runSearch(); else renderMain(); if (S.cur && $('noteV').classList.contains('on') && !$('editV').classList.contains('on')) showNote(S.cur, true); }
+function setTab(t){ S.tab = t; $('main').scrollTop = 0; renderMain(); if (t === 'search') setTimeout(() => { const q = $('q'); if (q && !S.query) q.focus(); }, 60); }
+function sortRecent(list){ return list.sort((a, b) => (b.mtime || 0) - (a.mtime || 0)); }
+function row(n, hl){
+  const s = hl ? hiSnip(n, hl) : esc(n.snip || '');
+  return `<button class="row${n.importance ? ' imp-' + n.importance : ''}" data-open="${esc(n.pl)}">
+    <div class="r-t">${n.locked ? ic('lock') : ''}${n.isMap ? ic('map') : ''}${n.pinned ? ic('pin') : ''}<span>${esc(n.name)}</span></div>
+    ${s ? `<div class="r-s">${s}</div>` : ''}
+    <div class="r-m">${n.folder ? `<span class="fd">${esc(n.folder)}</span>` : ''}<span>${esc(ago(n.mtime))}</span>${n.dirty ? '<span class="pend">not synced yet</span>' : ''}</div></button>`;
+}
+function renderMain(){
+  document.querySelectorAll('#nav .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  const m = $('main'), notes = [...S.notes.values()];
+  let ttl = TABS[S.tab][1], sub = '', h = '';
+  if (S.prog && S.prog.all > 10) h += `<div class="hint progt">Getting your notes… ${S.prog.done} of ${S.prog.all}</div><div class="prog"><i style="width:${100 * S.prog.done / S.prog.all}%"></i></div>`;
+  if (S.tab === 'recent'){
+    const pins = notes.filter(n => n.pinned).sort((a, b) => a.name.localeCompare(b.name));
+    if (pins.length) h += `<div class="sect">Pinned</div><div class="pins">${pins.map(n => `<button class="pin" data-open="${esc(n.pl)}">${ic('pin')}<b>${esc(n.name)}</b></button>`).join('')}</div>`;
+    const list = sortRecent(notes), today = startOfDay(Date.now());
+    const groups = [['Today', t => t >= today], ['Yesterday', t => t >= today - 864e5], ['This week', t => t >= today - 6 * 864e5], ['This month', t => t >= today - 30 * 864e5], ['Earlier', () => true]];
+    let gi = -1;
+    for (const n of list.slice(0, S.recentN)){
+      let g = groups.findIndex(([, f]) => f(n.mtime || 0));
+      if (g !== gi){ gi = g; h += `<div class="sect">${groups[g][0]}</div>`; }
+      h += row(n);
+    }
+    if (list.length > S.recentN) h += `<button class="more" data-act="moreRecent">Show more</button>`;
+    if (!list.length && !S.prog) h += `<div class="empty">${ic('book')}<div>${S.syncP ? 'Getting your notes…' : 'No notes yet. Tap + to write one.'}</div></div>`;
+    sub = notes.length ? notes.length + ' notes' : '';
+  } else if (S.tab === 'folders'){
+    const f = S.fpath, pre = f ? f + '/' : '';
+    if (f){ ttl = f.split('/').pop(); const parts = f.split('/'); h += `<div class="crumbs"><button data-fold="">All</button>${parts.map((p, i) => ` / <button data-fold="${esc(parts.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</div>`; }
+    const subs = [...S.folders].filter(x => x.startsWith(pre) && x.length > pre.length && !x.slice(pre.length).includes('/')).sort((a, b) => a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }));
+    const count = p => notes.filter(n => n.folder === p || n.folder.startsWith(p + '/')).length;
+    h += subs.map(s => `<button class="fold" data-fold="${esc(s)}">${ic(/inbox/i.test(s) ? 'inbox' : 'folder')}<span>${esc(s.slice(pre.length))}</span><small>${count(s)}</small>${ic('chev')}</button>`).join('');
+    const here = sortRecent(notes.filter(n => n.folder === f));
+    if (here.length) h += `<div class="sect">${f ? 'Notes' : 'Notes in the main folder'}</div>` + here.map(n => row(n)).join('');
+    if (!subs.length && !here.length) h += `<div class="empty">${ic('folder')}<div>This folder is empty.</div></div>`;
+  } else if (S.tab === 'search'){
+    h += `<div class="sbox"><label>${ic('search')}<input id="q" type="search" placeholder="Search your notes" value="${esc(S.query)}" enterkeyhint="search" autocomplete="off"></label></div><div id="sres"></div>`;
+  } else if (S.tab === 'tags'){
+    const cnt = new Map(); for (const n of notes) for (const t of n.tags) cnt.set(t, (cnt.get(t) || 0) + 1);
+    const list = [...cnt].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    h += list.length ? `<div class="chips" style="margin-top:10px">${list.map(([t, c]) => `<button class="chip" data-tag="${esc(t)}">#${esc(t)} <small>${c}</small></button>`).join('')}</div>` : `<div class="empty">${ic('tag')}<div>No tags yet.</div></div>`;
+    sub = list.length ? list.length + ' tags' : '';
+  }
+  $('ttl').innerHTML = esc(ttl) + (sub ? `<small>${esc(sub)}</small>` : '');
+  m.innerHTML = h;
+  if (S.tab === 'search') runSearch();
+}
+
+/* ---------- search ---------- */
+function parseQuery(q){
+  const out = { words:[], tags:[], folders:[] };
+  for (const m of q.matchAll(/(tag:|folder:|#)?("([^"]*)"|\S+)/gi)){
+    const v = (m[3] != null ? m[3] : m[2]).toLowerCase(); if (!v) continue;
+    const k = (m[1] || '').toLowerCase();
+    if (k === 'tag:' || k === '#') out.tags.push(v.replace(/^#/, '')); else if (k === 'folder:') out.folders.push(v); else out.words.push(v);
+  }
+  return out;
+}
+function hiSnip(n, words){
+  if (!words.length || n.locked) return esc(n.snip);
+  const body = plainText(splitHeader(n.text).body), lc = body.toLowerCase();
+  let at = -1; for (const w of words){ at = lc.indexOf(w); if (at >= 0) break; }
+  if (at < 0) return esc(n.snip);
+  const s = Math.max(0, at - 50), piece = (s ? '…' : '') + body.slice(s, at + 150);
+  let h = esc(piece); for (const w of words) h = h.replace(new RegExp(esc(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), x => `<mark>${x}</mark>`);
+  return h;
+}
+function runSearch(){
+  const box = $('sres'); if (!box) return;
+  const q = S.query.trim(), notes = [...S.notes.values()];
+  if (!q){
+    const cnt = new Map(); for (const n of notes) for (const t of n.tags) cnt.set(t, (cnt.get(t) || 0) + 1);
+    const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 14);
+    box.innerHTML = (top.length ? `<div class="sect">Tags</div><div class="chips">${top.map(([t]) => `<button class="chip" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : '')
+      + `<div class="hint">Search words in titles and text. Narrow it down with <code>tag:idea</code> or <code>folder:Inbox</code>. Use quotes for an exact phrase.</div>`;
+    return;
+  }
+  const pq = parseQuery(q);
+  const res = [];
+  for (const n of notes){
+    if (pq.tags.length && !pq.tags.every(t => n.tags.some(x => x.toLowerCase() === t || x.toLowerCase().startsWith(t + '/')))) continue;
+    if (pq.folders.length && !pq.folders.every(f => n.folder.toLowerCase() === f || n.folder.toLowerCase().startsWith(f + '/') || n.folder.toLowerCase().includes(f))) continue;
+    if (!pq.words.every(w => n.lc.includes(w))) continue;
+    const nm = n.name.toLowerCase();
+    let score = 0; for (const w of pq.words){ if (nm === w) score += 100; else if (nm.startsWith(w)) score += 40; else if (nm.includes(w)) score += 20; }
+    res.push([score, n]);
+  }
+  res.sort((a, b) => b[0] - a[0] || (b[1].mtime || 0) - (a[1].mtime || 0));
+  box.innerHTML = `<div class="hint">${res.length} ${res.length === 1 ? 'note' : 'notes'}</div>` + res.slice(0, 150).map(([, n]) => row(n, pq.words)).join('')
+    + (!res.length ? `<div class="empty">${ic('search')}<div>Nothing found.</div></div>` : '');
+}
+
+/* ---------- note view ---------- */
+function openNote(pl){
+  const n = S.notes.get(pl); if (!n) return toast('That note is not on this phone');
+  const page = $('noteV');
+  if (page.classList.contains('on') && S.cur && S.cur !== pl){ const prev = S.cur; S.noteHist.push(prev); pushLayer(() => { S.noteHist.pop(); showNote(prev); }); }
+  else if (!page.classList.contains('on')) pushLayer(closeNote);
+  showNote(pl);
+  page.classList.add('on');
+}
+function closeNote(){ $('noteV').classList.remove('on'); S.cur = null; renderMain(); }
+function backlinks(n){
+  const nm = n.name.toLowerCase(), out = [];
+  for (const o of S.notes.values()){
+    if (o === n || o.locked || !o.lc.includes('[[')) continue;
+    const re = /\[\[([^\]|#]+)/g; let m;
+    while ((m = re.exec(o.text))){ const t = m[1].trim().toLowerCase().replace(/\.md$/, ''); if (t === nm || t.endsWith('/' + nm) || t === n.pl.replace(/\.md$/, '')){ out.push(o); break; } }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+function propsHtml(n){
+  const skip = new Set(['tags', 'importance', 'pinned', 'type', 'map-layout', 'position', 'cssclasses', 'locked']);
+  const keys = Object.keys(n.props).filter(k => !skip.has(k.toLowerCase()) && n.props[k] !== '' && !(Array.isArray(n.props[k]) && !n.props[k].length));
+  if (!keys.length) return '';
+  const val = v => (Array.isArray(v) ? v : [v]).map(x => /^\[\[.*\]\]$/.test(x) ? inl(x) : /^https?:/.test(x) ? inl(x) : esc(x)).join(', ');
+  return `<details class="props"><summary>Properties · ${keys.length}</summary>${keys.map(k => `<div><dt>${esc(k)}</dt><dd>${val(n.props[k])}</dd></div>`).join('')}</details>`;
+}
+function showNote(pl, keepScroll){
+  const n = S.notes.get(pl), page = $('noteV');
+  if (!n){ if (page.classList.contains('on')) back(); return; }
+  S.cur = pl;
+  const sc = page.querySelector('.pscroll'), top = keepScroll && sc ? sc.scrollTop : 0;
+  const un = n.locked ? S.unlocked.get(pl) : null;
+  let body;
+  if (n.locked && un == null){
+    body = `<div class="lockp">${ic('lock')}<p>This note is locked. Enter your My Notes password to read it on this phone.</p>
+      <input type="password" id="lockPw" placeholder="Password" autocomplete="current-password"><button class="btn" data-act="unlock">Unlock</button>
+      <p class="hint">Locked notes can be read here; edit them on your computer.</p></div>`;
+  } else {
+    const src = n.locked ? un : n.text, sp = splitHeader(src), dn = n.locked ? derive({ pl:n.pl, path:n.path, text:src }) : n;
+    const off = (src.slice(0, sp.header.length).match(/\n/g) || []).length;   // line numbers of the body inside the file
+    const meta = [];
+    if (dn.importance) meta.push(`<span class="imp"><i class="dot ${dn.importance}"></i>${dn.importance[0].toUpperCase() + dn.importance.slice(1)}</span>`);
+    meta.push(`<span>${esc(ago(n.mtime))}</span>`);
+    if (n.dirty) meta.push('<span style="color:var(--accent);font-weight:600">not synced yet</span>');
+    const tagsH = dn.tags.map(t => `<button class="tagc" data-tag="${esc(t)}">#${esc(t)}</button>`).join(' ');
+    const bl = n.locked ? [] : backlinks(n);
+    body = `<article class="note"><h1 class="ntitle">${esc(n.name)}</h1>
+      <div class="nmeta">${meta.join('<span>·</span>')}${tagsH ? '<span>·</span>' + tagsH : ''}</div>
+      ${n.isMap ? `<div class="banner">${ic('map')}<div>Mind map, shown as text. Each <b>##</b> heading is a card, each <b>→</b> line an arrow. Open it on your computer to see the map.</div></div>` : ''}
+      ${n.locked ? `<div class="banner">${ic('lock')}<div>Unlocked for reading. Edit locked notes on your computer.</div></div>` : ''}
+      ${propsHtml(dn)}
+      <div class="md">${renderMd(sp.body, dn, n.locked ? -1 : off) || '<p style="color:var(--muted)">Empty note — tap the pencil to write.</p>'}</div>
+      ${bl.length ? `<div class="backl"><h4>Linked from</h4>${bl.map(o => `<button data-open="${esc(o.pl)}">${esc(o.name)}</button>`).join('')}</div>` : ''}
+    </article>`;
+  }
+  page.innerHTML = `<div class="pbar"><button class="ib" data-act="back" aria-label="Back">${ic('back')}</button><div class="mid">${esc(n.folder || 'Main folder')}</div>
+    ${n.locked ? '' : `<button class="ib" data-act="pin" aria-label="${n.pinned ? 'Unpin' : 'Pin'}" style="color:${n.pinned ? 'var(--accent)' : 'inherit'}">${ic(n.pinned ? 'pinfill' : 'pin')}</button>`}
+    <button class="ib" data-act="more" aria-label="More">${ic('more')}</button></div>
+    <div class="pscroll">${body}</div>${n.locked ? '' : `<button class="efab" data-act="edit" aria-label="Edit">${ic('pencil')}</button>`}`;
+  const s2 = page.querySelector('.pscroll'); s2.scrollTop = top;
+  s2.addEventListener('scroll', () => page.querySelector('.pbar').classList.toggle('sh', s2.scrollTop > 8), { passive:true });
+  loadImages(page);
+}
+async function toggleCheck(n, line, on){
+  const lines = n.text.split('\n'), l = lines[line]; if (l == null) return;
+  const nl = l.replace(/^(\s*([-*+]|\d+[.)])\s+)\[( |x|X|\/|-)\]/, (_, a) => a + (on ? '[x]' : '[ ]'));
+  if (nl === l) return;
+  lines[line] = nl; await saveText(n, lines.join('\n'));
+  showNote(n.pl, true);
+}
+
+/* ---------- editor ---------- */
+let ED = null;
+function openEditor(pl, opts){
+  opts = opts || {};
+  const n = pl ? S.notes.get(pl) : null;
+  const page = $('editV'), isNew = !n;
+  const sp = n ? splitHeader(n.text) : { header:'', body:opts.body || '' };
+  const crlf = /\r\n/.test(sp.body) || (!sp.body.trim() && n && /\r\n/.test(n.text));
+  ED = { n, isNew, header:sp.header, crlf, orig:sp.body.replace(/\r\n/g, '\n'), timer:null, folder: opts.folder != null ? opts.folder : defaultFolder() };
+  const folders = ['', ...[...S.folders].sort((a, b) => a.localeCompare(b, undefined, { sensitivity:'base' }))];
+  page.innerHTML = `<div class="pbar"><button class="ib" data-act="edclose" aria-label="Close">${ic(isNew ? 'x' : 'back')}</button><div class="mid" id="edState">${isNew ? 'New note' : 'Saved'}</div>
+      <button class="done" data-act="eddone">${isNew ? 'Save' : 'Done'}</button></div>
+    <div class="edhead">${isNew ? `<input id="edTitle" placeholder="Title" value="${esc(opts.title || '')}" enterkeyhint="next" autocomplete="off">
+      <div class="fsel">${ic('folder')} <select id="edFolder">${folders.map(f => `<option value="${esc(f)}"${f === ED.folder ? ' selected' : ''}>${esc(f || 'Main folder')}</option>`).join('')}</select></div>`
+      : `<input value="${esc(n.name)}" readonly tabindex="-1"><div class="edsub">${esc(n.folder || 'Main folder')}</div>`}</div>
+    <textarea id="edTa" placeholder="${isNew ? 'Write something…' : ''}" spellcheck="true" autocapitalize="sentences"></textarea>
+    <div class="kbar">
+      <button data-k="undo" aria-label="Undo">${ic('undo')}</button><button data-k="redo" aria-label="Redo">${ic('redo')}</button><span class="sep"></span>
+      <button data-k="h" aria-label="Heading">H</button><button data-k="b" aria-label="Bold"><b>B</b></button><button data-k="i" aria-label="Italic"><i>I</i></button>
+      <button data-k="ul" aria-label="List">${ic('list')}</button><button data-k="cb" aria-label="Checkbox">${ic('checksq')}</button>
+      <button data-k="link" aria-label="Link to note">[[ ]]</button><button data-k="tag" aria-label="Tag">${ic('hash')}</button><button data-k="hl" aria-label="Highlight">==</button>
+    </div>`;
+  const ta = $('edTa'); ta.value = ED.orig;
+  ta.addEventListener('input', edInput);
+  if (isNew){ const t = $('edTitle'); t.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ta.focus(); } }); $('edFolder').onchange = e => { ED.folder = e.target.value; }; }
+  pushLayer(closeEditor);
+  page.classList.add('on');
+  setTimeout(() => { if (isNew && !opts.title && !opts.body) $('edTitle').focus(); else { ta.focus(); const p = opts.cursorEnd || !isNew ? ta.value.length : 0; try { ta.setSelectionRange(p, p); } catch(e){} } }, 230);
+}
+function edInput(){
+  if (!ED) return;
+  if (ED.isNew){ $('edState').textContent = 'Not saved yet'; return; }
+  $('edState').textContent = 'Editing…';
+  clearTimeout(ED.timer); ED.timer = setTimeout(edSave, 700);
+}
+async function edSave(){
+  if (!ED || ED.isNew || !ED.n) return;
+  const v = $('edTa').value;
+  if (v === ED.orig && !ED.changed){ $('edState').textContent = 'Saved'; return; }   // opened and closed without changes: the file is not touched
+  ED.changed = true;
+  const body = ED.crlf ? v.replace(/\r?\n/g, '\r\n') : v;
+  await saveText(ED.n, ED.header + body);
+  $('edState') && ($('edState').textContent = navigator.onLine ? 'Saved' : 'Saved on phone · syncs when online');
+}
+async function edCreate(){
+  const ta = $('edTa'); let title = ($('edTitle').value || '').trim(), body = ta.value;
+  if (!title && !body.trim()) return true;          // nothing written: just close
+  if (!title){ const first = body.trim().split('\n')[0].replace(/^#+\s*|[*_`>\[\]]/g, '').trim(); title = first.slice(0, 60) || ('Note ' + stamp().replace(/-(\d\d)$/, ':$1')); }
+  const n = await createNote(title, body, ED.folder);
+  toast('Saved to ' + (n.folder || 'the main folder'));
+  ED.created = n;
+  return true;
+}
+function sanitizeName(s){ return String(s).replace(/[\\/:*?"<>|#^\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 120).replace(/[. ]+$/, '') || 'Untitled'; }
+async function createNote(title, body, folder){
+  let name = sanitizeName(title), base = name, k = 2, path;
+  while (S.notes.has((path = (folder ? folder + '/' : '') + name + '.md').toLowerCase())) name = base + ' ' + k++;
+  const n = derive({ pl:path.toLowerCase(), path, text:body, rev:null, mtime:Date.now(), base:null, dirty:true });
+  S.notes.set(n.pl, n); reindex(); await idbPut(n); schedulePush(300);
+  return n;
+}
+function defaultFolder(){
+  if (cfg.newFolder != null && (cfg.newFolder === '' || S.folders.has(cfg.newFolder))) return cfg.newFolder;
+  const inbox = [...S.folders].find(f => /^inbox$/i.test(f)); return inbox || '';
+}
+function closeEditor(){
+  const page = $('editV'); if (!ED) { page.classList.remove('on'); return; }
+  clearTimeout(ED.timer);
+  const was = ED; ED = null;
+  (async () => {
+    if (was.isNew){ ED = was; await edCreate(); ED = null; }
+    else { ED = was; await edSave(); ED = null; }
+    page.classList.remove('on'); document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    if (was.created) setTimeout(() => openNote(was.created.pl), 60);
+    else if (S.cur) showNote(S.cur, true);
+    renderMain();
+  })();
+}
+function kb(k){
+  const ta = $('edTa'); if (!ta) return;
+  ta.focus();
+  if (k === 'undo' || k === 'redo'){ document.execCommand(k); return; }
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const put = (from, to, text) => {   // through execCommand, so Undo / Redo know about it
+    if (from === to && !text) return;
+    ta.setSelectionRange(from, to);
+    if (!document.execCommand(text ? 'insertText' : 'delete', false, text)){ ta.setRangeText(text, from, to, 'end'); ta.dispatchEvent(new Event('input')); }
+  };
+  const ins = (text, selFrom, selTo) => { put(s, e, text); if (selFrom != null) ta.setSelectionRange(s + selFrom, s + selTo); };
+  const wrap = m => { const sel = v.slice(s, e); ins(m + sel + m, m.length, m.length + sel.length); };
+  const linePrefix = pre => {
+    const ls0 = v.lastIndexOf('\n', s - 1) + 1, line = v.slice(ls0, v.indexOf('\n', s) < 0 ? v.length : v.indexOf('\n', s));
+    const re = /^(\s*)(#{1,6}\s|[-*+]\s\[[ xX]\]\s|[-*+]\s|\d+[.)]\s)?/, m = line.match(re), cur = m[2] || '';
+    let next = cur === pre ? '' : pre;
+    if (pre === '## ' && /^#{1,6}\s$/.test(cur)) next = cur.length >= 4 ? '' : '#' + cur;   // H cycles ## → ### → none
+    if (m[0] !== m[1] + next) put(ls0, ls0 + m[0].length, m[1] + next);
+    const p = ls0 + m[1].length + next.length + (line.length - m[0].length); ta.setSelectionRange(p, p);
+  };
+  if (k === 'b') wrap('**'); else if (k === 'i') wrap('*'); else if (k === 'hl') wrap('==');
+  else if (k === 'h') linePrefix('## '); else if (k === 'ul') linePrefix('- '); else if (k === 'cb') linePrefix('- [ ] ');
+  else if (k === 'tag'){ const before = s > 0 && !/\s/.test(v[s - 1]) ? ' #' : '#'; ins(before); }
+  else if (k === 'link') pickNote(n => { ta.focus(); ta.setSelectionRange(s, e); put(s, e, '[[' + n.name + ']]'); });
+}
+
+/* ---------- bottom sheets ---------- */
+function sheet(html, opts){
+  opts = opts || {};
+  const bg = $('sheetBg'), sh = $('sheet');
+  sh.className = opts.tall ? 'tall' : ''; sh.innerHTML = '<div class="grab"></div>' + html;
+  bg.classList.add('on'); pushLayer(() => { bg.classList.remove('on'); if (opts.onClose) opts.onClose(); });
+  return sh;
+}
+const closeSheet = () => { if ($('sheetBg').classList.contains('on')) back(); };
+function noteMenu(){
+  const n = S.notes.get(S.cur); if (!n) return;
+  const imp = n.importance;
+  const sh = sheet(`<div class="sh-t">${esc(n.name)}</div>
+    ${n.locked ? '' : `<div class="lbl">Importance</div><div class="seg" id="impSeg">${['high', 'medium', 'low', ''].map(v => `<button data-imp="${v}" class="${imp === v ? 'on' : ''}">${v ? `<i class="dot ${v}"></i>${v[0].toUpperCase() + v.slice(1)}` : 'None'}</button>`).join('')}</div>
+    <button class="act" data-m="tags">${ic('tag')} Tags${n.tags.length ? ` <small style="color:var(--muted)">${esc(n.tags.map(t => '#' + t).join(' '))}</small>` : ''}</button>
+    <button class="act" data-m="pin">${ic('pin')} ${n.pinned ? 'Unpin' : 'Pin to top'}</button>`}
+    <button class="act" data-m="share">${ic('share')} Share text</button>
+    <button class="act" data-m="copy">${ic('copy')} Copy text</button>
+    <button class="act" data-m="link">${ic('link')} Copy link [[${esc(n.name)}]]</button>
+    <button class="act danger" data-m="trash">${ic('trash')} Move to trash</button>
+    <div class="hint">${esc(n.path)}</div>`);
+  sh.onclick = async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.imp != null){ await setImportance(n, b.dataset.imp); sh.querySelectorAll('#impSeg button').forEach(x => x.classList.toggle('on', x === b)); return; }
+    const m = b.dataset.m; if (!m) return;
+    const text = n.locked ? (S.unlocked.get(n.pl) || '') : n.text;
+    if (m === 'tags'){ closeSheet(); setTimeout(() => tagSheet(n), 250); }
+    else if (m === 'pin'){ closeSheet(); await togglePin(n); }
+    else if (m === 'share'){ closeSheet(); try { await navigator.share({ title:n.name, text:splitHeader(text).body.trim() }); } catch(e){ } }
+    else if (m === 'copy'){ closeSheet(); await copy(splitHeader(text).body.trim()); }
+    else if (m === 'link'){ closeSheet(); await copy('[[' + n.name + ']]'); }
+    else if (m === 'trash'){ closeSheet(); setTimeout(() => confirmTrash(n), 250); }
+  };
+}
+async function copy(t){ try { await navigator.clipboard.writeText(t); toast('Copied'); } catch(e){ toast('Could not copy'); } }
+async function setImportance(n, v){ await saveText(n, setFm(n.text, 'importance', v ? ['importance: ' + v] : null)); showNote(n.pl, true); }
+async function togglePin(n){ const on = !n.pinned; await saveText(n, setFm(n.text, 'pinned', on ? ['pinned: true'] : null)); toast(on ? 'Pinned' : 'Unpinned'); showNote(n.pl, true); }
+function tagSheet(n){
+  const all = new Map(); for (const o of S.notes.values()) for (const t of o.tags) all.set(t, (all.get(t) || 0) + 1);
+  const fmTags = () => { const p = n.props.tags; return (Array.isArray(p) ? p : p ? String(p).split(/[,\s]+/) : []).map(x => unq(x).replace(/^#/, '')).filter(Boolean); };
+  let cur = fmTags();
+  const sh = sheet(`<div class="sh-t">Tags</div><div class="chips" id="tgCur"></div>
+    <input class="field" id="tgIn" placeholder="Add a tag" autocomplete="off" autocapitalize="none" enterkeyhint="done">
+    <div class="lbl">Used in other notes</div><div class="chips" id="tgSug"></div>
+    <div class="hint">Tags are saved in the note's header, the same way the desktop app does it. #tags written in the text stay in the text.</div>`, { tall:true });
+  const draw = () => {
+    $('tgCur').innerHTML = cur.length ? cur.map(t => `<button class="chip on" data-rm="${esc(t)}">#${esc(t)} ${ic('x')}</button>`).join('') : '<span class="hint">No tags yet</span>';
+    const q = ($('tgIn').value || '').trim().replace(/^#/, '').toLowerCase();
+    $('tgSug').innerHTML = [...all].filter(([t]) => !cur.includes(t) && (!q || t.toLowerCase().includes(q))).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([t]) => `<button class="chip" data-add="${esc(t)}">#${esc(t)}</button>`).join('');
+    sh.querySelectorAll('#tgCur .ic').forEach(i => { i.style.width = '14px'; i.style.height = '14px'; });
+  };
+  const commit = async () => { await saveText(n, setFm(n.text, 'tags', cur.length ? ['tags:', ...cur.map(t => '  - ' + t)] : null)); showNote(n.pl, true); };
+  const add = async t => { t = t.trim().replace(/^#/, '').replace(/\s+/g, '-'); if (!t || cur.includes(t)) return; cur.push(t); $('tgIn').value = ''; draw(); await commit(); };
+  draw();
+  $('tgIn').addEventListener('input', draw);
+  $('tgIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); add($('tgIn').value); } });
+  sh.addEventListener('click', async e => {
+    const a = e.target.closest('[data-add]'), r = e.target.closest('[data-rm]');
+    if (a) await add(a.dataset.add);
+    if (r){ cur = cur.filter(t => t !== r.dataset.rm); draw(); await commit(); }
+  });
+}
+function confirmTrash(n){
+  const sh = sheet(`<div class="sh-t">Move “${esc(n.name)}” to the trash?</div>
+    <p class="hint" style="font-size:14px">It goes to the vault's .trash folder, like on your computer. You can restore it there with Trash in the desktop app.</p>
+    <button class="btn" style="background:var(--high)" data-y="1">${ic('trash')} Move to trash</button><button class="btn sec" data-n="1">Cancel</button>`);
+  sh.onclick = async e => {
+    if (e.target.closest('[data-n]')) return closeSheet();
+    if (!e.target.closest('[data-y]')) return;
+    closeSheet();
+    try { await trashNote(n); toast('Moved to trash'); if (S.cur === n.pl) setTimeout(back, 260); renderMain(); }
+    catch(err){ toast(err instanceof TypeError ? 'You are offline — try again when connected' : 'Could not move to trash: ' + err.message); }
+  };
+}
+async function trashNote(n){
+  if (n.rev){
+    if (n._pushing) await n._pushing;
+    const r = await rpc('files/move_v2', { from_path:full(n.path), to_path:full('.trash/' + n.name + '.md'), autorename:true });
+    try {   // remember where it came from, so the desktop's Trash can put it back
+      const ip = full('.trash/.my-notes-trash.json'); let idx = {};
+      try { idx = JSON.parse((await download(ip)).text) || {}; } catch(e){}
+      idx[r.metadata.name] = { from:n.path, at:Date.now() };
+      await upload(ip, JSON.stringify(idx, null, 1), 'overwrite', false);
+    } catch(e){ console.warn('[MNM] trash index', e); }
+  }
+  S.notes.delete(n.pl); await idbDel(n.pl); reindex();
+}
+function pickNote(cb){
+  const sh = sheet(`<div class="sh-t">Link to a note</div><div class="sbox"><label>${ic('search')}<input id="pkQ" placeholder="Note name" autocomplete="off"></label></div><div id="pkRes"></div>`, { tall:true });
+  const draw = () => {
+    const q = $('pkQ').value.trim().toLowerCase();
+    const list = sortRecent([...S.notes.values()].filter(n => !q || n.name.toLowerCase().includes(q))).slice(0, 40);
+    $('pkRes').innerHTML = list.map(n => `<button class="act" data-pk="${esc(n.pl)}">${ic('book')}<span>${esc(n.name)}<small style="display:block;color:var(--muted);font-size:12px">${esc(n.folder || 'Main folder')}</small></span></button>`).join('');
+  };
+  draw(); $('pkQ').addEventListener('input', draw); setTimeout(() => $('pkQ').focus(), 200);
+  sh.onclick = e => { const b = e.target.closest('[data-pk]'); if (!b) return; const n = S.notes.get(b.dataset.pk); closeSheet(); setTimeout(() => cb(n), 260); };
+}
+
+/* ---------- settings ---------- */
+function settings(){
+  const notes = [...S.notes.values()], pend = notes.filter(n => n.dirty).length, last = ls.get('lastSync', 0);
+  const folders = ['', ...[...S.folders].sort((a, b) => a.localeCompare(b, undefined, { sensitivity:'base' }))], nf = defaultFolder();
+  const sh = sheet(`<div class="sh-t">Settings</div>
+    <div class="lbl">Dropbox</div>
+    <div class="card">${esc(cfg.account || 'Connected')}<small>Notes folder: ${esc(cfg.vault || '—')}</small><small>${notes.length} notes on this phone${pend ? ' · ' + pend + ' waiting to sync' : ''} · last sync ${last ? esc(ago(last)) : 'never'}</small></div>
+    <button class="act" data-s="sync">${ic('refresh')} Sync now</button>
+    <button class="act" data-s="folder">${ic('folder')} Choose another notes folder</button>
+    <div class="lbl">New notes go to</div>
+    <select class="field" id="setNf">${folders.map(f => `<option value="${esc(f)}"${f === nf ? ' selected' : ''}>${esc(f || 'Main folder')}</option>`).join('')}</select>
+    <div class="lbl">Look</div>
+    <div class="seg" id="setTh">${[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button data-th="${v}" class="${cfg.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="seg" id="setSz">${[['s', 'Small text'], ['m', 'Medium'], ['l', 'Large']].map(([v, l]) => `<button data-sz="${v}" class="${cfg.size === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="lbl">Help</div>
+    <a class="act" href="https://github.com/rudivanek/My_Notes/blob/main/Manual/My%20Notes%20Manual.md#my-notes-on-your-phone" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${ic('book')} Manual: My Notes on your phone ${ic('ext')}</a>
+    <a class="act" href="../" style="text-decoration:none;color:inherit">${ic('ext')} Open the desktop version</a>
+    <div class="lbl">This phone</div>
+    <button class="act" data-s="redownload">${ic('refresh')} Download all notes again</button>
+    <button class="act danger" data-s="signout">${ic('cloudoff')} Disconnect Dropbox</button>
+    <div class="ver">My Notes Mobile ${VERSION}</div>`, { tall:true });
+  $('setNf').onchange = e => { cfg.newFolder = e.target.value; saveCfg(); };
+  sh.onclick = async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.th){ cfg.theme = b.dataset.th; saveCfg(); applyTheme(); sh.querySelectorAll('#setTh button').forEach(x => x.classList.toggle('on', x === b)); return; }
+    if (b.dataset.sz){ cfg.size = b.dataset.sz; saveCfg(); applyTheme(); sh.querySelectorAll('#setSz button').forEach(x => x.classList.toggle('on', x === b)); return; }
+    const s = b.dataset.s;
+    if (s === 'sync'){ closeSheet(); await sync(); if (S.sync === 'ok') toast('Up to date'); }
+    else if (s === 'folder'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); setTimeout(() => showSetup(2), 250); }
+    else if (s === 'redownload'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); await resetCache(); sync({ full:true }); }
+    else if (s === 'signout'){
+      if (pend && !confirm(pend + ' change(s) are not synced yet and will be lost. Disconnect anyway?')) return;
+      closeSheet(); try { await rpc('auth/token/revoke', null); } catch(e){}
+      ls.del('auth'); cfg.vault = cfg.vaultLower = null; cfg.account = ''; saveCfg(); await resetCache(); showSetup();
+    }
+  };
+}
+async function resetCache(){ await idbClear(); S.notes = new Map(); S.folders = new Set(); S.files = new Map(); S.byName = new Map(); renderMain(); }
+function applyTheme(){
+  const dark = cfg.theme === 'dark' || (cfg.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.size = cfg.size || 'm';
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => m.setAttribute('content', dark ? '#1A1917' : '#FAF9F6'));
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+
+/* ---------- first-time setup ---------- */
+function showSetup(step){
+  const el = $('setup'); el.classList.remove('hidden');
+  step = step || (signedIn() ? 2 : 1);
+  if (step === 1){
+    el.innerHTML = `<div class="wrap"><img class="logo" src="../icon-192.png" alt=""><h1>My Notes<br>on your phone</h1>
+      <p class="lead">Read, search, capture and edit the notes in your Dropbox notes folder. Changes sync both ways with My Notes on your computer.</p>
+      <div class="lbl">One-time setup (about 2 minutes)</div>
+      <ol>
+        <li>Open <a href="https://www.dropbox.com/developers/apps/create" target="_blank" rel="noopener">dropbox.com/developers/apps</a> and create an app: <b>Scoped access</b>, <b>Full Dropbox</b>, any name (e.g. <i>My Notes Rudi</i>).</li>
+        <li>Tab <b>Permissions</b>: tick <code>files.metadata.read</code>, <code>files.content.read</code> and <code>files.content.write</code>, then <b>Submit</b>.</li>
+        <li>Tab <b>Settings</b> → <b>OAuth 2 · Redirect URIs</b>: add this address:
+          <div class="copyrow"><span id="ruri">${esc(redirectUri())}</span><button data-copy="1">Copy</button></div></li>
+        <li>On the same tab, copy the <b>App key</b> and paste it here:</li>
+      </ol>
+      <input class="field" id="appKey" placeholder="App key" value="${esc(cfg.appKey || '')}" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <button class="btn" id="goConnect">Connect Dropbox</button>
+      <p class="hint">The app talks to Dropbox directly from this phone. There is no server in between, and the key is stored only on this phone.</p>
+      <div class="ver">My Notes Mobile ${VERSION}</div></div>`;
+    el.querySelector('[data-copy]').onclick = () => copy(redirectUri());
+    $('goConnect').onclick = () => { cfg.appKey = $('appKey').value.trim(); saveCfg(); connect(); };
+    return;
+  }
+  // step 2: choose the notes folder
+  let path = '';
+  const draw = async () => {
+    el.innerHTML = `<div class="wrap"><h1>Your notes folder</h1><p class="lead">Open the folder that holds your notes (the one you open with “Open vault…” on your computer) and tap <b>Use this folder</b>.</p>
+      <div class="crumbs"><button data-p="">Dropbox</button>${path.split('/').filter(Boolean).map((p, i, a) => ` / <button data-p="/${esc(a.slice(0, i + 1).join('/'))}">${esc(p)}</button>`).join('')}</div>
+      <div id="fl"><div class="hint">Loading…</div></div>
+      <button class="btn" id="useF" ${path ? '' : 'disabled'}>Use this folder${path ? ': ' + esc(path.split('/').pop()) : ''}</button>
+      ${cfg.vault ? '<button class="btn sec" id="cancelF">Cancel</button>' : ''}</div>`;
+    el.onclick = async e => {
+      const b = e.target.closest('[data-p]'); if (b){ path = b.dataset.p; draw(); return; }
+      if (e.target.closest('#useF') && path) await chooseVault(path);
+      if (e.target.closest('#cancelF')) el.classList.add('hidden');
+    };
+    try {
+      let r = await rpc('files/list_folder', { path, limit:2000 }); const ents = r.entries.slice();
+      while (r.has_more){ r = await rpc('files/list_folder/continue', { cursor:r.cursor }); ents.push(...r.entries); }
+      const fs = ents.filter(x => x['.tag'] === 'folder' && !x.name.startsWith('.')).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity:'base' }));
+      const mdc = ents.filter(x => x['.tag'] === 'file' && /\.md$/i.test(x.name)).length;
+      $('fl').innerHTML = fs.map(f => `<button class="fold" data-p="${esc(f.path_display)}">${ic('folder')}<span>${esc(f.name)}</span>${ic('chev')}</button>`).join('')
+        + `<div class="hint">${fs.length ? '' : 'No folders here. '}${mdc ? mdc + ' notes (.md files) directly in this folder.' : ''}</div>`;
+    } catch(e){ $('fl').innerHTML = `<div class="hint">Could not read Dropbox: ${esc(e.message)}</div>`; if (e instanceof NeedAuth) showSetup(1); }
+  };
+  draw();
+}
+async function chooseVault(path){
+  const m = await rpc('files/get_metadata', { path });
+  if (cfg.vaultLower && cfg.vaultLower !== m.path_lower) await resetCache();
+  cfg.vault = m.path_display; cfg.vaultLower = m.path_lower; cfg.newFolder = null; saveCfg();
+  await metaSet('cursor', null);
+  $('setup').classList.add('hidden');
+  S.tab = 'recent'; renderMain();
+  await sync({ full:true });
+  const sh = ls.get('pendingShare'); if (sh){ ls.del('pendingShare'); openShared(sh); }
+}
+
+/* ---------- sharing into the app (Android share sheet) ---------- */
+function openShared(p){
+  let title = (p.title || '').trim(), text = (p.text || '').trim(), url = (p.url || '').trim();
+  if (url && !text.includes(url)) text = (text ? text + '\n\n' : '') + url;
+  if (!url){ const m = text.match(/https?:\/\/\S+/); if (m) url = m[0]; }
+  if (!title || /^https?:/.test(title)){
+    const firstLine = text.replace(/https?:\/\/\S+/g, '').trim().split('\n')[0] || '';
+    title = firstLine.split(/\s+/).slice(0, 9).join(' ').replace(/[.:,;!?…]+$/, '') || (url ? url.replace(/^https?:\/\/(www\.)?/, '').split(/[/?#]/)[0] : 'Shared');
+  }
+  openEditor(null, { title:sanitizeName(title).slice(0, 80), body:text + '\n', cursorEnd:true });
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', async e => {
+  const t = e.target;
+  const op = t.closest('[data-open]'); if (op){ openNote(op.dataset.open); return; }
+  const tg = t.closest('[data-tag]'); if (tg && !t.closest('#sheet')){ e.preventDefault(); backAll(); S.query = 'tag:' + tg.dataset.tag; setTab('search'); return; }
+  const fd = t.closest('[data-fold]'); if (fd){ const prev = S.fpath, nx = fd.dataset.fold; if (nx.length > prev.length) pushLayer(() => { S.fpath = prev; renderMain(); }); S.fpath = nx; $('main').scrollTop = 0; renderMain(); return; }
+  const wl = t.closest('a.wl[data-wl]'); if (wl){ e.preventDefault(); const n = resolveNote(wl.dataset.wl); if (!n) return toast('No note named “' + wl.dataset.wl + '” yet'); openNote(n.pl); if (wl.dataset.h) setTimeout(() => { const h = document.getElementById(anchorId(wl.dataset.h)); h && h.scrollIntoView({ behavior:'smooth' }); }, 80); return; }
+  const an = t.closest('a[data-anchor]'); if (an){ e.preventDefault(); const h = document.getElementById(an.dataset.anchor); if (h) h.scrollIntoView({ behavior:'smooth' }); return; }
+  const tab = t.closest('#nav .tab'); if (tab){ if (S.tab === tab.dataset.tab && S.tab === 'folders' && S.fpath){ S.fpath = ''; } setTab(tab.dataset.tab); return; }
+  const k = t.closest('.kbar [data-k]'); if (k){ e.preventDefault(); kb(k.dataset.k); return; }
+  const a = t.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act, n = S.notes.get(S.cur);
+  if (act === 'back' || act === 'edclose' || act === 'eddone') back();
+  else if (act === 'more') noteMenu();
+  else if (act === 'pin' && n) togglePin(n);
+  else if (act === 'edit' && n) openEditor(n.pl);
+  else if (act === 'moreRecent'){ S.recentN += 100; renderMain(); }
+  else if (act === 'unlock' && n){
+    const pw = $('lockPw').value; if (!pw) return;
+    a.disabled = true; a.textContent = 'Unlocking…';
+    try { S.unlocked.set(n.pl, await unlockText(n.text, pw)); S.lockPass = pw; showNote(n.pl); }
+    catch(err){ a.disabled = false; a.textContent = 'Unlock'; toast('Wrong password'); }
+  }
+});
+document.addEventListener('change', e => {
+  const cb = e.target.closest('.md input[type=checkbox][data-ln]');
+  if (cb){ const n = S.notes.get(S.cur); if (n) toggleCheck(n, +cb.dataset.ln, cb.checked); }
+});
+document.addEventListener('input', e => { if (e.target.id === 'q'){ S.query = e.target.value; runSearch(); } });
+document.addEventListener('keydown', e => { if (e.target.id === 'lockPw' && e.key === 'Enter') document.querySelector('[data-act=unlock]').click(); });
+$('sheetBg').addEventListener('click', e => { if (e.target === $('sheetBg')) closeSheet(); });
+$('fab').onclick = () => openEditor(null, {});
+$('syncBtn').onclick = async () => {
+  if (S.sync === 'auth') return showSetup(1);
+  if (S.sync === 'off' && !navigator.onLine) return toast('Offline — your changes are kept on this phone and sync later');
+  await sync(); if (S.sync === 'ok') toast('Up to date' + (ls.get('lastSync') ? ' · synced ' + ago(ls.get('lastSync')) : ''));
+};
+$('setBtn').onclick = settings;
+window.addEventListener('online', () => sync());
+window.addEventListener('offline', () => setSync('off'));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(); else if (ED && !ED.isNew) edSave(); });
+setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine && !ED) sync(); }, 90000);
+window.addEventListener('pagehide', () => { if (ED && !ED.isNew) edSave(); });
+
+/* ---------- start ---------- */
+async function boot(){
+  applyTheme();
+  document.querySelectorAll('#nav .tab').forEach(b => { const [i, l] = TABS[b.dataset.tab]; b.innerHTML = ic(i) + l; });
+  $('fab').innerHTML = ic('plus'); $('setBtn').innerHTML = ic('sliders'); setSync('ok');
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).catch(() => {});
+  const q = new URLSearchParams(location.search);
+  let shared = null;
+  if (q.has('share') || q.has('text') || q.has('url')) shared = { title:q.get('title') || '', text:q.get('text') || '', url:q.get('url') || '' };
+  const doCmd = q.get('do');
+  if (q.has('code') || q.has('error')){ try { await finishAuth(q); } catch(e){ toast('Dropbox sign-in failed: ' + e.message); } }
+  if ([...q.keys()].length) history.replaceState(null, '', redirectUri());
+  try {
+    const recs = await idbAll();
+    for (const r of recs) S.notes.set(r.pl, derive(r));
+    (await metaGet('folders') || []).forEach(f => S.folders.add(f));
+    S.files = new Map(await metaGet('files') || []);
+    reindex();
+  } catch(e){ console.warn('[MNM] cache', e); }
+  renderMain();
+  if (!signedIn() || !cfg.vault){ if (shared) ls.set('pendingShare', shared); showSetup(); return; }
+  if (shared) openShared(shared);
+  else if (doCmd === 'new') openEditor(null, {});
+  else if (doCmd === 'search') setTab('search');
+  sync();
+}
+boot();
+</script>
+</body>
+</html>

@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v40 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v41 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -59,6 +59,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 22. [Printing and PDF](#22-printing-and-pdf)
 23. [Using several PCs (Dropbox)](#23-using-several-pcs-dropbox)
+→ [My Notes on your phone](#my-notes-on-your-phone)
 24. [Windows: opening .md files and quick capture](#24-windows-opening-md-files-and-quick-capture)
 25. [Appearance](#25-appearance)
 26. [Keyboard shortcuts](#26-keyboard-shortcuts)
@@ -640,6 +641,32 @@ Your original note stays as it is; only one line is added at its end, `🗺 Map:
 - Some things are kept **per PC**: the Claude and Firecrawl keys, your recently opened notes, and which AI boxes you've hidden.
 - My Notes re-reads the vault when you come back to it after **2 minutes or more** in another window. To pick up changes right away, right-click **All notes** → **Check for changes on disk**.
 - Try not to edit the same note on two PCs at the same moment. If it happens, Dropbox keeps a *conflicted copy*; compare the two and delete one.
+
+---
+
+## My Notes on your phone
+
+*New in v41.* **My Notes Mobile** is a separate, simpler app for your phone at **https://rudivanek.github.io/My_Notes/m/**. It works on the same notes folder as the desktop app, but reaches it through **Dropbox**, because phones can't open a folder the way Chrome on a PC can. Your vault must be in Dropbox (see the section before this one).
+
+**What it does:** recent notes (that's the start screen), pinned notes, folders, search (`tag:` and `folder:` work), tags, reading notes with links, backlinks, pictures and tappable checkboxes, writing and editing, a quick **+** for new notes, importance, tags and pin, and moving notes to the trash. **Maps** are shown as text: each `##` heading is a card and each `→` line an arrow, so you can read and edit them, but you only see the map itself on your computer. **Locked notes** can be read with your password, but not edited. Tables, the graph, AI, history and printing stay on the computer.
+
+**Set it up (once, about 2 minutes):**
+1. On the phone, open **https://rudivanek.github.io/My_Notes/m/** in Chrome.
+2. Follow the steps on the screen: create a free Dropbox app at dropbox.com/developers/apps (**Scoped access**, **Full Dropbox**), tick the permissions `files.metadata.read`, `files.content.read`, `files.content.write`, add the redirect address the app shows you, and paste the **App key**. It's easier to do the Dropbox part on your PC and then paste the key on the phone.
+3. Tap **Connect Dropbox**, allow access, then open your notes folder (for example *MyNotes → RFV_Vault*) and tap **Use this folder**. The first sync downloads all notes, which can take a minute.
+4. In Chrome's menu, tap **Add to Home screen** / **Install app**. Now My Notes opens like an app and works offline.
+
+**Sharing into My Notes (Android):** once it's installed, My Notes shows up in Android's **Share** menu. Share a tweet, a link or some text to it, and a new note opens with the text and link filled in. Tap **Save** and it goes to your **Inbox** folder. You can choose another folder for new notes in **Settings**.
+
+**How syncing works:**
+- Notes are kept on the phone, so the app opens at once and works without internet. Changes are sent to Dropbox when you're online (the cloud icon at the top shows a number while changes are waiting). It syncs when you open the app, every 1½ minutes while it's open, or when you tap the cloud icon.
+- Your PC gets the changes through the Dropbox app as usual, and My Notes on the PC picks them up.
+- If a note was changed on the PC **and** on the phone before they synced, nothing is lost: the PC version stays, and your phone version is saved next to it as **"Name (phone copy date time)"**.
+- Before the phone saves over a note, the old version goes into **Version history** (at most every 10 minutes per note), just like on the PC.
+- Notes deleted on the phone go to the vault's **.trash**, and the PC's **Trash** can restore them.
+- The app only changes the lines it has to. Opening and closing a note without typing doesn't touch the file.
+
+**Good to know:** pins, icons and other settings in `My Notes/settings.md` aren't used on the phone. The phone uses the **pinned** property in the note's header (the pin button next to a note's title on the PC does the same). Links to files on your PC (`D:\…`) don't open on the phone. **Settings → Disconnect Dropbox** signs the phone out and deletes the notes stored on it.
 
 ---
 

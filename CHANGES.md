@@ -4,6 +4,15 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v41-2026-11-12
+**My Notes on your phone.**
+- **My Notes Mobile** (`m/`, online at https://rudivanek.github.io/My_Notes/m/) is a separate phone app with its own design. It works on the same vault through **Dropbox**. Start screen: recent notes and pins. It also has folders, search (`tag:`, `folder:`), tags, reading with links, backlinks, pictures and tappable checkboxes, editing with a small formatting bar, **+** for quick notes (to *Inbox*), importance, tags, pin and trash.
+- **Share to My Notes** from any Android app (tweets, links, text) once it's installed.
+- Works offline. Changes sync when online. If a note changed on both sides, nothing is lost: you get a *"(phone copy …)"* note. Old versions go to `.history` and deleted notes to `.trash`, the same as on the PC.
+- Maps are shown and edited as text. Locked notes can be read but not edited.
+- Desktop app: the only changes are that its offline helper (service worker) now leaves `m/` alone, and the version number. Nothing else changed.
+- Manual: new section *My Notes on your phone*.
+
 ## v40-2026-11-11
 - **The manual inside the app:** a **Manual** button at the bottom left of the sidebar (also in the demo banner and the command palette: *Open the manual*) opens the full manual with pictures, a "Jump to…" list of sections and working links. It loads from the app's own folder or from GitHub, so it works online and with the local starters.
 - The demo's banner and welcome note point to **Open vault…** and the manual.
