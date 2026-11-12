@@ -49,6 +49,30 @@ My Notes is a lightweight **Obsidian alternative** for people who want something
 
 **Where Obsidian does more:** a huge plugin and theme community, mobile apps, its own sync and publish services, Canvas and many advanced features. If you rely on those, keep Obsidian; you can still use My Notes on the same vault.
 
+### Using the same vault in Obsidian
+
+Your notes stay ordinary Markdown files, so the core of your vault works in Obsidian. Only the My Notes extras look different there, because Obsidian doesn't know how they are stored.
+
+**Works the same in both**
+- Notes, folders, headings, checkboxes and formatting
+- `[[links]]`, `![[images]]`, linked PDFs and other files, backlinks; Obsidian's graph shows the same connections
+- Tags (also nested) and properties, including the importance level
+- Links to files on your PC (`file:///…`) — Obsidian can even open them directly
+- The `Related: [[…]]` lines the graph adds and the `🗺 Map: [[…]]` line under a note turned into a map
+- Trash: both apps use the same `.trash` folder
+
+**Works in Obsidian, without the My Notes extras**
+- **Maps** show as normal notes: card text, `→` arrow lines and a `map-layout` property with the card positions. Everything is readable, there's just no map view.
+- **Tables** open as Obsidian Bases (each row is a note, each cell a property). Coloured choices, column types and saved filter views only show in My Notes. *Not tested yet:* changing a table's columns in Obsidian may remove the My Notes column settings — try it on a copy first.
+- **Pins, icons, saved searches and sort order** are kept in `My Notes/settings.md`, which Obsidian ignores.
+
+**Only in My Notes**
+- **Locked notes** look like scrambled text in Obsidian and can't be opened there. ⚠️ **Never edit a locked note in Obsidian** — changing even one character breaks it and it can no longer be unlocked.
+- **Version history** is kept in the hidden `.history` folder; Obsidian doesn't show it.
+- AI features, the command palette, search words like `tag:` or `edited:`, drag-to-link in the graph, and printing are part of the app, not of your files.
+
+**In short:** you can open your vault in Obsidian at any time and lose nothing important — just leave locked notes alone there.
+
 *My Notes is an independent project. It is not affiliated with or endorsed by Obsidian.*
 
 ## Get started
