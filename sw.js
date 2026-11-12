@@ -1,6 +1,6 @@
 // My Notes service worker: lets the installed app start without any server,
 // and works offline. It only stores the app's own files — never your notes.
-const CACHE = 'my-notes-v39-2026-11-11';
+const CACHE = 'my-notes-v40-2026-11-11';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

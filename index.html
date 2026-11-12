@@ -735,6 +735,19 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .prft{display:flex;gap:6px;align-items:center;margin-top:10px}
 .aip .nailbl{margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
 .aip .nailbl+.saans{margin-top:3px}
+.manm{width:min(900px,96vw);height:min(92vh,1100px);max-height:92vh;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
+.manhd{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}.manhd b{font-size:15px}.manhd .sp{flex:1}.manhd .uic{width:16px;height:16px}
+.manhd select{max-width:260px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px}
+.manlink{font-size:12.5px;text-decoration:none;color:var(--muted);padding:4px 8px;border-radius:7px}.manlink:hover{background:var(--hover);color:var(--text)}
+.manbody{flex:1;overflow:auto;padding:18px 34px 60px;line-height:1.6;font-size:14.5px;outline:none}
+.manbody h1{font-size:26px;margin:6px 0 12px}.manbody h2{font-size:20px;margin:30px 0 10px;padding-top:12px;border-top:1px solid var(--line)}.manbody h3{font-size:16px;margin:20px 0 8px}
+.manbody img{max-width:100%;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.manbody table{border-collapse:collapse;margin:10px 0;font-size:13.5px}.manbody th,.manbody td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}.manbody th{background:var(--side)}
+.manbody code{background:var(--side);padding:1px 5px;border-radius:4px;font-size:.92em}.manbody pre{background:var(--side);padding:10px;border-radius:8px;overflow:auto}
+.manbody blockquote,.manbody .callout{border-left:3px solid var(--accent);margin:10px 0;padding:6px 12px;background:color-mix(in srgb,var(--accent) 5%,var(--bg));border-radius:0 8px 8px 0}
+.manbody a{color:var(--accent)}.manbody hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.manwait{color:var(--muted);padding:40px 10px;text-align:center}
+.banner a{color:inherit;font-weight:600}
 </style>
 </head>
 <body>
@@ -746,7 +759,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v39-2026-11-11</span>
+      <span class="appver" id="appVer" title="My Notes version">v40-2026-11-11</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -770,6 +783,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button id="openBtn">Open vault…</button>
       <button id="reopenBtn" style="display:none"></button>
       <button id="importBtn">Import .md</button>
+      <button id="manBtn" title="Read the My Notes manual">Manual</button>
       <button id="trashBtn" title="Trash — restore deleted notes or delete them permanently">Trash</button>
       <button id="tidyBtn" title="Go through notes that are missing tags or importance, with AI suggestions">✨ Tidy up</button>
       <input type="file" id="fileIn" accept=".md,text/markdown" multiple hidden>
@@ -794,7 +808,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn" id="printBtn" title="Print or save as PDF (Ctrl+P)">🖨</button>
       <button class="icon-btn" id="delBtn" title="Move to trash">🗑</button>
     </div>
-    <div class="banner" id="banner">Demo with sample notes. To see your own vault, open the downloaded file in Chrome or Edge on a computer and click <b>Open vault…</b></div>
+    <div class="banner" id="banner">Demo with sample notes — changes stay in this page. Click <b>Open vault…</b> (bottom left) to use your own notes folder, or read the <a href="#" data-manopen="1">Manual</a>.</div>
     <div class="scroll" id="scroll"></div>
   </main>
 </div>
@@ -6801,6 +6815,73 @@ $('scroll').addEventListener('contextmenu', e => {   // same menu on the ✨ Sug
   if (!e.target.closest('[data-aihint], #aip .ahd, #aip .afoot')) return;
   e.preventDefault(); e.stopPropagation(); showCtx(e.clientX, e.clientY, aiKeyMenu());
 }, true);
+
+/* ---------- v40: the manual inside the app (read-only reader) ---------- */
+const MAN_ONLINE = 'https://rudivanek.github.io/My_Notes/Manual/';
+const MAN_GITHUB = 'https://github.com/rudivanek/My_Notes/blob/main/Manual/My%20Notes%20Manual.md';
+const MAN = { html: null, base: null };
+function manSlug(t){ return t.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s/g, '-'); }
+async function manLoad(){
+  if (MAN.html) return true;
+  const bases = [];
+  if (/^https?:$/.test(location.protocol)) bases.push(new URL('Manual/', location.href).href);
+  bases.push(MAN_ONLINE);
+  for (const b of bases){
+    try {
+      const r = await fetch(b + 'My%20Notes%20Manual.md', { cache: 'no-cache' });
+      if (!r.ok) continue;
+      let t = await r.text(); if (!/My Notes/.test(t)) continue;
+      t = t.replace(/^---\n[\s\S]*?\n---\n/, '');
+      MAN.html = mdToPrintHtml(t, []); MAN.base = b; return true;
+    } catch(e){}
+  }
+  return false;
+}
+async function manOpen(anchor){
+  let bg = $('manBg');
+  if (!bg){
+    bg = document.createElement('div'); bg.id = 'manBg'; bg.className = 'modal-bg'; bg.style.zIndex = '66';
+    bg.innerHTML = `<div class="modal manm"><div class="manhd">${UI('book-open')}<b>My Notes — Manual</b><span class="sp"></span>
+        <select id="manToc" title="Jump to a section"><option value="">Jump to…</option></select>
+        <a class="ghost manlink" href="${MAN_GITHUB}" target="_blank" rel="noopener" title="Open the manual on GitHub">On GitHub ↗</a>
+        <button class="ghost" id="manClose" title="Close (Esc)">✕</button></div>
+      <div class="manbody" id="manBody"><div class="manwait"><span class="aspin"></span> Loading the manual…</div></div></div>`;
+    document.body.appendChild(bg);
+    bg.addEventListener('mousedown', e => { if (e.target === bg) manClose(); });
+    $('manClose').onclick = manClose;
+    $('manToc').onchange = e => { const id = e.target.value; e.target.value = ''; if (id) manGo(id); };
+    $('manBody').addEventListener('click', e => {
+      const a = e.target.closest('a[href]'); if (!a) return;
+      const h = a.getAttribute('href'); e.preventDefault();
+      if (h.startsWith('#')) return manGo(decodeURIComponent(h.slice(1)));
+      window.open(/^https?:/.test(h) ? h : new URL(h, MAN.base || MAN_ONLINE).href, '_blank', 'noopener');
+    });
+  }
+  bg.style.display = 'grid';
+  const body = $('manBody');
+  if (!MAN.html){
+    if (!await manLoad()){
+      body.innerHTML = `<div class="manwait">The manual couldn’t be loaded — it needs an internet connection the first time.<br><br><a href="${MAN_GITHUB}" target="_blank" rel="noopener">Open it on GitHub ↗</a></div>`;
+      return;
+    }
+  }
+  if (!body.dataset.done){
+    body.innerHTML = MAN.html; body.dataset.done = '1';
+    body.querySelectorAll('img[data-src]').forEach(im => { im.src = /^https?:/.test(im.dataset.src) ? im.dataset.src : new URL(im.dataset.src, MAN.base).href; im.loading = 'lazy'; });
+    const seen = {}, toc = $('manToc');
+    body.querySelectorAll('h1,h2,h3').forEach(h => {
+      let id = manSlug(h.textContent); if (seen[id] != null) id += '-' + (++seen[id]); else seen[id] = 0;
+      h.id = 'man-' + id;
+      if (h.tagName === 'H2'){ const o = document.createElement('option'); o.value = id; o.textContent = h.textContent; toc.appendChild(o); }
+    });
+  }
+  if (anchor) manGo(anchor); else body.focus();
+}
+function manGo(id){ const el = document.getElementById('man-' + id); if (el) el.scrollIntoView({ block:'start' }); }
+function manClose(){ const bg = $('manBg'); if (bg) bg.style.display = 'none'; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('manBg') && $('manBg').style.display === 'grid'){ e.preventDefault(); e.stopPropagation(); manClose(); } }, true);
+document.addEventListener('click', e => { const t = e.target.closest('[data-manopen]'); if (t){ e.preventDefault(); manOpen(); } });
+$('manBtn').onclick = () => manOpen();
 $('askNotesBtn').onclick = () => askOpen();
 $('orgBtn').onclick = () => orgOpenPage();
 $('sendTblBtn').onclick = () => { const n = cur(); if (n) guard(() => sendToTable(n))(); };
@@ -9431,6 +9512,7 @@ function cmdList(){
     ...[['', 'All'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low']].map(([v, t]) => ['Filter', 'Show ' + (v ? t + ' importance' : 'all importances'), '', S.imp !== v, () => { S.imp = v; renderSidebar(); }]),
     ...[['', 'Any time'], ['today', 'Today'], ['week', 'Last 7 days'], ['month', 'Last 30 days']].map(([v, t]) => ['Filter', 'Edited: ' + t, '', (S.dateF || '') !== v, () => { S.dateF = v; renderSidebar(); }]),
     ['Help', 'Keyboard shortcuts', '', true, () => showShortcuts()],
+    ['Help', 'Open the manual', '', true, () => manOpen()],
   ];
   return C.filter(c => c[3]).map(([g, t, k, , run]) => ({ g, t, k, run }));
 }
@@ -10225,7 +10307,7 @@ document.addEventListener('keydown', e => {
 
 /* ---------- start: demo notes + remembered vault ---------- */
 const DEMO = {
-  'Welcome.md': `---\ntags:\n  - start\nimportance: high\npinned: true\n---\nThis is **My Notes** — a calm home for your notes, kept as plain .md files in a folder you choose.\n\n- Set **importance** and **tags** above every note.\n- Filter by them in the sidebar.\n- Type [[ to link a note, e.g. [[Project ideas]] or [[Reading list]].\n- Drag a note from the sidebar into the text to link it, or onto a folder to move it.\n- Pin notes with the 📌 button at the top right.\n- Paste a screenshot (Ctrl+V) or drop an image into the text to add it.\n- Press Ctrl+O to jump to any note by typing part of its name.\n\n| Shortcut | Does |\n| -------- | ---- |\n| Ctrl+O   | Jump to a note |\n| Ctrl+B   | Bold |\n\nClick **Open vault…** (bottom left) to work on your real files. Everything is saved as plain .md files, so any app (and Dropbox) can read them.`,
+  'Welcome.md': `---\ntags:\n  - start\nimportance: high\npinned: true\n---\nThis is **My Notes** — a calm home for your notes, kept as plain .md files in a folder you choose.\n\n- Set **importance** and **tags** above every note.\n- Filter by them in the sidebar.\n- Type [[ to link a note, e.g. [[Project ideas]] or [[Reading list]].\n- Drag a note from the sidebar into the text to link it, or onto a folder to move it.\n- Pin notes with the pin button next to the note title.\n- New here? Click **Manual** at the bottom left for the full manual.\n- Paste a screenshot (Ctrl+V) or drop an image into the text to add it.\n- Press Ctrl+O to jump to any note by typing part of its name.\n\n| Shortcut | Does |\n| -------- | ---- |\n| Ctrl+O   | Jump to a note |\n| Ctrl+B   | Bold |\n\nClick **Open vault…** (bottom left) to work on your real files. Everything is saved as plain .md files, so any app (and Dropbox) can read them.`,
   'Project ideas.md': `---\ntags:\n  - work\n  - ideas\nimportance: medium\n---\nNotes on new products. See [[Welcome]].`,
   'Reading list.md': `---\ntags: [reading]\nimportance: low\n---\n- Man's Search for Meaning\n- A new book #later`,
   'Meetings/Client call.md': `---\ntags:\n  - work\nimportance: high\n---\nFollow up next week. Related: [[Project ideas]]`

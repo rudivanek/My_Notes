@@ -4,6 +4,10 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v40-2026-11-11
+- **The manual inside the app:** a **Manual** button at the bottom left of the sidebar (also in the demo banner and the command palette: *Open the manual*) opens the full manual with pictures, a "Jump to…" list of sections and working links. It loads from the app's own folder or from GitHub, so it works online and with the local starters.
+- The demo's banner and welcome note point to **Open vault…** and the manual.
+
 ## v39-2026-11-11
 **Ready for GitHub.**
 - **Sample vault** (`Sample Vault/`): a small made-up vault (Northwind Bakery) with notes, a table, a map, daily notes and the whole manual, so you can try everything right away.
