@@ -17,7 +17,7 @@ A calm, fast notes app for your own computer. Your notes are plain **Markdown fi
 - **Your files, your folder.** Every note is an ordinary `.md` file. Open it in any editor, sync it with Dropbox / OneDrive / iCloud, back it up however you like.
 - **Simple on the surface.** One clean window: notes, folders, tabs, search. The rest is there when you need it.
 - **Works offline.** Install it as an app from Chrome or Edge; after that it runs without internet.
-- **Compatible with Obsidian vaults**, but doesn't need Obsidian.
+- **Compatible with Obsidian vaults**, but doesn't need Obsidian (see [My Notes and Obsidian](#my-notes-and-obsidian)).
 
 ## What it can do
 
@@ -31,6 +31,25 @@ A calm, fast notes app for your own computer. Your notes are plain **Markdown fi
 - **Version history** and a **Trash** you can restore from
 - **Optional AI (Claude, with your own key):** ask questions about all your notes with sources; ask anything about one note or a selected paragraph; your own AI buttons (summarize, checklist, translate…); tag and folder suggestions; turn a note into a map
 - Print and PDF, web clipper, open `.md` files from the desktop, quick capture, themes and fonts
+
+## My Notes and Obsidian
+
+My Notes is a lightweight **Obsidian alternative** for people who want something simpler. Your vault works in both: you can open the same folder in My Notes and in Obsidian, even side by side.
+
+**The same in both**
+- Plain Markdown files in your own folder, with `[[links]]`, backlinks, tags and properties (YAML front matter)
+- Bases (`.base` files) and callouts
+- No lock-in: stop using either app at any time and your notes stay as they are
+
+**Different in My Notes**
+- **Nothing to install:** it runs in Chrome or Edge, or install it as an app with one click
+- **Built in, no plugins needed:** tables like Notion, mind maps, locked (encrypted) notes, version history, Trash, web clipper, PDF
+- **AI built in** with your own Claude key: ask your notes, ask about a note or a paragraph, your own AI buttons
+- **Fewer settings on purpose:** one calm window, the rest is in the command palette
+
+**Where Obsidian does more:** a huge plugin and theme community, mobile apps, its own sync and publish services, Canvas and many advanced features. If you rely on those, keep Obsidian; you can still use My Notes on the same vault.
+
+*My Notes is an independent project. It is not affiliated with or endorsed by Obsidian.*
 
 ## Get started
 
