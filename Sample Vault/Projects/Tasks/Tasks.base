@@ -1,0 +1,45 @@
+filters:
+  and:
+    - file.inFolder("Projects/Tasks")
+properties:
+  file.name:
+    displayName: Name
+  note.status:
+    displayName: Status
+  note.due:
+    displayName: Due
+  note.done:
+    displayName: Done
+  note.project:
+    displayName: Project
+views:
+  - type: table
+    name: Table
+    order:
+      - file.name
+      - status
+      - due
+      - project
+      - done
+mynotes:
+  table: true
+  folder: Projects/Tasks
+  columns:
+    status:
+      type: select
+      options:
+        - Todo
+        - Doing
+        - Done
+    due:
+      type: date
+    done:
+      type: checkbox
+    project:
+      type: link
+  order:
+    - Wireframes
+    - Photo shoot
+    - Write product texts
+    - Set up payments
+    - Redirects

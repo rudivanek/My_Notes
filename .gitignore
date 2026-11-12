@@ -1,0 +1,8 @@
+# never commit notes, app data or system files
+.history/
+.trash/
+.obsidian/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak*
