@@ -4,6 +4,14 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v46-2026-11-13
+**💬 Chat threads from ✨.** (Replaces the Ctrl+Enter chat from v45.)
+- Select text, click **✨**, then **💬 Chat** (type a question first if you like). Claude answers in an AI box **Thread** right under your text. If something important is missing, it asks a few questions first.
+- Continue with **↩ Reply** under the thread, or select any part of the thread and click **✨** ("about this part…"). Your line ("**You:** …") and Claude's answer are added to the same box, so the whole conversation stays together in the note.
+- Claude gets the note and the whole thread each time. A note in the reply box (and a one-time notice) says that long threads use more tokens (about 1–5 cents per reply).
+- If Claude can't answer (no connection, busy), a ⚠️ line appears in the thread; just reply again.
+- Removed: the 💬 Chat button in the formatting bar and Ctrl+Enter (v45).
+
 ## v45-2026-11-13
 **💬 Chat inside the note.** (Replaces the chat in a popup from v44.)
 - The note itself is the conversation. Write a request ("I want to plan a trip to Vienna…"), click **💬 Chat** in the formatting bar or press **Ctrl+Enter**.
