@@ -4,6 +4,15 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v45-2026-11-13
+**💬 Chat inside the note.** (Replaces the chat in a popup from v44.)
+- The note itself is the conversation. Write a request ("I want to plan a trip to Vienna…"), click **💬 Chat** in the formatting bar or press **Ctrl+Enter**.
+- Claude's answer appears as an AI box right below your line, and the cursor jumps below it. Write your reply there and press **Ctrl+Enter** again. Claude reads everything above the cursor: your text and its earlier AI boxes.
+- If something important is missing, Claude asks a few questions first; just answer below the box.
+- The conversation is saved in the note, so you can come back tomorrow and continue.
+- The first time, a short notice says that each Chat sends the text above the cursor, so long chats use more tokens (about 1–5 cents per reply). The button's tooltip says it too.
+- Removed: the 💬 Chat button in the AI popups (v44).
+
 ## v44-2026-11-13
 **💬 Chat with AI — for everyone with a Claude key.** (Replaces v43's ▶ Run as prompt.)
 - A **💬 Chat** button is now first in both AI panels: when you select text, and in **✨** next to a note title (whole note).

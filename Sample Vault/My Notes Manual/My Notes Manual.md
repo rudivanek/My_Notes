@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v44 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v45 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [▶ Watch the intro video](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4) (63 seconds, no sound). It was made with version 28, so a few buttons have moved since then: the note buttons now sit next to the note title (see [The screen](#2-the-screen)). The video file is also in the app's folder on GitHub: `Manual/My Notes - intro.mp4`.
@@ -95,7 +95,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Summarize or translate a paragraph | Select it, click the **✨** that appears (needs AI) |
 | Ask anything about the whole note | **✨** next to the note title → **Ask** row (needs AI) |
 | Make my own AI button | **✎** after the AI buttons, or **☆ Save as button** after a question |
-| Chat with AI about a note or a request I wrote | Select the text (or open **✨** next to the title), then **💬 Chat**, see [Suggestions](#18-suggestions-and-tidy-up) |
+| Chat with AI inside a note | Write your request, then **💬 Chat** in the formatting bar or **Ctrl+Enter**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
 | Save a note as PDF | **Ctrl+Shift+P** |
 | Get changes from my other PC right now | Right-click **All notes** → **Check for changes on disk** |
 
@@ -522,7 +522,7 @@ All AI features use **Claude** by Anthropic. They're optional; everything else w
 - **Locked notes are never sent.**
 - Nothing is sent to anyone else. My Notes has no server of its own.
 
-**Costs** go to your Anthropic account. Rough guide: a suggestion or a selection question costs a fraction of a cent to about a cent; a 💬 *Chat* message roughly 1–5 cents (more as the chat gets longer); *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
+**Costs** go to your Anthropic account. Rough guide: a suggestion or a selection question costs a fraction of a cent to about a cent; a 💬 *Chat* reply roughly 1–5 cents (more as the chat gets longer); *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
 
 ---
 
@@ -545,14 +545,6 @@ At the bottom of the Suggestions panel there's an **Ask** line, so you can do mo
 
 ### My AI buttons
 The buttons are one list, shared by the Suggestions panel and the panel for selected text, and by your PCs (it's stored in the vault's settings note). Click **✎** after the buttons (or the command palette: *My AI buttons*) to change them: rename, reword what Claude should do, tick **replaces the text** for rewrites and translations, move up/down, remove, **＋ Add button**, or **Reset to the standard buttons**.
-
-### 💬 Chat with AI
-**💬 Chat** is the first button in both AI panels: when you select text, and in **✨** next to a note title (then Claude reads the whole note). It opens an ongoing chat instead of a single answer.
-
-- Write a request in a note, for example "plan trip to Vienna!", select it and click **💬 Chat**. If something important is missing, Claude asks a few questions first ("When are you travelling? Who is going?"). Answer in the chat box and press Enter; Claude then does it.
-- Keep going as long as you like: "make it cheaper", "add a day in Salzburg", "now as a checklist".
-- Take Claude's **last answer** with **Insert below** or **Replace selection** (selected text), **Add at end** or **New note** (whole note), or **Copy**. **End chat** goes back to the normal buttons.
-- **Costs:** each message sends the whole chat to Claude again, so long chats use more tokens, roughly 1–5 cents per message. A small line under the chat reminds you.
 
 ### Tidy up: notes missing tags or importance
 **Tidy up** (bottom left), or right-click a folder → **Tidy up: notes here missing tags or importance**. My Notes collects the notes that lack tags or importance and walks you through them one by one in **triage** mode, with ✨ suggestions ready.
@@ -602,7 +594,6 @@ Ask a question in normal words and get an answer **written from your own notes**
    - **Insert below:** puts it in a coloured **AI box** under your text.
    - **Replace selection:** puts it in place of your text (the main button for Improve and translations).
    - **Copy** or **Discard**.
-4. Want a conversation instead of one answer? Click **💬 Chat**, see [Chat with AI](#18-suggestions-and-tidy-up) in section 18.
 
 **Ctrl+Z** undoes it. Only the open note is sent to Claude; this is turned off for locked notes.
 
@@ -620,6 +611,18 @@ An inserted answer looks like this: a box with a header such as **✨ AI · Summ
 **Remove an AI box:** put the cursor inside it → command palette → **Remove the AI box at the cursor**. Its selection marker goes too.
 
 **In the file**, an AI box is a standard Markdown callout (`> [!ai] Summarize` followed by lines starting with `>`), and the selection markers are hidden comments (`%% ai-start … %%`, `%%ai{%%…%%}%%`). Obsidian shows the box as a callout and hides the markers; printing shows the box and drops the markers.
+
+### 💬 Chat inside the note
+The note itself can be a conversation with Claude, with no popup:
+
+1. Write what you want in the note, for example "I want to plan a trip to Vienna, flying out from Querétaro".
+2. Click **💬 Chat** in the formatting bar above the text, or press **Ctrl+Enter**.
+3. Claude's answer appears as an **AI box** right below your line, and the cursor jumps below the box. If something important is missing, Claude asks a few questions first.
+4. Write your reply below the box ("July, 10 days, 2 adults") and press **Ctrl+Enter** again. Claude answers in a new box below it. Keep going as long as you like.
+
+Claude reads **everything above the cursor**: your text and its earlier AI boxes (also boxes from Explain, Summarize and the other buttons). Text below the cursor isn't sent. The whole conversation is saved in the note, so you can continue tomorrow. Edit or delete any part like normal text; hide the boxes with **✦ Hide AI**.
+
+**Costs:** each Chat sends the text above the cursor again, so long chats use more tokens, roughly 1–5 cents per reply. My Notes reminds you the first time.
 
 ---
 
@@ -727,6 +730,7 @@ Changes apply immediately and sync to your other PCs through the vault.
 | Ctrl+K | Search |
 | Ctrl+O | Jump to a note by name |
 | Ctrl+J | Ask your notes (AI) |
+| Ctrl+Enter | 💬 Chat with Claude in the note (AI) |
 | Ctrl+Alt+N | New note |
 | Ctrl+D | Today's daily note |
 | Ctrl+\\ | Hide / show the sidebar |
