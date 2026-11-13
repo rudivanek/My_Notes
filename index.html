@@ -733,10 +733,16 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .prtop button{padding:3px 8px}.prrw input{width:auto!important;margin:0!important;flex:none}.prrw{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
 .prrow textarea{width:100%;box-sizing:border-box;resize:vertical;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:13px}
 .prft{display:flex;gap:6px;align-items:center;margin-top:10px}
-.rpsep{display:inline-block;width:1px;height:16px;background:var(--line);margin:0 4px;vertical-align:middle}
-.aip .rpinfo{border-left-color:var(--muted);color:var(--fg)}
-.rpset{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 10px;flex:none}.rpset label{cursor:pointer;display:flex;align-items:flex-start;gap:8px}.rpset input[type=checkbox]{width:auto!important;display:inline-block!important;margin:2px 0 0!important;flex:none}
-.rpdesc{color:var(--muted);font-size:12.5px;margin:3px 0 6px 22px}.rpset .rpweb{font-size:12.5px;margin-left:22px;color:var(--muted)}
+.chat{display:flex;flex-direction:column;gap:8px;min-width:0}
+.chat .chlog{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto;padding:2px}
+#selAi .chat .chlog{max-height:min(380px,50vh)}
+.chm{padding:7px 10px;border-radius:10px;line-height:1.5;max-width:92%;overflow-wrap:anywhere}
+.chm.chu{align-self:flex-end;background:color-mix(in srgb,var(--accent) 14%,var(--bg));white-space:pre-wrap}
+.chm.cha{align-self:flex-start;border-left:3px solid var(--accent);border-radius:0 10px 10px 0;background:color-mix(in srgb,var(--accent) 6%,var(--bg))}
+.chm.cha>:first-child{margin-top:0}.chm.cha>:last-child{margin-bottom:0}
+.chat .saact{margin-top:0}
+.chwarn{font-size:11.5px;color:var(--muted)}
+.chm h1,.chm h2{font-size:15px;margin:8px 0 4px}.chm h3,.chm h4{font-size:14px;margin:6px 0 3px}.chm ul,.chm ol{margin:4px 0;padding-left:20px}.chm p{margin:4px 0}
 .aip .nailbl{margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
 .aip .nailbl+.saans{margin-top:3px}
 .manm{width:min(900px,96vw);height:min(92vh,1100px);max-height:92vh;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
@@ -763,7 +769,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v43-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v44-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6418,6 +6424,7 @@ function selAiOpen(){
   const r = v.state.selection.main; if (r.empty) return toast('Select some text first');
   SELAI.sel = { path: n.path, from: r.from, to: r.to, text: v.state.sliceDoc(r.from, r.to) };
   SELAI.q = ''; SELAI.a = ''; SELAI.rewrite = false;
+  if (CHAT.where === 'sel') chatEnd();
   selAiHideBtn();
   const p = $('selAi'), c = v.coordsAtPos(r.to) || v.coordsAtPos(r.from) || { left: 200, bottom: 200, top: 200 };
   p.style.display = 'flex'; selAiRender();
@@ -6433,13 +6440,18 @@ function selAiFit(){   // v27: never let the popup run off the bottom (or top) o
   if (p.getBoundingClientRect().top < 8) p.style.top = '8px';
 }
 window.addEventListener('resize', () => selAiFit());
-function selAiClose(){ $('selAi').style.display = 'none'; SELAI.busy = false; if (S.editor) S.editor.view.focus(); }
+function selAiClose(){ if (CHAT.where === 'sel') chatEnd(); $('selAi').style.display = 'none'; SELAI.busy = false; if (S.editor) S.editor.view.focus(); }
 function selAiRender(){
   const p = $('selAi'), s = SELAI.sel; if (!s) return;
   const short = s.text.replace(/\s+/g, ' ').trim();
+  if (CHAT.on && CHAT.where === 'sel'){
+    p.innerHTML = `<div class="sahead">${UI('sparkles')}<b>Chat about the selection</b><span class="sp"></span><button class="ghost" data-sa="close" title="Close (Esc)">✕</button></div>
+      <div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>${chatHtml()}`;
+    selAiFit(); chatBind(); return;
+  }
   p.innerHTML = `<div class="sahead">${UI('sparkles')}<b>Ask about the selection</b><span class="sp"></span><button class="ghost" data-sa="close" title="Close (Esc)">✕</button></div>
     <div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>
-    <div class="saquick">${prChips('saq', SELAI.busy)}</div>
+    <div class="saquick">${chatChip('saq', SELAI.busy)}${prChips('saq', SELAI.busy)}</div>
     <div class="sabar"><input id="selAiIn" placeholder="Ask anything about this text… (Enter)" value="${esc(SELAI.label ? '' : SELAI.q)}" ${SELAI.busy ? 'disabled' : ''} autocomplete="off"><button class="primary" data-sa="ask" ${SELAI.busy ? 'disabled' : ''}>${SELAI.busy ? '…' : 'Ask'}</button></div>
     ${SELAI.busy ? `<div class="saans saw"><span class="aspin"></span> Claude is reading…</div>` : ''}
     ${SELAI.err ? `<div class="saans saerr">${esc(SELAI.err)}</div>` : ''}
@@ -6527,6 +6539,7 @@ function selAiRemoveBox(){
   const p = document.createElement('div'); p.id = 'selAi'; document.body.appendChild(p);
   p.addEventListener('mousedown', e => { if (!e.target.closest('input')) e.preventDefault(); });
   p.addEventListener('click', e => {
+    const cb = e.target.closest('[data-chat],[data-ch]'); if (cb) return chatClick(cb);
     const q = e.target.closest('[data-saq]'); if (q){ if (q.dataset.saq === 'edit') return prEdit(); const x = prompts()[+q.dataset.saq]; return x && selAiAsk(x.p, !!x.rw, x.name); }
     const a = e.target.closest('[data-sa]'); if (!a) return;
     const k = a.dataset.sa;
@@ -6536,7 +6549,7 @@ function selAiRemoveBox(){
     if (k === 'savebtn') return prSaveAsButton(SELAI.q);
     if (k === 'copy'){ navigator.clipboard.writeText(SELAI.a).then(() => toast('Copied')).catch(() => toast('Could not copy')); }
   });
-  document.addEventListener('mousedown', e => { if (p.style.display === 'flex' && !p.contains(e.target) && !e.target.closest('#prBg,#askBg') && !SELAI.busy && !SELAI.a) selAiClose(); });
+  document.addEventListener('mousedown', e => { if (p.style.display === 'flex' && !p.contains(e.target) && !e.target.closest('#prBg,#askBg') && !SELAI.busy && !SELAI.a && !(CHAT.on && CHAT.where === 'sel')) selAiClose(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && p.style.display === 'flex' && !($('prBg') && $('prBg').style.display === 'grid') && $('askBg').style.display !== 'grid'){ e.preventDefault(); e.stopPropagation(); selAiClose(); } }, true);
   const later = () => setTimeout(selAiCheck, 0);
   document.addEventListener('mouseup', e => { if (e.target.closest && e.target.closest('.cm-editor')) later(); else if (!e.target.closest || !e.target.closest('#selAiBtn')) selAiHideBtn(); });
@@ -6642,20 +6655,12 @@ function prEdit(){
     bg.innerHTML = `<div class="modal prm" style="width:min(640px,96vw);max-height:90vh;display:flex;flex-direction:column">
       <div class="prhd"><b>My AI buttons</b><span class="sp"></span><button class="ghost" data-pr="close">✕</button></div>
       <div class="prsub">One list for ✨ Suggestions (whole note) and for selected text. Shared with your other PCs.</div>
-      <div class="rpset"><label><input type="checkbox" data-rp="on" ${rpOn() ? 'checked' : ''}> <b>▶ Run as prompt</b></label>
-        <div class="rpdesc">Adds a ▶ button that treats the note as a request (“plan a trip to Austria…”, “outline an app idea about…”). Claude asks up to 5 questions in the note if something important is missing, then writes the answer into a new linked note.</div>
-        <label class="rpweb"><input type="checkbox" data-rp="web" ${rpWeb() ? 'checked' : ''} ${rpOn() ? '' : 'disabled'}> let it search the web for current facts (prices, competitors…) — a little slower and costs about 1 cent per search</label></div>
       <div class="prlist">${l.map((x, i) => `<div class="prrow" data-i="${i}">
         <div class="prtop"><input data-f="name" value="${esc(x.name)}" placeholder="Button name" maxlength="40">
           <label class="prrw" title="Offer “Replace” for the answer (for rewrites and translations)"><input type="checkbox" data-f="rw" ${x.rw ? 'checked' : ''}> replaces the text</label>
           <span class="sp"></span><button class="ghost" data-pr="up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="ghost" data-pr="down" title="Move down" ${i < l.length - 1 ? '' : 'disabled'}>↓</button><button class="ghost danger" data-pr="del" title="Remove">✕</button></div>
         <textarea data-f="p" rows="2" placeholder="What should Claude do? e.g. “Turn this into a LinkedIn post.”">${esc(x.p)}</textarea></div>`).join('')}</div>
       <div class="prft"><button class="ghost" data-pr="add">＋ Add button</button><button class="ghost" data-pr="reset">Reset to the standard buttons</button><span class="sp"></span><button class="ghost" data-pr="close">Cancel</button><button class="primary" data-pr="save">Save</button></div></div>`;
-  };
-  bg.onchange = e => {
-    const c = e.target.closest('[data-rp]'); if (!c) return;
-    if (c.dataset.rp === 'on'){ rpSet(c.checked); const w = bg.querySelector('[data-rp=web]'); if (w) w.disabled = !c.checked; toast(c.checked ? '▶ Run as prompt is on — find it in ✨ next to a note title' : '▶ Run as prompt is off'); aiRender(); }
-    else rpSetWeb(c.checked);
   };
   bg.onclick = e => {
     const b = e.target.closest('[data-pr]'); if (!b) return;
@@ -6680,12 +6685,12 @@ function prEdit(){
 // Ask about the whole note (inside the ✨ Suggestions panel)
 const NAI = { path:null, q:'', a:'', busy:false, err:'', label:'', rw:false };
 function naiHtml(n){
-  if (NAI.path !== n.path) Object.assign(NAI, { path:n.path, q:'', a:'', busy:false, err:'', info:'', label:'', rw:false });
+  if (NAI.path !== n.path) Object.assign(NAI, { path:n.path, q:'', a:'', busy:false, err:'', label:'', rw:false });
+  if (CHAT.on && CHAT.where === 'note' && CHAT.path === n.path) return `<div class="nai"><div class="arow"><label>Chat</label><div class="naiw">${chatHtml()}</div></div></div>`;
   return `<div class="nai"><div class="arow"><label>Ask</label><div class="naiw">
-      <div class="saquick">${rpChips(n)}${prChips('naq', NAI.busy)}</div>
+      <div class="saquick">${chatChip('naq', NAI.busy)}${prChips('naq', NAI.busy)}</div>
       <div class="sabar"><input id="naiIn" placeholder="Ask anything about this note… (Enter)" value="${esc(NAI.label ? '' : NAI.q)}" ${NAI.busy ? 'disabled' : ''} autocomplete="off"><button class="primary" data-nai="ask" ${NAI.busy ? 'disabled' : ''}>${NAI.busy ? '…' : 'Ask'}</button></div>
-      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> ${/Run|Just/.test(NAI.label) ? 'Claude is working on your request… (with web search this can take a minute)' : 'Claude is reading the note…'}</div>` : ''}
-      ${NAI.info && !NAI.busy ? `<div class="saans rpinfo">${esc(NAI.info)}</div>` : ''}
+      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> Claude is reading the note…</div>` : ''}
       ${NAI.err ? `<div class="saans saerr">${esc(NAI.err)}</div>` : ''}
       ${NAI.a && !NAI.busy ? `${NAI.label ? `<div class="nailbl">${esc(NAI.label)}</div>` : ''}<div class="saans">${mdToPrintHtml(NAI.a, [])}</div>
         <div class="saact">${NAI.rw ? `<button class="primary" data-nai="replace" title="Put the answer in place of the whole note text (Ctrl+Z undoes it)">Replace note text</button>` : ''}
@@ -6703,6 +6708,7 @@ function aiRender(){
   const foot = box.querySelector('.afoot'), d = document.createElement('div');
   d.innerHTML = naiHtml(n);
   box.insertBefore(d.firstElementChild, foot || null);
+  chatBind();
   const inp = $('naiIn');
   if (inp){
     inp.oninput = () => { NAI.q = inp.value; };
@@ -6716,7 +6722,7 @@ async function naiAsk(q, rw, label){
   q = (q || '').trim(); const n = cur(); if (!q || NAI.busy || !n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
   if (!aiKey() && !(await aiAskKey('Turn on AI to ask about this note'))) return;
-  Object.assign(NAI, { path:n.path, q, a:'', err:'', info:'', busy:true, label: label || '', rw: !!rw }); aiRender();
+  Object.assign(NAI, { path:n.path, q, a:'', err:'', busy:true, label: label || '', rw: !!rw }); aiRender();
   let body = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
   if (body.length > 40000) body = body.slice(0, 40000) + '\n[…]';
   const system = `You help the user with one of their personal notes (given in full).
@@ -6729,119 +6735,98 @@ async function naiAsk(q, rw, label){
   NAI.busy = false;
   if (S.ai && cur() === n) aiRender();
 }
-/* ---------- v43: ▶ Run as prompt (off by default — turn it on in ✎ My AI buttons) ----------
-   The note is a request ("plan a trip to Austria…"). Claude either asks up to 5 questions
-   (written into the note under "## Questions", answer them there and run again)
-   or writes the answer into a new note that links back to the request. */
-const RP_KEY = 'qn-runprompt', RP_WEB = 'qn-runprompt-web';
-const RP_MODEL = 'claude-sonnet-5-5';
-function rpOn(){ try { return localStorage.getItem(RP_KEY) === '1'; } catch(e){ return false; } }
-function rpWeb(){ try { return localStorage.getItem(RP_WEB) !== '0'; } catch(e){ return true; } }
-function rpSet(on){ try { localStorage.setItem(RP_KEY, on ? '1' : '0'); } catch(e){} }
-function rpSetWeb(on){ try { localStorage.setItem(RP_WEB, on ? '1' : '0'); } catch(e){} }
-const RP_QHEAD = '## Questions';
-const rpHasQuestions = t => /^## Questions\s*$/m.test(t || '');
-function rpSystem(force){
-  return `The user wrote a request in one of their personal notes (given in full) and wants you to carry it out: answer it, plan it, outline it — whatever it asks.
-
-First decide whether you have enough to give a genuinely useful answer.
-${force ? '- The user wants the answer NOW. Do not ask anything. Fill every gap with a sensible assumption and list your assumptions.\n' : `- If details are missing that would substantially change the answer (for a trip: dates, who is going, budget, purpose; for a workout plan: goal, level, time per week…), ask instead of answering.
-- Never ask about something the note already answers. If the note already has a "## Questions" section, the user has answered what they wanted to — do NOT ask again: answer now, and fill blanks with sensible assumptions.
-- Ask only what really changes the result: at most 5 short questions.`}
-
-Reply in exactly one of these two forms, in the language the note is written in:
-
-QUESTIONS
-- first question?
-- second question?
-
-or
-
-ANSWER
-<the full answer in Markdown>
-
-For an ANSWER:
-- Answer every question and point in the request. Organise it with ## headings that fit the topic (for an app idea e.g. market, workflow, features, risks; for a trip e.g. route, days, budget, logistics).
-- Be concrete and practical. Use bullet points, short paragraphs, and tables where they help.
-- If you assumed anything, say so briefly near the top ("Assumed: …").
-- End with a "## Next steps" section of 3–6 checkboxes (- [ ] …).
-- Facts that change over time (prices, competitors, opening times, rules) — ${rpWeb() ? 'use web search for the important ones and mention where they come from' : 'say they are from your general knowledge and should be checked'}.
-- No preamble like "Sure!". Do not repeat the request.`;
+/* ---------- v44: 💬 Chat with AI (in the selection panel and in the ✨ note panel) ----------
+   An ongoing conversation about the selected text or the whole note. Claude may ask a few
+   questions first; you reply in the chat. Take any answer with Insert below / New note / Copy. */
+const CHAT = { on:false, where:'', path:'', sel:null, msgs:[], busy:false, err:'', draft:'' };
+const CHAT_SYS = `You are Claude, chatting with the user inside My Notes, their personal notes app, about one of their notes (and a passage they selected, if given).
+- Be conversational, warm and concise. Simple Markdown only (bold, bullet points, short ## headings for longer answers, checkboxes).
+- When the user wants something substantial (a plan, an outline, an analysis) and key details are missing that would really change the result, first ask up to 4 short questions as a bullet list. Ask only once; after the user replies, do it and state briefly what you assumed for anything still open.
+- When you give a full plan or outline, end with a few concrete next steps.
+- Answer in the language the user writes in (for your first reply: the language of the note).
+- No preamble like "Sure!" or "Great question".`;
+const chatChip = (attr, busy) => `<button class="primary prchip" data-chat="start" title="Start a chat with Claude about this — it can ask you questions and you can follow up" ${busy ? 'disabled' : ''}>💬 Chat</button>`;
+function chatLast(){ for (let i = CHAT.msgs.length - 1; i >= 0; i--) if (CHAT.msgs[i].role === 'assistant') return CHAT.msgs[i].content; return ''; }
+function chatRender(){
+  if (CHAT.where === 'sel'){ if ($('selAi').style.display === 'flex') selAiRender(); }
+  else if (S.ai && cur() && cur().path === CHAT.path) aiRender();
 }
-async function rpCall(system, content){
-  const key = aiKey();
-  const once = async web => {
-    const msgs = [{ role:'user', content }];
-    let out = '';
-    for (let turn = 0; turn < 4; turn++){
-      let r;
-      try {
-        r = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-          body: JSON.stringify(Object.assign({ model:RP_MODEL, max_tokens:8000, system, messages:msgs }, web ? { tools:[{ type:'web_search_20250305', name:'web_search', max_uses:5 }] } : {}))
-        });
-      } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
-      if (r.status === 401 || r.status === 403) throw new Error('Your Claude key was not accepted — click ✨ next to a note title, then “Claude key”, to change it.');
-      if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
-      if (!r.ok){
-        let m = ''; try { m = (await r.json()).error.message; } catch(e){}
-        if (web && /web.?search|tool/i.test(m)){ const e = new Error('NOWEB'); e.noWeb = true; throw e; }
-        throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')'));
-      }
-      const j = await r.json();
-      out += (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
-      if (j.stop_reason !== 'pause_turn') break;   // a long web search: let Claude continue
-      msgs.push({ role:'assistant', content: j.content });
-    }
-    return out.trim();
-  };
-  if (!rpWeb()) return once(false);
-  try { return await once(true); }
-  catch(e){ if (!e.noWeb) throw e; toast('Web search isn’t available for your Claude key — answering without it'); return once(false); }
-}
-async function rpRun(force){
-  const n = cur(); if (!n || NAI.busy) return;
+function chatEnd(){ Object.assign(CHAT, { on:false, msgs:[], busy:false, err:'', draft:'' }); }
+async function chatStart(where){
+  const n = where === 'sel' ? (SELAI.sel && S.notes.get(SELAI.sel.path)) : cur();
+  if (!n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
-  if (!(n.body || '').trim()) return toast('Write your request in the note first');
-  if (!aiKey() && !(await aiAskKey('Turn on AI to run this note as a prompt'))) return;
+  if (!aiKey() && !(await aiAskKey('Turn on AI to chat with Claude'))) return;
   if (S.editor && S.editorPath === n.path) n.body = S.editor.view.state.doc.toString();
-  Object.assign(NAI, { path:n.path, q:'', a:'', err:'', info:'', busy:true, label: force ? '⏩ Just go' : '▶ Run as prompt', rw:false }); aiRender();
+  Object.assign(CHAT, { on:true, where, path:n.path, sel: where === 'sel' ? SELAI.sel.text : null, msgs:[], busy:false, err:'', draft:'' });
   let body = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
-  if (body.length > 40000) body = body.slice(0, 40000) + '\n[…]';
-  const content = `NOTE TITLE: ${n.name}\n<note>\n${body}\n</note>`;
-  let t = '';
-  try { t = await rpCall(rpSystem(force), content); }
-  catch(e){ NAI.busy = false; NAI.err = e.message; if (S.ai && cur() === n) aiRender(); return; }
-  NAI.busy = false;
-  const m = t.match(/^\s*(QUESTIONS|ANSWER)\s*\n?/);
-  const kind = m ? m[1] : (/^\s*-\s.*\?\s*$/m.test(t) && t.length < 900 && !/^#/m.test(t) ? 'QUESTIONS' : 'ANSWER');
-  const rest = (m ? t.slice(m[0].length) : t).trim();
-  if (!rest){ NAI.err = 'Claude gave no answer. Try again.'; if (S.ai && cur() === n) aiRender(); return; }
-  if (kind === 'QUESTIONS' && !force){
-    const qs = rest.split('\n').map(l => l.trim()).filter(l => /^[-*•]\s+/.test(l) || /\?$/.test(l)).map(l => l.replace(/^[-*•]\s+/, '')).slice(0, 5);
-    const block = RP_QHEAD + '\n' + (qs.length ? qs : [rest.replace(/\s+/g, ' ')]).map(q => '- ' + q + ' → ').join('\n') + '\n';
-    naiEdit(n, d => ({ from:d.length, insert: (d.trim() ? (d.endsWith('\n') ? '\n' : '\n\n') : '') + block }));
-    NAI.info = 'Claude has ' + (qs.length || 1) + ' question' + ((qs.length || 1) === 1 ? '' : 's') + ' — answer them after the → in the note, then ▶ Run again. Or ⏩ Just go to let Claude assume.';
-    if (S.ai && cur() === n) aiRender();
-    toast('Questions added at the end of the note');
-    return;
-  }
-  // the answer goes into a new note next to the request, linked both ways
-  await guard(async () => {
-    const nn = await createNote((n.name + ' – Answer').slice(0, 90), rest + '\n\n---\nFrom [[' + n.name + ']] · ▶ Run as prompt · ' + new Date().toISOString().slice(0, 10) + '\n', n.external ? '' : n.folder);
-    naiEdit(n, d => ({ from:d.length, insert: (d.endsWith('\n') ? '\n' : '\n\n') + '→ Answer: [[' + nn.name + ']]\n' }));
-    Object.assign(NAI, { info:'', label:'' });
-    S.ai = null; renderSidebar(); openPath(nn.path);
-    toast('Answer saved as “' + nn.name + '” — the request links to it');
-  })();
+  if (CHAT.sel){ if (body.length > 14000){ const at = Math.max(0, body.indexOf(CHAT.sel) - 6000); body = (at ? '[…]\n' : '') + body.slice(at, at + 14000) + '\n[…]'; } }
+  else if (body.length > 40000) body = body.slice(0, 40000) + '\n[…]';
+  const ctx = `NOTE TITLE: ${n.name}\n<note>\n${body}\n</note>` + (CHAT.sel ? `\n\n<selected>\n${CHAT.sel}\n</selected>` : '');
+  CHAT.msgs.push({ role:'user', hidden:true, content: ctx + `\n\nThe user opened a chat about this ${CHAT.sel ? 'selected text' : 'note'}. If it asks for something (a plan, an outline, an idea, an answer), either ask the few questions you really need first, or do it right away if you have enough. If it is ordinary text, say in one or two sentences what you notice and offer 2–3 things you could do with it.` });
+  chatTurn();
 }
-function rpChips(n){
-  if (!rpOn()) return '';
-  const q = rpHasQuestions(n.body);
-  return `<button class="primary prchip" data-nrp="run" title="Treat this note as a request: Claude asks what's missing or writes the answer into a new linked note" ${NAI.busy ? 'disabled' : ''}>▶ Run as prompt</button>`
-    + (q ? `<button class="ghost prchip" data-nrp="go" title="Answer now and assume whatever is still open" ${NAI.busy ? 'disabled' : ''}>⏩ Just go</button>` : '')
-    + `<span class="rpsep"></span>`;
+async function chatSend(text){
+  text = (text || '').trim(); if (!text || CHAT.busy || !CHAT.on) return;
+  CHAT.msgs.push({ role:'user', content:text }); CHAT.draft = '';
+  chatTurn();
+}
+async function chatTurn(){
+  CHAT.busy = true; CHAT.err = ''; chatRender();
+  const path = CHAT.path;
+  try {
+    const a = await askClaude(SELAI_MODEL, CHAT.msgs.map(m => ({ role:m.role, content:m.content })), 3000, CHAT_SYS);
+    if (!CHAT.on || CHAT.path !== path) return;
+    CHAT.msgs.push({ role:'assistant', content: a || 'Claude gave no answer. Try asking in other words.' });
+  } catch(e){
+    if (!CHAT.on || CHAT.path !== path) return;
+    CHAT.err = e.message;
+    const last = CHAT.msgs[CHAT.msgs.length - 1];
+    if (last && last.role === 'user' && !last.hidden){ CHAT.msgs.pop(); CHAT.draft = last.content; }   // give the text back to retry
+  }
+  CHAT.busy = false; chatRender();
+}
+function chatHtml(){
+  const last = chatLast(), sel = CHAT.where === 'sel';
+  const log = CHAT.msgs.filter(m => !m.hidden).map(m => m.role === 'assistant'
+    ? `<div class="chm cha">${mdToPrintHtml(m.content, [])}</div>`
+    : `<div class="chm chu">${esc(m.content)}</div>`).join('');
+  return `<div class="chat"><div class="chlog">${log}
+      ${CHAT.busy ? `<div class="chm cha saw"><span class="aspin"></span> Claude is ${CHAT.msgs.length > 1 ? 'writing' : 'reading'}…</div>` : ''}
+      ${CHAT.err ? `<div class="saans saerr">${esc(CHAT.err)}</div>` : ''}</div>
+    <div class="sabar"><input id="chatIn" placeholder="${CHAT.msgs.length > 1 ? 'Reply to Claude… (Enter)' : 'Write to Claude… (Enter)'}" value="${esc(CHAT.draft)}" ${CHAT.busy ? 'disabled' : ''} autocomplete="off"><button class="primary" data-ch="send" ${CHAT.busy ? 'disabled' : ''}>Send</button></div>
+    <div class="saact">${last && !CHAT.busy ? (sel
+        ? `<button class="ghost" data-ch="below" title="Put Claude's last answer in an AI box under the selected text">Insert below</button><button class="ghost" data-ch="replace" title="Put Claude's last answer in place of the selected text">Replace selection</button>`
+        : `<button class="ghost" data-ch="end" title="Add Claude's last answer as an AI box at the end of the note">Add at end</button><button class="ghost" data-ch="new" title="Save Claude's last answer as a new note that links back here">New note</button>`)
+        + `<button class="ghost" data-ch="copy">Copy</button>` : ''}
+      <span class="sp"></span><button class="ghost" data-ch="stop" title="End the chat and go back to the buttons">End chat</button></div>
+    <div class="chwarn">Each message sends the whole chat to Claude again, so long chats use more tokens — roughly 1–5 cents per message.</div></div>`;
+}
+function chatBind(){
+  const inp = $('chatIn'); if (!inp) return;
+  inp.oninput = () => { CHAT.draft = inp.value; };
+  inp.onkeydown = e => {
+    if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.stopPropagation(); chatSend(inp.value); }
+    else if (e.key === 'Escape' && CHAT.where === 'note'){ e.preventDefault(); e.stopPropagation(); chatEnd(); aiRender(); }
+  };
+  const log = document.querySelector('.chat .chlog'); if (log) log.scrollTop = log.scrollHeight;
+  if (!CHAT.busy) setTimeout(() => { const i = $('chatIn'); if (i && document.activeElement !== i && !(window.getSelection() + '')) i.focus(); }, 20);
+}
+async function chatClick(b){
+  if (b.dataset.chat === 'start') return chatStart(b.closest('#selAi') ? 'sel' : 'note');
+  const k = b.dataset.ch, last = chatLast();
+  if (k === 'send') return chatSend($('chatIn').value);
+  if (k === 'stop'){ chatEnd(); return b.closest('#selAi') ? selAiRender() : aiRender(); }
+  if (k === 'copy') return navigator.clipboard.writeText(last).then(() => toast('Copied')).catch(() => toast('Could not copy'));
+  if (!last) return;
+  if (k === 'below' || k === 'replace'){ Object.assign(SELAI, { a:last, q:'Chat', label:'Chat' }); chatEnd(); return selAiInsert(k); }
+  if (k === 'end' || k === 'new'){
+    const n = cur(); if (!n) return;
+    Object.assign(NAI, { path:n.path, a:last, q:'Chat', label:'Chat', rw:false });
+    await naiClick({ dataset:{ nai:k } }, n);
+    if (k === 'new'){ Object.assign(NAI, { a:'', q:'', label:'' }); }
+    aiRender();
+  }
 }
 function naiEdit(n, change){   // change: doc text → { from, to, insert }
   if (S.editor && S.editorPath === n.path){
@@ -6852,7 +6837,6 @@ function naiEdit(n, change){   // change: doc text → { from, to, insert }
   queueSave(n);
 }
 async function naiClick(b, n){
-  if (b.dataset.nrp) return rpRun(b.dataset.nrp === 'go');
   if (b.dataset.naq != null){
     if (b.dataset.naq === 'edit') return prEdit();
     const x = prompts()[+b.dataset.naq]; if (x) naiAsk(x.p, !!x.rw, x.name); return;
@@ -7031,7 +7015,8 @@ $('scroll').addEventListener('click', async e => {
   const n = cur(); if (!n || !S.ai) return;
   const x = e.target.closest('[data-aix]'), t = e.target.closest('[data-aitag]'), i = e.target.closest('[data-aiimp]'), f = e.target.closest('[data-aifolder]'), sm = e.target.closest('[data-aisum]');
   e.stopPropagation();
-  const nb = e.target.closest('[data-nai],[data-naq],[data-nrp]'); if (nb) return naiClick(nb, n);
+  const cb = e.target.closest('[data-chat],[data-ch]'); if (cb) return chatClick(cb);
+  const nb = e.target.closest('[data-nai],[data-naq]'); if (nb) return naiClick(nb, n);
   if (x){
     const a = x.dataset.aix;
     if (a === 'close'){ S.ai = null; renderEditor(); return; }
@@ -9622,8 +9607,7 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Claude key (add, change or remove)…', '', true, () => { const m = aiKeyMenu(); showCtx(innerWidth / 2 - 120, 120, m); }],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
-    ['AI', 'Run this note as a prompt ▶', '', rpOn() && note && !n.locked, () => { if (!S.ai || S.ai.path !== n.path) aiOpen(n); rpRun(false); }],
-    ['AI', rpOn() ? 'Turn off ▶ Run as prompt' : 'Turn on ▶ Run as prompt', '', true, () => { rpSet(!rpOn()); toast(rpOn() ? '▶ Run as prompt is on — find it in ✨ next to a note title' : '▶ Run as prompt is off'); aiRender(); }],
+    ['AI', 'Chat with AI about this note', '', note && !n.locked, () => { if (!S.ai || S.ai.path !== n.path) aiOpen(n); chatStart('note'); }],
     ['Lock', 'Lock this note…', '', note && !n.locked, () => lockNoteNow(n)],
     ['Lock', 'Remove lock from this note…', '', note && !!n.locked, () => removeLock(n)],
     ['Lock', 'Lock all locked notes now', '', !!S.lockPass, () => lockAll()],
@@ -9990,7 +9974,7 @@ window.addEventListener('drop', e => { if (!hasFiles(e)) return; if (e.defaultPr
 
 /* ---------- settings stored in the vault (.quietnotes/settings.json) ---------- */
 // Same pins, folders, tabs and look on every PC that opens this vault. The Firecrawl key stays on each PC.
-const VS_SHARED = ['qn-prompts','qn-runprompt','qn-runprompt-web','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
+const VS_SHARED = ['qn-prompts','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
 const VS_PERVAULT = ['qn-savedsearch','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
 const VS_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md';
 const VS = { dir:null, mtime:0, applying:false, timer:null, ready:false };

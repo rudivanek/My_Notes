@@ -4,6 +4,14 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v44-2026-11-13
+**💬 Chat with AI — for everyone with a Claude key.** (Replaces v43's ▶ Run as prompt.)
+- A **💬 Chat** button is now first in both AI panels: when you select text, and in **✨** next to a note title (whole note).
+- It opens an ongoing chat about the text. If you wrote a request ("plan trip to Vienna!"), Claude asks a few questions first when something important is missing, then does it. Reply in the chat, follow up ("make it cheaper"), as long as you like.
+- Take Claude's last answer with **Insert below** / **Replace selection** (selected text) or **Add at end** / **New note** (whole note), or **Copy**. **End chat** goes back to the buttons.
+- A small line under the chat reminds you that each message resends the whole chat, so long chats use more tokens (roughly 1–5 cents per message).
+- Removed: ▶ Run as prompt and its switch in My AI buttons (v43).
+
 ## v43-2026-11-13
 **▶ Run as prompt (optional, off by default).**
 - Write a request in a note — "Plan a trip to Austria", "Outline an app idea about … — market, workflow, risks", "Make me a 3-day workout plan" — and click **▶ Run as prompt** in the ✨ panel.
