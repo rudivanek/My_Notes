@@ -4,6 +4,11 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v51-2026-11-13
+**Threads reuse what Claude already found.**
+- In a thread with web search, Claude now treats facts, dates, prices and sources from its earlier answers as known and builds on them. It only searches for what is missing or new, for example dates not covered yet, and re-checks an earlier fact only when it matters and may have changed.
+- Follow-ups in long threads are faster, cheaper (fewer searches) and consistent with earlier answers.
+
 ## v50-2026-11-13
 **Token use and cost after every AI answer. Big requests no longer come back empty.**
 - Every thread answer and every thread summary now ends with a small grey line, for example *Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0321*. The cost is in USD with four decimals, at Claude Sonnet 5.5 prices ($2 per million input tokens, $10 per million output tokens, about $0.01 per web search). Improve and the translations show it in the notice after replacing the text.

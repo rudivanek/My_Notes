@@ -770,7 +770,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v50-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v51-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6455,7 +6455,7 @@ const WEB_KEY = 'qn-web';
 function webOn(){ try { return localStorage.getItem(WEB_KEY) !== '0'; } catch(e){ return true; } }
 function webSet(on){ try { localStorage.setItem(WEB_KEY, on ? '1' : '0'); } catch(e){} }
 const thSys = web => TH_SYS.replace('- You can\'t browse the web or see live prices; say so briefly when it matters and give your best general knowledge.',
-  web ? '- You can search the web. Do it when the answer depends on current, local or specific facts (prices, news, opening times, rules, products, people, companies); otherwise answer from what you know. You can\'t book anything or see live booking-site fares; for those, give the best public information you find and say where to check.'
+  web ? '- You can search the web. Do it when the answer depends on current, local or specific facts (prices, news, opening times, rules, products, people, companies); otherwise answer from what you know. You can\'t book anything or see live booking-site fares; for those, give the best public information you find and say where to check.\n- Reuse what is already in this thread: facts, dates, prices and sources found in earlier answers count as known — build on them and don\'t search for them again. Search only for what is missing or new (for example dates or topics not covered yet). Re-check an earlier fact only if it matters and may have changed. Keep searches few and focused.'
       : '- You can\'t browse the web or see live prices in this setup; say so briefly when it matters and give your best general knowledge.');
 // like askClaude, but with web search; returns { text, sources:[{url,title}], noWeb }
 async function askClaudeWeb(model, messages, maxTokens, system){
