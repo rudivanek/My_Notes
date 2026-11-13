@@ -4,6 +4,15 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v49-2026-11-13
+**AI threads can search the web.**
+- In threads (and Explain, Summarize… started from ✨), Claude can now search the web when the answer depends on current facts: news, prices, products, opening times, rules, companies. It decides by itself when a search is worth it.
+- The answer ends with **Sources:** as links, so you can check them.
+- Uses Claude's own web search: no extra account and no extra key. About 1 cent per search, on top of the answer.
+- **Search the web** switch in the ✨ popup (on by default; also in the command palette). Summaries never search.
+- If web search is turned off for your Claude key, you get one short notice and the answer comes without it.
+- Claude still can't book anything or see live booking-site fares (Google Flights, Skyscanner).
+
 ## v48-2026-11-13
 **AI answers always go into the note. Triple-click selects a paragraph.**
 - Select text → **✨**: the popup is now only for choosing what to ask. Type a question and press Enter (or just press **Ask** with nothing typed), or click **Explain, Summarize, Checklist…**: the popup closes and Claude answers in a **Thread** right under your text. Continue with **Reply**.

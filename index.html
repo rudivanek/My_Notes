@@ -740,7 +740,9 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .cm-threply button{display:inline-flex;align-items:center;gap:5px}.cm-threply .uic{width:14px;height:14px;margin:0}
 .cm-aichip .uic{width:13px;height:13px;margin:0;vertical-align:-2px}
 .cm-threply button.thfold{color:var(--muted);font-weight:500}
-#selAi .thwarn{font-size:11.5px;color:var(--muted);margin-top:8px}
+#selAi .thwarn{font-size:11.5px;color:var(--muted);margin-top:8px;display:flex;flex-direction:column;gap:6px}
+#selAi .webtog{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-size:12.5px;width:max-content}
+#selAi .webtog input{width:auto;margin:0}#selAi .webtog .uic{width:14px;height:14px;margin:0;color:var(--accent)}
 .aip .nailbl{margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
 .aip .nailbl+.saans{margin-top:3px}
 .manm{width:min(900px,96vw);height:min(92vh,1100px);max-height:92vh;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
@@ -767,7 +769,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v48-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v49-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6429,6 +6431,61 @@ const TH_SYS = `You are Claude, in a conversation thread inside My Notes, the us
 - You can't browse the web or see live prices; say so briefly when it matters and give your best general knowledge.
 - Answer in the language of the user's latest message (first reply: the language of the passage).
 - No preamble like "Sure!" or "Great question".`;
+// ---- v49: web search for threads (Claude's own web search tool; on by default, switch in the ✨ popup) ----
+const WEB_KEY = 'qn-web';
+function webOn(){ try { return localStorage.getItem(WEB_KEY) !== '0'; } catch(e){ return true; } }
+function webSet(on){ try { localStorage.setItem(WEB_KEY, on ? '1' : '0'); } catch(e){} }
+const thSys = web => TH_SYS.replace('- You can\'t browse the web or see live prices; say so briefly when it matters and give your best general knowledge.',
+  web ? '- You can search the web. Do it when the answer depends on current, local or specific facts (prices, news, opening times, rules, products, people, companies); otherwise answer from what you know. You can\'t book anything or see live booking-site fares; for those, give the best public information you find and say where to check.'
+      : '- You can\'t browse the web or see live prices in this setup; say so briefly when it matters and give your best general knowledge.');
+// like askClaude, but with web search; returns { text, sources:[{url,title}], noWeb }
+async function askClaudeWeb(model, messages, maxTokens, system){
+  const key = aiKey(), msgs = messages.slice();
+  let text = '', sources = [], seen = new Set();
+  for (let turn = 0; turn < 4; turn++){
+    let r;
+    try {
+      r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({ model, max_tokens:maxTokens, system, messages:msgs, tools:[{ type:'web_search_20250305', name:'web_search', max_uses:5 }] })
+      });
+    } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
+    if (r.status === 401) throw new Error('Your Claude key was not accepted — click ✨ next to a note title, then “Claude key”, to change it.');
+    if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
+    if (!r.ok){
+      let m = ''; try { m = (await r.json()).error.message; } catch(e){}
+      if (r.status === 400 || r.status === 403){ if (/web.?search|tool|not (enabled|allowed|available)|disabled/i.test(m) || r.status === 403) return { noWeb:true, why:m }; }
+      throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')'));
+    }
+    const j = await r.json();
+    for (const c of (j.content || [])){
+      if (c.type === 'text'){
+        text += c.text;
+        for (const ct of (c.citations || [])) if (ct.url && !seen.has(ct.url)){ seen.add(ct.url); sources.push({ url:ct.url, title:(ct.title || ct.url).replace(/[\[\]]/g, '') }); }
+      } else if (c.type === 'web_search_tool_result' && c.content && c.content.error_code){
+        if (/disabled|not_enabled|unavailable/i.test(c.content.error_code)) return { noWeb:true, why:c.content.error_code };
+      }
+    }
+    if (j.stop_reason !== 'pause_turn') break;   // a long search: let Claude carry on
+    msgs.push({ role:'assistant', content:j.content });
+  }
+  return { text: text.trim(), sources };
+}
+let WEB_WARNED = false;
+async function thAsk(msgs){
+  if (webOn()){
+    const r = await askClaudeWeb(SELAI_MODEL, msgs, 4000, thSys(true));
+    if (!r.noWeb){
+      let t = r.text || 'Claude gave no answer. Try asking in other words.';
+      if (r.sources.length) t += '\n\n**Sources:**\n' + r.sources.slice(0, 8).map(s => '- [' + s.title.slice(0, 90) + '](' + s.url + ')').join('\n');
+      return t;
+    }
+    if (!WEB_WARNED){ WEB_WARNED = true; toast('Web search isn’t available for your Claude key (it can be turned on in console.anthropic.com → Settings → Privacy). Answering without it.', 9000); }
+  }
+  return (await askClaude(SELAI_MODEL, msgs, 3000, thSys(false))).trim() || 'Claude gave no answer. Try asking in other words.';
+}
+const webToggle = () => `<label class="webtog" title="Let Claude search the web when the answer depends on current facts (about 1 cent per search)"><input type="checkbox" data-web="1" ${webOn() ? 'checked' : ''}>${UI('globe')}<span>Search the web</span></label>`;
 const TH_YOU = /^\*\*You:\*\*\s?/;
 const TH_SKIP = /%%(chat-wait-\d+|th-err)%%/;
 let TH_N = 0;
@@ -6468,7 +6525,7 @@ async function thRun(n, mark){
   const msgs = thMessages(doc, x, n);
   thWarnOnce();
   let out = '', err = '';
-  try { out = (await askClaude(SELAI_MODEL, msgs, 3000, TH_SYS)).trim() || 'Claude gave no answer. Try asking in other words.'; }
+  try { out = await thAsk(msgs); }
   catch(e){ err = e.message; out = '⚠️ ' + e.message + ' %%th-err%%'; }
   const put = d => { const i = d.indexOf(mark); if (i < 0) return null; const a = d.lastIndexOf('\n', i) + 1, b = d.indexOf('\n', i); return { from:a, to: b < 0 ? d.length : b, insert: thLines(out) }; };
   const m = S.notes.get(n.path) || n;
@@ -6557,7 +6614,7 @@ async function thSummarize(head){
   thSetFold(x.head, true);
   thWarnOnce();
   let out = '', err = '';
-  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, TH_SYS)).trim() || 'Claude gave no summary. Try again.'; }
+  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, thSys(false))).trim() || 'Claude gave no summary. Try again.'; }
   catch(e){ err = e.message; out = '⚠️ ' + e.message + ' — click ✓ Summarize again %%th-err%%'; }
   const put = d => { const i = d.indexOf(mark); if (i < 0) return null; const a = d.lastIndexOf('\n', i) + 1, b = d.indexOf('\n', i); return { from:a, to: b < 0 ? d.length : b, insert: thLines(out) }; };
   const m = S.notes.get(n.path) || n;
@@ -6648,7 +6705,7 @@ function selAiRender(){
       ${short ? `<div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>` : ''}
       <div class="saquick">${prChips('saq', false)}</div>
       <div class="sabar"><input id="selAiIn" placeholder="${short ? 'Ask about this part… (Enter)' : 'Your reply or question… (Enter)'}" autocomplete="off"><button class="primary" data-sa="ask">Send</button></div>
-      <div class="thwarn">Claude gets the note and the whole thread each time, so long threads use more tokens (about 1–5 cents per reply).</div>`;
+      <div class="thwarn">${webToggle()}<span>Claude gets the note and the whole thread each time, so long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
     selAiFit();
     const ti = $('selAiIn'); if (ti) ti.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); thReply(ti.value); } };
     return;
@@ -6657,7 +6714,7 @@ function selAiRender(){
     <div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>
     <div class="saquick">${prChips('saq', false)}</div>
     <div class="sabar"><input id="selAiIn" placeholder="Ask or chat about this text… (Enter)" autocomplete="off"><button class="primary" data-sa="ask">Ask</button></div>
-    <div class="thwarn">Claude answers in the note, right under your text. Continue there with Reply. Long threads use more tokens (about 1–5 cents per reply).</div>`;
+    <div class="thwarn">${webToggle()}<span>Claude answers in the note, right under your text. Continue there with Reply. Long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
   selAiFit();
   const inp = $('selAiIn');
   if (inp) inp.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); selAiAsk(inp.value); } };
@@ -6759,7 +6816,8 @@ function selAiRemoveBox(){
   b.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); selAiOpen(); });
   document.body.appendChild(b);
   const p = document.createElement('div'); p.id = 'selAi'; document.body.appendChild(p);
-  p.addEventListener('mousedown', e => { if (!e.target.closest('input')) e.preventDefault(); });
+  p.addEventListener('mousedown', e => { if (!e.target.closest('input,label')) e.preventDefault(); });
+  p.addEventListener('change', e => { const w = e.target.closest('[data-web]'); if (w){ webSet(w.checked); toast(w.checked ? 'Claude may search the web in threads' : 'Web search off — Claude answers from what it knows'); } });
   p.addEventListener('click', e => {
     const q = e.target.closest('[data-saq]'); if (q){ if (q.dataset.saq === 'edit') return prEdit(); const x = prompts()[+q.dataset.saq]; return x && selAiAsk(x.p, !!x.rw, x.name); }
     const a = e.target.closest('[data-sa]'); if (!a) return;
@@ -9738,6 +9796,7 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Claude key (add, change or remove)…', '', true, () => { const m = aiKeyMenu(); showCtx(innerWidth / 2 - 120, 120, m); }],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
+    ['AI', webOn() ? 'Turn off web search for AI threads' : 'Turn on web search for AI threads', '', true, () => { webSet(!webOn()); toast(webOn() ? 'Claude may search the web in threads' : 'Web search off'); }],
     ['Lock', 'Lock this note…', '', note && !n.locked, () => lockNoteNow(n)],
     ['Lock', 'Remove lock from this note…', '', note && !!n.locked, () => removeLock(n)],
     ['Lock', 'Lock all locked notes now', '', !!S.lockPass, () => lockAll()],
@@ -10104,7 +10163,7 @@ window.addEventListener('drop', e => { if (!hasFiles(e)) return; if (e.defaultPr
 
 /* ---------- settings stored in the vault (.quietnotes/settings.json) ---------- */
 // Same pins, folders, tabs and look on every PC that opens this vault. The Firecrawl key stays on each PC.
-const VS_SHARED = ['qn-prompts','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
+const VS_SHARED = ['qn-prompts','qn-web','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
 const VS_PERVAULT = ['qn-savedsearch','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
 const VS_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md';
 const VS = { dir:null, mtime:0, applying:false, timer:null, ready:false };
