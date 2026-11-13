@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v45 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v46 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -97,7 +97,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Summarize or translate a paragraph | Select it, click the **✨** that appears (needs AI) |
 | Ask anything about the whole note | **✨** next to the note title → **Ask** row (needs AI) |
 | Make my own AI button | **✎** after the AI buttons, or **☆ Save as button** after a question |
-| Chat with AI inside a note | Write your request, then **💬 Chat** in the formatting bar or **Ctrl+Enter**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
+| Chat with AI inside a note | Select the text, click **✨**, then **💬 Chat**; continue with **↩ Reply**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
 | Save a note as PDF | **Ctrl+Shift+P** |
 | Get changes from my other PC right now | Right-click **All notes** → **Check for changes on disk** |
 
@@ -614,17 +614,17 @@ An inserted answer looks like this: a box with a header such as **✨ AI · Summ
 
 **In the file**, an AI box is a standard Markdown callout (`> [!ai] Summarize` followed by lines starting with `>`), and the selection markers are hidden comments (`%% ai-start … %%`, `%%ai{%%…%%}%%`). Obsidian shows the box as a callout and hides the markers; printing shows the box and drops the markers.
 
-### 💬 Chat inside the note
-The note itself can be a conversation with Claude, with no popup:
+### 💬 Chat threads
+Have a conversation with Claude **inside the note**, starting from any text:
 
-1. Write what you want in the note, for example "I want to plan a trip to Vienna, flying out from Querétaro".
-2. Click **💬 Chat** in the formatting bar above the text, or press **Ctrl+Enter**.
-3. Claude's answer appears as an **AI box** right below your line, and the cursor jumps below the box. If something important is missing, Claude asks a few questions first.
-4. Write your reply below the box ("July, 10 days, 2 adults") and press **Ctrl+Enter** again. Claude answers in a new box below it. Keep going as long as you like.
+1. **Select** the text (for example "I want to plan a trip to Vienna, flying out from Querétaro"), click the **✨** that appears, then **💬 Chat**. You can type a question in the box first; otherwise Claude responds to the selected text.
+2. Claude's answer appears in an AI box called **Thread** right under your text. If something important is missing, it asks a few questions first.
+3. To continue, click **↩ Reply** under the thread, type your answer or next question, and press Enter. Or **select any part of the thread** and click **✨** to ask about exactly that part ("about this route…").
+4. Your line (**You: …**) and Claude's answer are added to the **same box**, so the whole conversation stays together. Keep going as long as you like.
 
-Claude reads **everything above the cursor**: your text and its earlier AI boxes (also boxes from Explain, Summarize and the other buttons). Text below the cursor isn't sent. The whole conversation is saved in the note, so you can continue tomorrow. Edit or delete any part like normal text; hide the boxes with **✦ Hide AI**.
+The thread is saved in the note like any other text: come back tomorrow and reply again, edit or delete parts, or hide it with **✦ Hide AI**. If Claude can't answer (no connection, busy), a ⚠️ line appears in the thread; just reply again.
 
-**Costs:** each Chat sends the text above the cursor again, so long chats use more tokens, roughly 1–5 cents per reply. My Notes reminds you the first time.
+**What Claude sees:** the note and the whole thread, every time. **Costs:** long threads use more tokens, roughly 1–5 cents per reply; the reply box reminds you. Claude can't look up live information such as flight prices.
 
 ---
 
@@ -732,7 +732,6 @@ Changes apply immediately and sync to your other PCs through the vault.
 | Ctrl+K | Search |
 | Ctrl+O | Jump to a note by name |
 | Ctrl+J | Ask your notes (AI) |
-| Ctrl+Enter | 💬 Chat with Claude in the note (AI) |
 | Ctrl+Alt+N | New note |
 | Ctrl+D | Today's daily note |
 | Ctrl+\\ | Hide / show the sidebar |
