@@ -778,7 +778,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v53-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v54-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -5474,10 +5474,11 @@ async function aiSettings(title, intro){
       <div class="aipm" data-aimsg="${p}">Get a key: ${esc(AIP[p].get)}</div></div>`;
   const pr = ask(title || 'AI settings', `${intro ? `<p style="margin:0 0 12px;line-height:1.5">${intro}</p>` : ''}
     <label>Which AI should My Notes use?</label>
-    <select name="prov">${ps.map(p => `<option value="${p}" ${p === cur ? 'selected' : ''}>${AIP[p].name}${p === 'deepseek' ? ' — very cheap, no web search (servers in China)' : ''}</option>`).join('')}</select>
+    <select name="prov">${ps.map(p => `<option value="${p}" ${p === cur ? 'selected' : ''}>${AIP[p].name}${aiKeyOf(p) ? ' ✓ key saved' : ' — no key yet'}${p === 'deepseek' ? ' · very cheap, no web search (servers in China)' : ''}</option>`).join('')}</select>
     ${ps.map(block).join('')}
     <p class="aipnote">Keys are saved only in this browser on this PC and sent only to that company. Only the notes you use AI on are sent; locked notes never.</p>`, 'Save');
   const body = $('askBody'), box = body.parentElement; box.classList.add('aiset');
+  const sp = $('selAi'), spWas = sp && sp.style.display; if (sp && spWas && spWas !== 'none') sp.style.display = 'none';   // the ✨ popup steps aside while AI settings is open
   const mark = () => { const v = body.querySelector('[name=prov]').value; body.querySelectorAll('.aipb').forEach(b => b.classList.toggle('on', b.dataset.aip === v)); };
   mark(); body.querySelector('[name=prov]').addEventListener('change', mark);
   const msgOf = p => body.querySelector('[data-aimsg=' + p + ']'), keyOf = p => body.querySelector('[name=key_' + p + ']').value.trim();
@@ -5505,18 +5506,21 @@ async function aiSettings(title, intro){
     catch(e){ say(p, '✗ ' + e.message, 'bad'); }
   }));
   const v = await pr; box.classList.remove('aiset');
-  if (!v) return false;
+  if (!v){ if (sp && spWas && spWas !== 'none') sp.style.display = spWas; return false; }
   for (const p of ps){
     lsSet(AIP[p].keyLS, (v['key_' + p] || '').trim());
     const m = v['model_' + p];
     if (m && m !== '__all') lsSet('qn-ai-model-' + p, m === AIP[p].cheap ? '' : m);   // the recommended model isn't stored, so it follows future updates
   }
   lsSet('qn-ai-provider', v.prov && v.prov !== 'claude' ? v.prov : '');
-  AI.cache.clear(); S.ai = null; try { renderEditor(); } catch(e){}
-  toast('AI: ' + AIN() + ' · ' + aiLabel(aiChosen()) + (aiKey() ? '' : ' — no key yet'));
+  AI.cache.clear(); if (S.ai){ S.ai = null; try { renderEditor(); } catch(e){} }   // redraw only when the suggestions panel is open (a redraw would cut off a reply that is waiting for the key)
+  toast('AI: ' + AIN() + ' · ' + aiLabel(aiChosen()) + (aiKey() ? '' : ' — no key yet, so AI answers can’t be sent. Add the key in AI settings.'), aiKey() ? 3000 : 7000);
+  if (!aiKey() && sp && spWas && spWas !== 'none') sp.style.display = spWas;
   return !!aiKey();
 }
 async function aiAskKey(reason){
+  const others = Object.keys(AIP).filter(p => p !== aiProv() && aiKeyOf(p)).map(p => AIP[p].name);
+  if (others.length) return aiSettings(reason || 'Turn on AI', '<b>' + AIN() + '</b> is selected but has no key on this PC yet. Paste its key below, or choose ' + others.join(' or ') + ' (key already saved) under “Which AI”.');
   return aiSettings(reason || 'Turn on AI', 'Choose an AI and paste its <b>API key</b> (add a little credit on that site first). Claude and OpenAI can also search the web in AI threads; DeepSeek is the cheapest.');
 }
 function aiHash(t){ let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h.toString(36) + ':' + t.length; }

@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v54-2026-11-13
+**Fix: switching AI in the middle of a thread.**
+- If you switch to an AI that has no key yet (for example OpenAI) and then press Send in a thread, AI settings now opens on its own: the reply popup steps aside, and the dialog says which AI has no key and which ones already have a key saved (marked **✓ key saved** in the menu).
+- Paste the key, or choose an AI that has one, and **Save**: your reply is sent right away. Cancel brings the reply popup back with your text still in it.
+- Before, both windows stayed on top of each other and the reply could get lost after saving.
+
 ## v53-2026-11-13
 **AI settings button in the sidebar.**
 - New robot icon at the bottom left, next to the Appearance (palette) icon: one click opens **AI settings** (Claude, OpenAI or DeepSeek, key, model). Hover over it to see which AI and model are in use.
