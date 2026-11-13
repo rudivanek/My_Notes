@@ -4,6 +4,13 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v47-2026-11-13
+**✓ Summarize a chat thread.**
+- Under every thread there are now three buttons: **↩ Reply**, **✓ Summarize** and **▴ Fold**.
+- **✓ Summarize:** Claude writes a short summary box right under the thread (what was decided, the final plan or answer, open questions, next steps as checkboxes) and folds the thread into a small chip *✦ AI · Thread (n messages)*. Nothing is deleted; click the chip to open the thread again.
+- Summarize again after more replies and the old summary is replaced, not duplicated.
+- **▴ Fold** folds a thread without a summary. In the file a folded thread is `> [!ai]- Thread`, like a folded callout in Obsidian.
+
 ## v46-2026-11-13
 **💬 Chat threads from ✨.** (Replaces the Ctrl+Enter chat from v45.)
 - Select text, click **✨**, then **💬 Chat** (type a question first if you like). Claude answers in an AI box **Thread** right under your text. If something important is missing, it asks a few questions first.

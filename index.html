@@ -737,6 +737,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .cm-threply{display:flex;align-items:center;gap:10px;margin:2px 0 10px;padding-left:4px;font-size:12px;color:var(--muted)}
 .cm-threply button{font:inherit;font-weight:600;color:var(--accent);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px 10px;cursor:pointer}
 .cm-threply button:hover{background:var(--sel)}
+.cm-threply button.thfold{color:var(--muted);font-weight:500}
 #selAi .thwarn{font-size:11.5px;color:var(--muted);margin-top:8px}
 .aip .nailbl{margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
 .aip .nailbl+.saans{margin-top:3px}
@@ -764,7 +765,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v46-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v47-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6358,8 +6359,14 @@ window.qnAiBlocks = (state, arr) => {
   if (!window.qnCM) return;
   if (!aibHidden(S.editorPath)){
     const n = cur(); if (!n || n.locked) return;
-    const W = thWidget(), B = window.qnCM.B, doc = state.doc;
-    for (const x of aibScan(doc)) if (thIsBox(x) && !/%%chat-wait-\d+%%/.test(doc.line(x.last).text)) arr.push(B.widget({ widget: new W(x.head), block: true, side: 1 }).range(doc.line(x.last).to));
+    const W = thWidget(), FW = thFoldWidget(), B = window.qnCM.B, doc = state.doc;
+    for (const x of aibScan(doc)){
+      if (!thIsBox(x)) continue;
+      if (thFolded(doc, x)){
+        let k = 1; for (let i = x.head + 1; i <= x.last; i++) if (/^\s*>\s*\*\*You:\*\*/.test(doc.line(i).text)) k += 2;
+        arr.push(B.replace({ widget: new FW(x.head, k), block: true }).range(doc.line(x.head).from, doc.line(x.last).to));
+      } else if (!/%%chat-wait-\d+%%/.test(doc.line(x.last).text)) arr.push(B.widget({ widget: new W(x.head), block: true, side: 1 }).range(doc.line(x.last).to));
+    }
     return;
   }
   const doc = state.doc, W = aibWidget(), B = window.qnCM.B;
@@ -6440,7 +6447,7 @@ function thMessages(doc, x, n){
   let sel = '';
   if (x.start){ let e = x.head - 1; while (e > x.start && !doc.line(e).text.trim()) e--; sel = e > x.start ? doc.sliceString(doc.line(x.start + 1).from, doc.line(e).to) : ''; }
   else if (x.inl) sel = doc.sliceString(x.inl[0] + 7, x.inl[1] - 5);
-  const all = doc.toString(), hf = doc.line(x.head).from, lt = doc.line(x.last).to;
+  const all = doc.toString(), hf = doc.line(x.head).from, sb = thSumBox(doc, x), lt = doc.line(sb ? sb.last : x.last).to;   // the thread's summary box is left out too
   let note = thStrip(all.slice(0, hf) + '[…this thread…]' + all.slice(lt)).replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
   if (note.length > 14000){ const at = Math.max(0, note.indexOf('[…this thread…]') - 9000); note = (at ? '[…]\n' : '') + note.slice(at, at + 14000) + '\n[…]'; }
   let first = `NOTE TITLE: ${n.name}\n<note>\n${note}\n</note>` + (sel.trim() ? `\n\n<selected passage>\n${sel.trim()}\n</selected passage>` : '');
@@ -6511,6 +6518,69 @@ function thOpenReply(head, el){
   p.style.top = (r.bottom + h + 10 < innerHeight ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + 'px';
   setTimeout(() => $('selAiIn') && $('selAiIn').focus(), 20);
 }
+// ---- v47: ✓ Summarize + fold a thread ----
+// a thread is folded when its first line is "> [!ai]- Thread" (Obsidian's folded callout)
+const thFolded = (doc, x) => /\[!ai\]-/i.test(doc.line(x.head).text);
+function thSetFold(head, fold){
+  const v = S.editor && S.editor.view; if (!v || head > v.state.doc.lines) return;
+  const L = v.state.doc.line(head), m = L.text.match(/\[!ai\]([+-]?)/i); if (!m) return;
+  const at = L.from + m.index + 5;
+  v.dispatch({ changes:{ from:at, to:at + m[1].length, insert: fold ? '-' : '' }, userEvent:'input' });
+}
+// the summary box that belongs to thread x: the next AI box, only blank lines between, label "Summary of thread…"
+function thSumBox(doc, x){
+  const all = aibScan(doc), y = all.find(b => b.head > x.last);
+  if (!y || !/^summary of thread/i.test(y.label || '')) return null;
+  for (let i = x.last + 1; i < y.head; i++) if (doc.line(i).text.trim()) return null;
+  return y;
+}
+const TH_SUM_Q = `Please write a short summary of our conversation to keep in my note, in the language we used. Use these parts and skip any that are empty:
+**Decided:** what we settled on (bullets)
+**Plan / answer:** the final version only, not earlier drafts (bullets, short)
+**Open questions:** what is still undecided (bullets)
+**Next steps:** as checkboxes "- [ ] …"
+No preamble, no heading at the top.`;
+async function thSummarize(head){
+  const v = S.editor && S.editor.view, n = cur(); if (!v || !n || n.locked) return;
+  if (!aiKey() && !(await aiAskKey('Turn on AI to summarize the thread'))) return;
+  let doc = v.state.doc; const x = thFind(doc, Math.min(head, doc.lines)); if (!x) return toast('This thread is no longer there');
+  const msgs = thMessages(doc, x, n), last = msgs[msgs.length - 1];
+  if (msgs.length < 2) return toast('Nothing to summarize yet');
+  if (last.role === 'user') last.content += '\n\n' + TH_SUM_Q; else msgs.push({ role:'user', content: TH_SUM_Q });
+  const id = ++TH_N, mark = '%%chat-wait-' + id + '%%';
+  const box = '> [!ai] Summary of thread\n> ' + thWait(id).replace('Claude is writing', 'Claude is summarizing');
+  const old = thSumBox(doc, x), L = doc.line(x.last);
+  const change = old ? { from: doc.line(old.head).from, to: doc.line(old.last).to, insert: box } : { from: L.to, insert: '\n\n' + box };
+  v.dispatch({ changes: change, userEvent:'input' });
+  thSetFold(x.head, true);
+  thWarnOnce();
+  let out = '', err = '';
+  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, TH_SYS)).trim() || 'Claude gave no summary. Try again.'; }
+  catch(e){ err = e.message; out = '⚠️ ' + e.message + ' — click ✓ Summarize again %%th-err%%'; }
+  const put = d => { const i = d.indexOf(mark); if (i < 0) return null; const a = d.lastIndexOf('\n', i) + 1, b = d.indexOf('\n', i); return { from:a, to: b < 0 ? d.length : b, insert: thLines(out) }; };
+  const m = S.notes.get(n.path) || n;
+  if (S.editor && S.editorPath === m.path){ const vv = S.editor.view, c = put(vv.state.doc.toString()); if (c){ vv.dispatch({ changes:c, userEvent:'input' }); m.body = vv.state.doc.toString(); queueSave(m); } }
+  else { const d = m.body || '', c = put(d); if (c){ m.body = d.slice(0, c.from) + c.insert + d.slice(c.to); queueSave(m); } }
+  aibBtn();
+  if (err) toast(err, 6000); else toast('Summary added — the thread is folded (click it to open)');
+}
+let TH_FW = null;
+function thFoldWidget(){
+  if (TH_FW || !window.qnCM) return TH_FW;
+  TH_FW = class extends window.qnCM.Ht {
+    constructor(head, n){ super(); this.head = head; this.n = n; }
+    eq(o){ return o.head === this.head && o.n === this.n; }
+    ignoreEvent(){ return true; }
+    toDOM(){
+      const el = document.createElement('div'); el.className = 'cm-aimini';
+      const b = document.createElement('span'); b.className = 'cm-aichip'; b.textContent = '✦ AI · Thread (' + this.n + ' message' + (this.n === 1 ? '' : 's') + ') ▾';
+      b.title = 'Folded thread — click to open it';
+      b.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSetFold(this.head, false); };
+      el.appendChild(b); return el;
+    }
+  };
+  return TH_FW;
+}
 let TH_W = null;
 function thWidget(){
   if (TH_W || !window.qnCM) return TH_W;
@@ -6522,8 +6592,12 @@ function thWidget(){
       const el = document.createElement('div'); el.className = 'cm-threply';
       const b = document.createElement('button'); b.textContent = '↩ Reply'; b.title = 'Continue this thread with Claude';
       b.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thOpenReply(this.head, b); };
+      const s = document.createElement('button'); s.textContent = '✓ Summarize'; s.title = 'Done? Claude writes a short summary under the thread (decisions, plan, open questions, next steps) and folds the thread';
+      s.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSummarize(this.head); };
+      const f = document.createElement('button'); f.className = 'thfold'; f.textContent = '▴ Fold'; f.title = 'Fold the thread into a small chip (nothing is deleted)';
+      f.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSetFold(this.head, true); };
       const t = document.createElement('span'); t.textContent = 'or select text in the thread and click ✨';
-      el.appendChild(b); el.appendChild(t); return el;
+      el.appendChild(b); el.appendChild(s); el.appendChild(f); el.appendChild(t); return el;
     }
   };
   return TH_W;
