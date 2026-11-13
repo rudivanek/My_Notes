@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v47 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v48 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [▶ Watch the intro video](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4) (63 seconds, no sound). It was made with version 28, so a few buttons have moved since then: the note buttons now sit next to the note title (see [The screen](#2-the-screen)). The video file is also in the app's folder on GitHub: `Manual/My Notes - intro.mp4`.
@@ -92,10 +92,11 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Draw a mind map | **map** button above the note list |
 | See all commands | **Ctrl+Shift+A** |
 | Ask a question about my notes | **Ctrl+J** (needs AI) |
-| Summarize or translate a paragraph | Select it, click the **✨** that appears (needs AI) |
+| Select a whole paragraph | **Triple-click** it (double-click selects a word) |
+| Summarize or translate a paragraph | Triple-click it to select it, click the **✨** that appears (needs AI) |
 | Ask anything about the whole note | **✨** next to the note title → **Ask** row (needs AI) |
 | Make my own AI button | **✎** after the AI buttons, or **☆ Save as button** after a question |
-| Chat with AI inside a note | Select the text, click **✨**, then **💬 Chat**; continue with **↩ Reply**, finish with **✓ Summarize**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
+| Chat with AI inside a note | Select the text, click **✨**, ask; continue with **Reply**, finish with **Summarize**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
 | Save a note as PDF | **Ctrl+Shift+P** |
 | Get changes from my other PC right now | Right-click **All notes** → **Check for changes on disk** |
 
@@ -589,11 +590,9 @@ Ask a question in normal words and get an answer **written from your own notes**
 
 ### Ask about a selection
 1. **Select some text** in a note. A small round **✨** button appears next to it. Click it.
-2. Click one of your AI buttons (**Explain**, **Summarize**, **Improve**, **Checklist**, **→ English**… change them with **✎**, see [My AI buttons](#my-ai-buttons)). Or type your own question and press Enter; **☆ Save as button** keeps it for next time.
-3. Choose what to do with the answer:
-   - **Insert below:** puts it in a coloured **AI box** under your text.
-   - **Replace selection:** puts it in place of your text (the main button for Improve and translations).
-   - **Copy** or **Discard**.
+2. Type a question and press Enter, or click one of your AI buttons (**Explain**, **Summarize**, **Checklist**… change them with **✎**, see [My AI buttons](#my-ai-buttons)). Pressing **Ask** with nothing typed lets Claude respond to the text itself.
+3. The popup closes and Claude answers **in the note**, in a **Thread** box right under your text. Continue there, see [Chat threads](#20-ai-on-selected-text-and-ai-boxes) below.
+4. **Improve** and the translations (→ English…), the buttons marked *replaces the text*, put Claude's version **in place of** your text instead.
 
 **Ctrl+Z** undoes it. Only the open note is sent to Claude; this is turned off for locked notes.
 
@@ -615,12 +614,12 @@ An inserted answer looks like this: a box with a header such as **✨ AI · Summ
 ### 💬 Chat threads
 Have a conversation with Claude **inside the note**, starting from any text:
 
-1. **Select** the text (for example "I want to plan a trip to Vienna, flying out from Querétaro"), click the **✨** that appears, then **💬 Chat**. You can type a question in the box first; otherwise Claude responds to the selected text.
+1. **Select** the text (for example "I want to plan a trip to Vienna, flying out from Querétaro"), click the **✨** that appears, type a question (or click an AI button, or just **Ask**) and press Enter.
 2. Claude's answer appears in an AI box called **Thread** right under your text. If something important is missing, it asks a few questions first.
-3. To continue, click **↩ Reply** under the thread, type your answer or next question, and press Enter. Or **select any part of the thread** and click **✨** to ask about exactly that part ("about this route…").
+3. To continue, click **Reply** under the thread, type your answer or next question, and press Enter. Or **select any part of the thread** and click **✨** to ask about exactly that part ("about this route…").
 4. Your line (**You: …**) and Claude's answer are added to the **same box**, so the whole conversation stays together. Keep going as long as you like.
 
-**Done?** Click **✓ Summarize** under the thread. Claude writes a short **Summary of thread** box right under it (what was decided, the final plan or answer, open questions, next steps as checkboxes) and **folds** the thread into a small chip *✦ AI · Thread (n messages)*. Nothing is deleted: click the chip to open the thread again. If you continue the chat and summarize again, the old summary is replaced. **▴ Fold** folds a thread without a summary.
+**Done?** Click **Summarize** under the thread. Claude writes a short **Summary of thread** box right under it (what was decided, the final plan or answer, open questions, next steps as checkboxes) and **folds** the thread into a small chip *✦ AI · Thread (n messages)*. Nothing is deleted: click the chip to open the thread again. If you continue the chat and summarize again, the old summary is replaced. **Fold** folds a thread without a summary.
 
 The thread is saved in the note like any other text: come back tomorrow and reply again, edit or delete parts, or hide it with **✦ Hide AI**. If Claude can't answer (no connection, busy), a ⚠️ line appears in the thread; just reply again.
 

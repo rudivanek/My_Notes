@@ -4,6 +4,14 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v48-2026-11-13
+**AI answers always go into the note. Triple-click selects a paragraph.**
+- Select text → **✨**: the popup is now only for choosing what to ask. Type a question and press Enter (or just press **Ask** with nothing typed), or click **Explain, Summarize, Checklist…**: the popup closes and Claude answers in a **Thread** right under your text. Continue with **Reply**.
+- **Improve** and the translations (→ English…) replace the selected text directly. Ctrl+Z undoes it.
+- The separate 💬 Chat button and the answer area in the popup (Insert below, Replace, Copy, Save as button) are gone. Save your own buttons with **✎**.
+- **Reply · Summarize · Fold** under a thread now use the app's line icons.
+- **Triple-click** selects the whole paragraph, also when it spans several lines and inside AI boxes. Each list item counts as its own paragraph. Double-click still selects a word.
+
 ## v47-2026-11-13
 **✓ Summarize a chat thread.**
 - Under every thread there are now three buttons: **↩ Reply**, **✓ Summarize** and **▴ Fold**.
