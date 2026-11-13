@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v51 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v52 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [▶ Watch the intro video](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4) (63 seconds, no sound). It was made with version 28, so a few buttons have moved since then: the note buttons now sit next to the note title (see [The screen](#2-the-screen)). The video file is also in the app's folder on GitHub: `Manual/My Notes - intro.mp4`.
@@ -96,6 +96,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Summarize or translate a paragraph | Triple-click it to select it, click the **✨** that appears (needs AI) |
 | Ask anything about the whole note | **✨** next to the note title → **Ask** row (needs AI) |
 | Make my own AI button | **✎** after the AI buttons, or **☆ Save as button** after a question |
+| Choose Claude, OpenAI or DeepSeek | Command palette → **AI settings** |
 | Chat with AI inside a note | Select the text, click **✨**, ask; continue with **Reply**, finish with **Summarize**, see [AI on selected text](#20-ai-on-selected-text-and-ai-boxes) |
 | Save a note as PDF | **Ctrl+Shift+P** |
 | Get changes from my other PC right now | Right-click **All notes** → **Check for changes on disk** |
@@ -514,16 +515,33 @@ Deleted notes, tables and folders go to the vault's `.trash` folder, not away fo
 
 ## 17. Setting up AI, privacy and costs
 
-All AI features use **Claude** by Anthropic. They're optional; everything else works without them.
+The AI features work with **Claude** (Anthropic), **OpenAI** or **DeepSeek**: you choose. They're optional; everything else works without them.
 
-**Setup:** get an API key at **console.anthropic.com** → API Keys (add a little credit there first). The first time you use an AI feature, My Notes asks for the key. It's stored **only on this PC**. To change or remove it, click **✨** next to a note's title, then **Claude key** at the bottom of the Suggestions panel (or the command palette, Ctrl+Shift+A: *Claude key*).
+**Setup:** open **AI settings**: command palette (Ctrl+Shift+A) → *AI settings*, or right-click **✨** next to a note's title. The first time you use an AI feature, My Notes opens it for you.
+1. **Which AI should My Notes use?** Pick Claude, OpenAI or DeepSeek.
+2. Paste that provider's **API key** (add a little credit on its site first):
+   - Claude: **console.anthropic.com** → API Keys
+   - OpenAI: **platform.openai.com** → API keys
+   - DeepSeek: **platform.deepseek.com** → API keys
+3. Choose a **model**. The first one is **recommended** (good and cheap); the second is the **best quality** and costs more. **Show all models from your key…** lists every text model your key can use.
+4. Click **Test**: it says ✓ or tells you what's wrong (wrong key, no credit, unknown model). Then **Save**.
+
+Each provider keeps its own key, so you can switch any time without typing keys again. Keys are stored **only in this browser on this PC**.
+
+| Provider | Recommended | Best quality | Web search in threads | Price (per million tokens, in / out) |
+| --- | --- | --- | --- | --- |
+| Claude | Haiku 5.5 | Sonnet 5.5 | ✓ | $1 / $5 · Sonnet $2 / $10 |
+| OpenAI | GPT-6.1 Terra | GPT-6.1 Sol | ✓ | $1 / $5 · Sol $2 / $10 |
+| DeepSeek | DeepSeek Flash | DeepSeek V4 Pro | — | about $0.30 / $1.20, half price off-peak |
+
+DeepSeek is by far the cheapest, but it can't search the web and its servers are in China. Where this manual says **Claude**, read *the AI you chose*. Quick helper jobs (search words for *Ask your notes*, tag suggestions, table fields) always use the recommended model, even if you chose the best one.
 
 **Privacy, in short:**
-- Your notes are only sent to Claude when you use an AI feature, and only what that feature needs (see each section).
+- Your notes are only sent to the AI you chose when you use an AI feature, and only what that feature needs (see each section).
 - **Locked notes are never sent.**
 - Nothing is sent to anyone else. My Notes has no server of its own.
 
-**Costs** go to your Anthropic account. Rough guide: a suggestion or a selection question costs a fraction of a cent to about a cent; a thread reply roughly 1–5 cents (more as the thread gets longer, plus about 1 cent per web search); *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
+**Costs** go to your account with that provider. Rough guide (Claude Haiku / GPT-6.1 Terra; DeepSeek costs much less): a suggestion or a selection question costs a fraction of a cent to about a cent; a thread reply roughly 1–5 cents (more as the thread gets longer, plus about 1 cent per web search); *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
 
 ---
 
@@ -623,9 +641,9 @@ Have a conversation with Claude **inside the note**, starting from any text:
 
 The thread is saved in the note like any other text: come back tomorrow and reply again, edit or delete parts, or hide it with **✦ Hide AI**. If Claude can't answer (no connection, busy), a ⚠️ line appears in the thread; just reply again.
 
-**Web search:** in threads, Claude can search the web when the answer depends on current facts (news, prices, products, opening times, rules, companies), and lists its **Sources** as links at the end of the answer. It uses Claude's own web search, so you don't need an extra account or key; it costs about 1 cent per search. In a thread, Claude reuses what it already found in earlier answers and only searches for what is new. Switch it off with **Search the web** in the ✨ popup. If web search is turned off for your Claude key (some company accounts), you get a short notice and the answer comes without it. Claude can't book anything or see live booking-site fares.
+**Web search:** in threads, Claude can search the web when the answer depends on current facts (news, prices, products, opening times, rules, companies), and lists its **Sources** as links at the end of the answer. It uses the provider's own web search (Claude or OpenAI), so you don't need an extra account or key; it costs about 1 cent per search. **DeepSeek can't search the web**: the switch shows *No web search with DeepSeek*. In a thread, Claude reuses what it already found in earlier answers and only searches for what is new. Switch it off with **Search the web** in the ✨ popup. If web search is turned off for your key (some company accounts), you get a short notice and the answer comes without it. Claude can't book anything or see live booking-site fares.
 
-**Cost of each answer:** every thread answer and summary ends with a small grey line like *Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0321* (USD, at Claude Sonnet 5.5 prices: $2 per million input tokens, $10 per million output tokens, about $0.01 per web search). If a very big request gets cut off, the thread says so; reply "continue" or ask for a smaller part.
+**Cost of each answer:** every thread answer and summary ends with a small grey line like *Haiku 5.5 · Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0254*: the model that answered, then the cost in USD at that model's prices (about $0.01 per web search). For a model whose price My Notes doesn't know, only the tokens are shown. If a very big request gets cut off, the thread says so; reply "continue" or ask for a smaller part.
 
 **What Claude sees:** the note and the whole thread, every time. **Costs:** long threads use more tokens, roughly 1–5 cents per reply; the reply box reminds you. 
 
@@ -656,7 +674,7 @@ Your original note stays as it is; only one line is added at its end, `🗺 Map:
 - Put your vault in Dropbox (or OneDrive, Google Drive…) and set the folder to **Available offline**.
 - On each PC, install My Notes and choose that folder once with **Open vault…**
 - **Pins, icons, appearance, property types, saved searches** and other settings are stored in the vault in `My Notes/settings.md`, so every PC looks the same. Don't edit that note by hand.
-- Some things are kept **per PC**: the Claude and Firecrawl keys, your recently opened notes, and which AI boxes you've hidden.
+- Some things are kept **per PC**: the AI keys (Claude, OpenAI, DeepSeek), the Firecrawl key, your recently opened notes, and which AI boxes you've hidden.
 - My Notes re-reads the vault when you come back to it after **2 minutes or more** in another window. To pick up changes right away, right-click **All notes** → **Check for changes on disk**.
 - Try not to edit the same note on two PCs at the same moment. If it happens, Dropbox keeps a *conflicted copy*; compare the two and delete one.
 
@@ -807,7 +825,7 @@ Much of My Notes lives in right-click menus.
 
 **A table or Base:** Open · Rename… · Change icon… · Pin · Delete. Inside a table: right-click a **row** (Open / Delete row) or a **view tab** (Rename / Duplicate / Delete view).
 
-**The ✨ button:** change or remove your Claude key.
+**The ✨ button:** AI settings (provider, key, model) or remove the key.
 
 **In a map:** right-click a **card** (colour, shape, group, delete…), an **arrow** (comment, reverse, delete) or empty space.
 
@@ -829,7 +847,7 @@ Everything is ordinary files in your vault. Nothing is hidden in a database.
 | Settings shared between your PCs (pins, icons, look, saved searches…) | `My Notes/settings.md` |
 | Version history | `.history/` (hidden) |
 | Trash | `.trash/` (hidden) |
-| Claude / Firecrawl keys, recently opened, hidden AI boxes | only in Chrome on this PC |
+| AI keys (Claude / OpenAI / DeepSeek), Firecrawl key, recently opened, hidden AI boxes | only in Chrome on this PC |
 | Quick-start copy of your notes (locked notes stay locked) | only in Chrome on this PC; rebuilt by itself |
 
 Folders that start with a dot (`.history`, `.trash`, `.obsidian`) don't show up in the sidebar. My Notes doesn't need Obsidian, but your vault stays compatible with it.
@@ -846,13 +864,13 @@ Folders that start with a dot (`.history`, `.trash`, `.obsidian`) don't show up 
 
 **The update didn't arrive.** Online (Option A): close My Notes completely and open it again while online. App folder (Option B): start the server again (`.bat`, `.command` or `.sh`) and open My Notes while its window is open. Check the version number at the top right of the sidebar.
 
-**AI says my key isn't accepted, or I'm out of credit.** Click **✨** next to a note's title → **Claude key** (bottom of the panel) to change the key; add credit at console.anthropic.com.
+**AI says my key isn't accepted, or I'm out of credit.** Open **AI settings** (right-click **✨** next to a note's title, or the command palette) and click **Test** next to the key: it says what's wrong. Add credit on the provider's site (console.anthropic.com, platform.openai.com or platform.deepseek.com). OpenAI sometimes reports a wrong key as "No connection"; Test shows it too.
 
 **Ask your notes didn't find something I know is there.** Try other words (the actual words in the note), add `folder:…`, or make sure the note isn't locked.
 
 **Clicking a link to a file on my PC doesn't open it.** That's expected: a browser app may not open files outside the vault, so the path is copied instead. On Windows press Win+R, Ctrl+V, Enter.
 
-**Is anything uploaded?** No, except what an AI feature sends to Claude (or the web clipper to Firecrawl) when you use it. My Notes has no server and no account.
+**Is anything uploaded?** No, except what an AI feature sends to the AI you chose in AI settings (or the web clipper to Firecrawl) when you use it. My Notes has no server and no account.
 
 **Can I use it without Chrome?** Microsoft Edge works the same way. (Other Chromium browsers may work too; Brave, for example, needs this feature switched on first.) Firefox and Safari don't allow web apps to edit folders on your disk, so there it only runs as a demo.
 

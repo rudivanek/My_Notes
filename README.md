@@ -30,7 +30,7 @@ A calm, fast notes app for your own computer. Your notes are plain **Markdown fi
 - **On your phone:** [My Notes Mobile](https://rudivanek.github.io/My_Notes/m/) reads, searches, captures and edits the same vault through Dropbox, works offline, and accepts shares from other Android apps ([manual](Manual/My%20Notes%20Manual.md#my-notes-on-your-phone))
 - **Locked notes:** AES-256 encrypted, one password for all
 - **Version history** and a **Trash** you can restore from
-- **Optional AI (Claude, with your own key):** ask questions about all your notes with sources; ask anything about one note or a selected paragraph; your own AI buttons (summarize, checklist, translate…); tag and folder suggestions; turn a note into a map
+- **Optional AI (Claude, OpenAI or DeepSeek, with your own key):** ask questions about all your notes with sources; ask anything about one note or a selected paragraph; your own AI buttons (summarize, checklist, translate…); tag and folder suggestions; turn a note into a map
 - Print and PDF, web clipper, open `.md` files from the desktop, quick capture, themes and fonts
 
 ## My Notes and Obsidian
@@ -45,7 +45,7 @@ My Notes is a lighter app for the same kind of vault, for people who want someth
 **Different in My Notes**
 - **Nothing to install:** it runs in Chrome or Edge, or install it as an app with one click
 - **Built in, no plugins needed:** tables like Notion, mind maps, locked (encrypted) notes, version history, Trash, web clipper, PDF
-- **AI built in** with your own Claude key: ask your notes, ask about a note or a paragraph, your own AI buttons
+- **AI built in** with your own Claude, OpenAI or DeepSeek key: ask your notes, ask about a note or a paragraph, your own AI buttons
 - **Fewer settings on purpose:** one calm window, the rest is in the command palette
 
 **Where Obsidian does more:** a huge plugin and theme community, mobile apps, its own sync and publish services, Canvas and many advanced features. If you rely on those, keep Obsidian; you can still use My Notes on the same vault.
@@ -103,11 +103,11 @@ The folder **[Sample Vault](Sample%20Vault)** (also as a [zip](https://github.co
 
 ## AI (optional)
 
-AI features use [Claude](https://www.anthropic.com/) with **your own API key** from [console.anthropic.com](https://console.anthropic.com/). The key is stored only in your browser on that computer. Notes are sent to Anthropic only when you use an AI feature, only what that feature needs, and **locked notes are never sent**. Costs go to your own Anthropic account (a fraction of a cent to a few cents per use).
+AI features work with [Claude](https://www.anthropic.com/), [OpenAI](https://platform.openai.com/) or [DeepSeek](https://platform.deepseek.com/) and **your own API key** (choose in *AI settings*). The key is stored only in your browser on that computer. Notes are sent to that provider only when you use an AI feature, only what that feature needs, and **locked notes are never sent**. Costs go to your own account with that provider (a fraction of a cent to a few cents per use; DeepSeek costs much less). Web search in AI threads works with Claude and OpenAI.
 
 ## Privacy
 
-My Notes has no server and no account. It reads and writes your notes folder directly. Nothing is uploaded, except when you use an AI feature (to Anthropic, with your key) or the web clipper (the page address to [Firecrawl](https://www.firecrawl.dev/), with your key).
+My Notes has no server and no account. It reads and writes your notes folder directly. Nothing is uploaded, except when you use an AI feature (to the AI provider you chose, with your key) or the web clipper (the page address to [Firecrawl](https://www.firecrawl.dev/), with your key).
 
 ## Manual
 

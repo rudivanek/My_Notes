@@ -703,6 +703,14 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .modal{background:var(--bg);border-radius:12px;padding:20px;width:min(360px,90vw);box-shadow:var(--shadow)}
 .modal p{margin:0 0 16px}
 .modal .row{display:flex;justify-content:flex-end;gap:8px}
+.modal.aiset{width:min(500px,94vw)}
+.aipb{border:1px solid var(--line);border-radius:10px;padding:10px 12px 8px;margin:0 0 10px;opacity:.6}
+.aipb.on{opacity:1;border-color:var(--accent)}
+.aipt{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}.aipt span{font-size:11.5px;color:var(--muted)}
+.aipb input{margin:0 0 8px}.aipr{display:flex;gap:8px;align-items:flex-start}.aipr select{margin:0 0 6px;flex:1}.aipr button{padding:6px 12px;border:1px solid var(--line);border-radius:8px;white-space:nowrap}
+.aipm{font-size:11.5px;color:var(--muted);line-height:1.4;word-break:break-word}.aipm.ok{color:#2e7d32}.aipm.bad{color:#c62828}
+.aipnote{font-size:11.5px;color:var(--muted);margin:2px 0 12px;line-height:1.45}
+.webtog.off{opacity:.55;cursor:default}
 .modal .ghost{padding:6px 12px;border-radius:8px;border:1px solid var(--line)}
 .drop{position:fixed;inset:0;background:rgba(180,83,42,.08);border:3px dashed var(--accent);display:none;place-items:center;font-size:18px;color:var(--accent);z-index:80;pointer-events:none}
 @media (max-width:780px){
@@ -770,7 +778,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v51-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v52-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -5300,18 +5308,216 @@ document.addEventListener('keydown', e => {
 
 /* ---------- ✨ AI suggestions (Claude): tags, importance, folder, summary ---------- */
 // Nothing changes in a note until you accept. Only the note you're looking at is sent to Anthropic.
-const AI_MODEL = 'claude-haiku-5-5';
+const AI_MODEL = 'small';
 const AI = { cache:new Map(), busy:new Map() };
-function aiKey(){ try { return localStorage.getItem('qn-claude-key') || ''; } catch(e){ return ''; } }   // stays on this PC
+/* ---------- v52: AI providers — Claude, OpenAI or DeepSeek (AI settings) ----------
+   One key and one model per provider, saved only in this browser on this PC. Every AI feature goes through aiCall().
+   'main' = the model chosen in AI settings; 'small' = quick helper jobs (search words, tags, table fields): the good & cheap model unless another one was picked. */
+const AIP = {
+  claude:  { name:'Claude', keyLS:'qn-claude-key', ph:'sk-ant-…', get:'console.anthropic.com → API Keys', pay:'console.anthropic.com', cheap:'claude-haiku-5-5', best:'claude-sonnet-5-5', web:true },
+  openai:  { name:'OpenAI', keyLS:'qn-openai-key', ph:'sk-…', get:'platform.openai.com → API keys', pay:'platform.openai.com → Billing', cheap:'gpt-6.1-terra', best:'gpt-6.1-sol', web:true },
+  deepseek:{ name:'DeepSeek', keyLS:'qn-deepseek-key', ph:'sk-…', get:'platform.deepseek.com → API keys', pay:'platform.deepseek.com → Top up', cheap:'deepseek-flash', best:'deepseek-v4-pro', web:false }
+};
+const AI_BASE = { claude:'https://api.anthropic.com/v1', openai:'https://api.openai.com/v1', deepseek:'https://api.deepseek.com' };
+const AI_LABEL = { 'claude-haiku-5-5':'Haiku 5.5', 'claude-sonnet-5-5':'Sonnet 5.5', 'gpt-6.1-terra':'GPT-6.1 Terra', 'gpt-6.1-sol':'GPT-6.1 Sol', 'gpt-6-luna':'GPT-6 Luna', 'gpt-6-astra':'GPT-6 Astra', 'deepseek-flash':'DeepSeek Flash', 'deepseek-v4-pro':'DeepSeek V4 Pro' };
+const aiLabel = m => AI_LABEL[m] || m;
+const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } };
+const lsSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch(e){} };
+function aiProv(){ const p = lsGet('qn-ai-provider'); return AIP[p] ? p : 'claude'; }
+const AIN = () => AIP[aiProv()].name;
+const aiKeyOf = p => lsGet(AIP[p].keyLS);
+function aiKey(){ return aiKeyOf(aiProv()); }   // stays on this PC
 const aiSkipFolder = f => /(^|\/)(templates?|plantillas)(\/|$)/i.test(f || '');
+const aiChosen = p => lsGet('qn-ai-model-' + (p || aiProv())) || AIP[p || aiProv()].cheap;
+function aiModel(tier, p){
+  p = p || aiProv(); const m = aiChosen(p);
+  if (tier === 'small') return m === AIP[p].best ? AIP[p].cheap : m;
+  return tier && tier !== 'main' ? tier : m;
+}
+// USD per million tokens (in, out, cache write, cache read); DeepSeek: peak price, half price off-peak
+const AI_PRICE = {
+  'claude-sonnet-5-5':{ in:2, out:10, cw:2.5, cr:0.2 }, 'claude-haiku-5-5':{ in:1, out:5, cw:1.25, cr:0.1 },
+  'gpt-6.1-sol':{ in:2, out:10, cr:0.1 }, 'gpt-6.1-terra':{ in:1, out:5, cr:0.05 }, 'gpt-6-luna':{ in:0.1, out:0.5, cr:0.01 }, 'gpt-6-astra':{ in:10, out:50, cr:1 },
+  'deepseek-flash':{ in:0.3, out:1.2, cr:0.006, off:0.5 }, 'deepseek-v4-flash':{ in:0.3, out:1.2, cr:0.006, off:0.5 }, 'deepseek-v4-pro':{ in:1.32, out:3.96, cr:0.044, off:0.5 }
+};
+const AI_SEARCH_USD = 0.01;
+function aiPrice(model){ const k = Object.keys(AI_PRICE).sort((a, b) => b.length - a.length).find(k => model === k || String(model).startsWith(k + '-')); return k ? AI_PRICE[k] : null; }
+function dsPeak(d){ d = d || new Date(); const w = d.getUTCDay(), h = d.getUTCHours(); return w >= 1 && w <= 5 && ((h >= 1 && h < 4) || (h >= 6 && h < 10)); }   // DeepSeek peak hours (UTC)
+const aiHdr = (p, key) => p === 'claude'
+  ? { 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' }
+  : { 'Content-Type':'application/json', 'Authorization':'Bearer ' + key };
+function aiErr(p, status, m, code){
+  const P = AIP[p], e = new Error(''); m = String(m || '');
+  if (status === 401 || (status === 403 && p === 'claude') || /incorrect api key|invalid (x-)?api.?key|authentication fails/i.test(m)){ e.code = 'BADKEY'; e.message = 'Your ' + P.name + ' key was not accepted — check it in AI settings (command palette: “AI settings”).'; return e; }
+  if (status === 402 || /credit|balance|billing|insufficient_quota|exceeded your current quota/i.test(m + ' ' + (code || ''))){ e.message = 'Your ' + P.name + ' account has no credit left. Add some at ' + P.pay + '.'; return e; }
+  if (status === 429 || status === 529 || status >= 500){ e.message = P.name + ' is busy right now. Try again in a moment.'; return e; }
+  if (status === 404 || (/model/i.test(m) && /not.?found|does not exist|invalid model|unknown|not supported|no access/i.test(m))){ e.message = P.name + ' couldn’t use this model' + (m ? ' (' + m.slice(0, 160) + ')' : '') + ' — pick another one in AI settings.'; return e; }
+  e.message = P.name + ' couldn’t answer' + (m ? ': ' + m.slice(0, 300) : ' (' + status + ')'); return e;
+}
+async function aiPost(p, path, key, body){
+  let r;
+  try { r = await fetch(AI_BASE[p] + path, { method:'POST', headers:aiHdr(p, key), body:JSON.stringify(body) }); }
+  catch(e){ throw new Error('No connection to ' + AIP[p].name + '. Check your internet and try again.' + (p === 'openai' ? ' (OpenAI also answers like this when the key is wrong — check it in AI settings.)' : '')); }
+  let j = null; try { j = await r.json(); } catch(e){}
+  const er = j && j.error;
+  return { r, j: j || {}, m: er ? (typeof er === 'string' ? er : er.message || '') : '', code: er && er.code };
+}
+// one call to the AI chosen in AI settings. o: { tier | model, system, messages, max, tool:{name, description, schema}, force, web, p, key }
+// → { text, input (tool arguments), usage, stop, sources, model }  or { noWeb:true } when web search isn't available
+async function aiCall(o){
+  const p = o.p || aiProv(), key = o.key != null ? o.key : aiKeyOf(p), model = o.model || aiModel(o.tier || 'main', p);
+  if (!key){ const e = new Error('No ' + AIP[p].name + ' key on this PC yet — add it in AI settings.'); e.code = 'NOKEY'; throw e; }
+  if (o.web && !AIP[p].web) return { noWeb:true, why:'provider' };
+  const msgs = (o.messages || []).map(m => ({ role:m.role, content:m.content }));
+  const out = { text:'', input:null, usage:null, stop:'', sources:[], model };
+  const seen = new Set(), src = (url, title) => { if (url && !seen.has(url)){ seen.add(url); out.sources.push({ url, title:String(title || url).replace(/[\[\]]/g, '') }); } };
+  const str = c => typeof c === 'string' ? c : (Array.isArray(c) ? c.filter(x => x && x.type === 'text').map(x => x.text).join('\n') : String(c || ''));
+  if (p === 'claude'){
+    const body = { model, max_tokens:o.max || 2000, messages:msgs };
+    if (o.system) body.system = o.system;
+    if (o.tool){ body.tools = [{ name:o.tool.name, description:o.tool.description, input_schema:o.tool.schema }]; body.tool_choice = o.force ? { type:'tool', name:o.tool.name } : { type:'auto' }; }
+    if (o.web) body.tools = [{ type:'web_search_20250305', name:'web_search', max_uses:5 }];
+    const parts = []; let usage = null;
+    for (let turn = 0; turn < (o.web ? 8 : 1); turn++){
+      let x = await aiPost(p, '/messages', key, body);
+      if (!x.r.ok && x.r.status === 400 && body.tool_choice && body.tool_choice.type === 'tool' && /tool_choice|tool choice|not supported/i.test(x.m)){ body.tool_choice = { type:'auto' }; x = await aiPost(p, '/messages', key, body); }
+      if (!x.r.ok){
+        if (o.web && (x.r.status === 403 || (x.r.status === 400 && /web.?search|tool|not (enabled|allowed|available)|disabled/i.test(x.m)))) return { noWeb:true, why:x.m };
+        throw aiErr(p, x.r.status, x.m, x.code);
+      }
+      const j = x.j;
+      usage = usageAdd(usage, j.usage);
+      for (const c of (j.content || [])){
+        if (c.type === 'text'){ parts.push(c.text); for (const ct of (c.citations || [])) src(ct.url, ct.title); }
+        else if (c.type === 'tool_use' && !out.input) out.input = c.input;
+        else if (c.type === 'web_search_tool_result' && c.content && c.content.error_code && /disabled|not_enabled|unavailable/i.test(c.content.error_code)) return { noWeb:true, why:c.content.error_code };
+      }
+      out.stop = j.stop_reason || '';
+      if (out.stop !== 'pause_turn') break;   // a long search: let Claude carry on
+      body.messages = body.messages.concat([{ role:'assistant', content:j.content }]);
+    }
+    out.text = parts.join(o.web ? '' : '\n'); out.usage = usage;
+  } else if (p === 'openai'){
+    // Responses API (function tools and web search work there with the GPT-6 models); reasoning tokens count as output, so the budget is bigger
+    const body = { model, input:msgs.map(m => ({ role:m.role, content:str(m.content) })), max_output_tokens:Math.max((o.max || 2000) * 2, 4000), store:false, reasoning:{ effort:'low' } };
+    if (o.system) body.instructions = o.system;
+    if (o.tool){ body.tools = [{ type:'function', name:o.tool.name, description:o.tool.description, parameters:o.tool.schema }]; if (o.force) body.tool_choice = { type:'function', name:o.tool.name }; }
+    if (o.web) body.tools = [{ type:'web_search' }];
+    let x = await aiPost(p, '/responses', key, body);
+    for (let i = 0; i < 3 && !x.r.ok && x.r.status === 400; i++){
+      if (body.reasoning && /reasoning/i.test(x.m)) delete body.reasoning;
+      else if (body.tool_choice && /tool_choice/i.test(x.m)) delete body.tool_choice;
+      else break;
+      x = await aiPost(p, '/responses', key, body);
+    }
+    if (!x.r.ok){
+      if (o.web && (x.r.status === 400 || x.r.status === 403) && /web.?search|tool/i.test(x.m)) return { noWeb:true, why:x.m };
+      throw aiErr(p, x.r.status, x.m, x.code);
+    }
+    const j = x.j, parts = []; let web = 0;
+    for (const it of (j.output || [])){
+      if (it.type === 'message'){ for (const c of (it.content || [])){ if (c.type === 'output_text'){ parts.push(c.text || ''); for (const a of (c.annotations || [])) if (a.type === 'url_citation') src(a.url, a.title); } else if (c.type === 'refusal') out.stop = 'refusal'; } }
+      else if (it.type === 'function_call' && !out.input){ try { out.input = JSON.parse(it.arguments || '{}'); } catch(e){} }
+      else if (it.type === 'web_search_call' && (!it.action || it.action.type === 'search')) web++;
+    }
+    out.text = parts.join('\n');
+    if (!out.stop){ const why = (j.incomplete_details && j.incomplete_details.reason) || ''; out.stop = j.status === 'incomplete' ? (why === 'max_output_tokens' ? 'max_tokens' : why === 'content_filter' ? 'refusal' : why || 'incomplete') : 'end_turn'; }
+    const u = j.usage || {}, cached = (u.input_tokens_details && u.input_tokens_details.cached_tokens) || 0;
+    out.usage = usageAdd(null, { input_tokens:(u.input_tokens || 0) - cached, cache_read_input_tokens:cached, output_tokens:u.output_tokens || 0, server_tool_use:{ web_search_requests:web } });
+  } else {
+    // DeepSeek: OpenAI-style chat completions; "thinking" switched off so quick jobs stay quick
+    const body = { model, messages:(o.system ? [{ role:'system', content:o.system }] : []).concat(msgs.map(m => ({ role:m.role, content:str(m.content) }))), max_tokens:o.max || 2000, thinking:{ type:'disabled' } };
+    if (o.tool){ body.tools = [{ type:'function', function:{ name:o.tool.name, description:o.tool.description, parameters:o.tool.schema } }]; body.tool_choice = o.force ? { type:'function', function:{ name:o.tool.name } } : 'auto'; }
+    let x = await aiPost(p, '/chat/completions', key, body);
+    for (let i = 0; i < 2 && !x.r.ok && x.r.status === 400; i++){
+      if (body.thinking && /thinking/i.test(x.m)) delete body.thinking;
+      else if (body.tool_choice && body.tool_choice !== 'auto' && /tool_choice/i.test(x.m)) body.tool_choice = 'auto';
+      else break;
+      x = await aiPost(p, '/chat/completions', key, body);
+    }
+    if (!x.r.ok) throw aiErr(p, x.r.status, x.m, x.code);
+    const j = x.j, c = (j.choices && j.choices[0]) || {}, m = c.message || {};
+    out.text = m.content || '';
+    const tc = (m.tool_calls || [])[0];
+    if (tc && tc.function){ try { out.input = JSON.parse(tc.function.arguments || '{}'); } catch(e){} }
+    out.stop = c.finish_reason === 'length' ? 'max_tokens' : c.finish_reason === 'content_filter' ? 'refusal' : 'end_turn';
+    const u = j.usage || {}, hit = u.prompt_cache_hit_tokens || 0;
+    out.usage = usageAdd(null, { input_tokens:u.prompt_cache_miss_tokens != null ? u.prompt_cache_miss_tokens : Math.max(0, (u.prompt_tokens || 0) - hit), cache_read_input_tokens:hit, output_tokens:u.completion_tokens || 0 });
+    out.usage.off = !dsPeak();
+  }
+  if (out.usage) out.usage.model = model;
+  return out;
+}
+// models the key can use ("Show all models from your key…")
+async function aiModels(p, key){
+  let r;
+  try { r = await fetch(AI_BASE[p] + '/models' + (p === 'claude' ? '?limit=1000' : ''), { headers:aiHdr(p, key) }); }
+  catch(e){ throw new Error('No connection to ' + AIP[p].name + (p === 'openai' ? ' (or the key is wrong)' : '') + '.'); }
+  let j = {}; try { j = await r.json(); } catch(e){}
+  if (!r.ok) throw aiErr(p, r.status, (j.error && (j.error.message || j.error)) || '');
+  let ids = (j.data || []).map(x => x.id).filter(Boolean);
+  if (p === 'openai') ids = ids.filter(i => /^(gpt-|o\d|chatgpt)/.test(i) && !/(audio|realtime|transcribe|tts|image|whisper|embedding|search|live|codex|moderation|instruct)/.test(i));
+  return [...new Set(ids)].sort((a, b) => b.localeCompare(a));
+}
+// ⚙ AI settings: provider, key and model for each provider, Test button
+async function aiSettings(title, intro){
+  const cur = aiProv(), ps = Object.keys(AIP);
+  const opts = p => {
+    const P = AIP[p], ch = aiChosen(p), list = [[P.cheap, aiLabel(P.cheap) + ' · recommended'], [P.best, aiLabel(P.best) + ' · best quality, costs more']];
+    if (!list.some(x => x[0] === ch)) list.push([ch, aiLabel(ch)]);
+    return list.map(([v, l]) => `<option value="${esc(v)}" ${v === ch ? 'selected' : ''}>${esc(l)}</option>`).join('') + '<option value="__all">Show all models from your key…</option>';
+  };
+  const block = p => `<div class="aipb" data-aip="${p}">
+      <div class="aipt"><b>${AIP[p].name}</b><span>${AIP[p].web ? 'can search the web' : 'no web search'}</span></div>
+      <input name="key_${p}" type="password" placeholder="${AIP[p].name} API key (${AIP[p].ph})" autocomplete="off" value="${esc(aiKeyOf(p))}">
+      <div class="aipr"><select name="model_${p}">${opts(p)}</select><button type="button" class="ghost" data-aitest="${p}">Test</button></div>
+      <div class="aipm" data-aimsg="${p}">Get a key: ${esc(AIP[p].get)}</div></div>`;
+  const pr = ask(title || 'AI settings', `${intro ? `<p style="margin:0 0 12px;line-height:1.5">${intro}</p>` : ''}
+    <label>Which AI should My Notes use?</label>
+    <select name="prov">${ps.map(p => `<option value="${p}" ${p === cur ? 'selected' : ''}>${AIP[p].name}${p === 'deepseek' ? ' — very cheap, no web search (servers in China)' : ''}</option>`).join('')}</select>
+    ${ps.map(block).join('')}
+    <p class="aipnote">Keys are saved only in this browser on this PC and sent only to that company. Only the notes you use AI on are sent; locked notes never.</p>`, 'Save');
+  const body = $('askBody'), box = body.parentElement; box.classList.add('aiset');
+  const mark = () => { const v = body.querySelector('[name=prov]').value; body.querySelectorAll('.aipb').forEach(b => b.classList.toggle('on', b.dataset.aip === v)); };
+  mark(); body.querySelector('[name=prov]').addEventListener('change', mark);
+  const msgOf = p => body.querySelector('[data-aimsg=' + p + ']'), keyOf = p => body.querySelector('[name=key_' + p + ']').value.trim();
+  const say = (p, t, cls) => { const m = msgOf(p); m.textContent = t; m.className = 'aipm' + (cls ? ' ' + cls : ''); };
+  body.querySelectorAll('select[name^=model_]').forEach(s => {
+    s.dataset.prev = s.value;
+    s.addEventListener('change', async () => {
+      if (s.value !== '__all'){ s.dataset.prev = s.value; return; }
+      const p = s.name.slice(6), prev = s.dataset.prev; s.value = prev;
+      if (!keyOf(p)) return say(p, 'Paste the key first, then choose “Show all models…”', 'bad');
+      say(p, 'Loading the models your key can use…');
+      try {
+        const ids = await aiModels(p, keyOf(p));
+        if (!ids.includes(prev)) ids.unshift(prev);
+        s.innerHTML = ids.map(id => `<option value="${esc(id)}" ${id === prev ? 'selected' : ''}>${esc(aiLabel(id) === id ? id : aiLabel(id) + ' (' + id + ')')}${id === AIP[p].cheap ? ' · recommended' : ''}</option>`).join('');
+        say(p, ids.length + ' models — the recommended ones are marked');
+      } catch(e){ say(p, e.message, 'bad'); }
+    });
+  });
+  body.querySelectorAll('[data-aitest]').forEach(b => b.addEventListener('click', async () => {
+    const p = b.dataset.aitest, key = keyOf(p), model = body.querySelector('[name=model_' + p + ']').value;
+    if (!key) return say(p, 'Paste the key first', 'bad');
+    say(p, 'Testing ' + aiLabel(model) + '…'); const t0 = performance.now();
+    try { await aiCall({ p, key, model, max:20, messages:[{ role:'user', content:'Reply with just: OK' }] }); say(p, '✓ Works — ' + aiLabel(model) + ' answered in ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s', 'ok'); }
+    catch(e){ say(p, '✗ ' + e.message, 'bad'); }
+  }));
+  const v = await pr; box.classList.remove('aiset');
+  if (!v) return false;
+  for (const p of ps){
+    lsSet(AIP[p].keyLS, (v['key_' + p] || '').trim());
+    const m = v['model_' + p];
+    if (m && m !== '__all') lsSet('qn-ai-model-' + p, m === AIP[p].cheap ? '' : m);   // the recommended model isn't stored, so it follows future updates
+  }
+  lsSet('qn-ai-provider', v.prov && v.prov !== 'claude' ? v.prov : '');
+  AI.cache.clear(); S.ai = null; try { renderEditor(); } catch(e){}
+  toast('AI: ' + AIN() + ' · ' + aiLabel(aiChosen()) + (aiKey() ? '' : ' — no key yet'));
+  return !!aiKey();
+}
 async function aiAskKey(reason){
-  const v = await ask(reason || 'Turn on ✨ AI suggestions',
-    `<p style="margin:0 0 10px;line-height:1.5">Paste your <b>Claude API key</b>. You get it at <b>console.anthropic.com</b> → API Keys (add a little credit there first).</p>
-     <p style="margin:0 0 12px;line-height:1.5;color:var(--muted);font-size:12.5px">It's saved only on this PC. When you ask for suggestions, only that one note is sent to Anthropic.</p>
-     <input name="key" type="password" placeholder="sk-ant-…" autocomplete="off" style="width:100%">`, 'Save key');
-  if (!v || !v.key || !v.key.trim()) return false;
-  try { localStorage.setItem('qn-claude-key', v.key.trim()); } catch(e){}
-  AI.cache.clear(); toast('Key saved'); return true;
+  return aiSettings(reason || 'Turn on AI', 'Choose an AI and paste its <b>API key</b> (add a little credit on that site first). Claude and OpenAI can also search the web in AI threads; DeepSeek is the cheapest.');
 }
 function aiHash(t){ let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h.toString(36) + ':' + t.length; }
 function aiVaultTags(){
@@ -5354,28 +5560,19 @@ Rules:
 - folder: the single best existing folder from the list for this note. Return "" if the current folder already fits or nothing fits better. Never invent folders. Don't suggest INBOX-type folders.
 - summary: 2 or 3 short sentences saying what the note is about, written in the same language as the note.`;
   const job = (async () => {
-    let r;
+    let res;
     try {
-      r = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-        body: JSON.stringify({ model:AI_MODEL, max_tokens:800,
-          tools:[{ name:'suggest', description:'Return the suggestions for the note.',
-            input_schema:{ type:'object', properties:{
-              tags:{ type:'array', items:{ type:'string' } },
-              importance:{ type:'string', enum:['high', 'medium', 'low'] },
-              importance_reason:{ type:'string' },
-              folder:{ type:'string' },
-              summary:{ type:'string' } }, required:['tags', 'importance', 'importance_reason', 'folder', 'summary'] } }],
-          tool_choice:{ type:'tool', name:'suggest' },
-          messages:[{ role:'user', content: prompt }] })
-      });
-    } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
-    if (r.status === 401 || r.status === 403) throw new Error('BADKEY');
-    if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
-    if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : '.')); }
-    const j = await r.json(), u = (j.content || []).find(c => c.type === 'tool_use');
-    if (!u || !u.input) throw new Error('Claude gave no suggestions. Try again.');
+      res = await aiCall({ tier:'small', max:800, force:true, messages:[{ role:'user', content: prompt }],
+        tool:{ name:'suggest', description:'Return the suggestions for the note.',
+          schema:{ type:'object', properties:{
+            tags:{ type:'array', items:{ type:'string' } },
+            importance:{ type:'string', enum:['high', 'medium', 'low'] },
+            importance_reason:{ type:'string' },
+            folder:{ type:'string' },
+            summary:{ type:'string' } }, required:['tags', 'importance', 'importance_reason', 'folder', 'summary'] } } });
+    } catch(e){ if (e.code === 'BADKEY') throw new Error('BADKEY'); if (e.code === 'NOKEY') throw new Error('NOKEY'); throw e; }
+    const u = { input: res.input };
+    if (!u.input) throw new Error(AIN() + ' gave no suggestions. Try again.');
     const known = new Set(aiVaultTags().map(x => x[0].toLowerCase())), fs = new Set(allFolders());
     const tags = [...new Set((u.input.tags || []).map(t => clean(String(t)).replace(/\s+/g, '-')).filter(Boolean))].slice(0, 4);
     const out = {
@@ -5392,7 +5589,7 @@ Rules:
   try { return await job; } finally { AI.busy.delete(ck); }
 }
 /* ---------- Note → map (AI) ---------- */
-const AI_MAP_MODEL = 'claude-sonnet-5-5';
+const AI_MAP_MODEL = 'main';
 function mapSafeTitle(t){ return String(t || '').replace(/[#\[\]→:|\r\n]/g, ' ').replace(/->/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80); }
 function aiMapText(srcName, data){
   const used = new Set(), title = {};
@@ -5421,7 +5618,7 @@ async function noteToMap(n){
   if (isMap(n)) return toast('This note is already a map');
   if (!(n.body || '').trim()) return toast('This note is empty');
   if (!aiKey() && !(await aiAskKey('Turn on AI to make maps'))) return;
-  const v = await ask('Turn “' + n.name + '” into a map', `<p style="font-size:13px;color:var(--muted);margin:0 0 10px">Claude reads the note and builds a new map next to it with cards, arrows and groups. Your note stays as it is.</p>
+  const v = await ask('Turn “' + n.name + '” into a map', `<p style="font-size:13px;color:var(--muted);margin:0 0 10px">${AIN()} reads the note and builds a new map next to it with cards, arrows and groups. Your note stays as it is.</p>
     <label>How detailed?</label><select name="size"><option value="compact">Compact — the main points (5–9 cards)</option><option value="detailed" selected>Detailed (8–16 cards)</option><option value="full">Everything important (12–24 cards)</option></select>
     <label>Focus (optional)</label><input name="focus" placeholder="e.g. decisions and next steps, pros and cons, timeline…" autocomplete="off">`, 'Make map');
   if (!v) return;
@@ -5443,32 +5640,22 @@ Rules:
 - group: optionally put cards into 2–5 themes (short theme names); use "" for the central card or if grouping doesn't help.
 - arrows: connect cards where there is a real relation (leads to, causes, part of, depends on, example of, answers…). Every card should be reachable from the central card. Labels are 1–3 words, or "".
 - Write everything in the same language as the note.`;
-  loading(true, 'Making a map of “' + n.name + '”…'); clearInterval(S.loadTick); $('loadSub').textContent = 'Claude is reading the note — this takes a few seconds';
-  let r;
+  loading(true, 'Making a map of “' + n.name + '”…'); clearInterval(S.loadTick); $('loadSub').textContent = AIN() + ' is reading the note — this takes a few seconds';
+  let res;
   try {
-    r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{ 'content-type':'application/json', 'x-api-key':aiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model:AI_MAP_MODEL, max_tokens:4000,
-        tools:[{ name:'make_map', description:'Return the map.', input_schema:{ type:'object', properties:{
-          cards:{ type:'array', items:{ type:'object', properties:{ id:{ type:'string' }, title:{ type:'string' }, text:{ type:'string' }, kind:{ type:'string', enum:['decision','question','idea','risk','done',''] }, group:{ type:'string' } }, required:['id','title','text'] } },
-          arrows:{ type:'array', items:{ type:'object', properties:{ from:{ type:'string' }, to:{ type:'string' }, label:{ type:'string' } }, required:['from','to'] } } }, required:['cards','arrows'] } }],
-        tool_choice:{ type:'auto' },
-        messages:[{ role:'user', content: prompt + '\n\nReturn the map by calling the make_map tool.' }] })
-    });
-  } catch(e){ loading(false); return toast('No connection to Claude. Check your internet and try again.'); }
+    res = await aiCall({ tier:AI_MAP_MODEL, max:4000, messages:[{ role:'user', content: prompt + '\n\nReturn the map by calling the make_map tool.' }],
+      tool:{ name:'make_map', description:'Return the map.', schema:{ type:'object', properties:{
+        cards:{ type:'array', items:{ type:'object', properties:{ id:{ type:'string' }, title:{ type:'string' }, text:{ type:'string' }, kind:{ type:'string', enum:['decision','question','idea','risk','done',''] }, group:{ type:'string' } }, required:['id','title','text'] } },
+        arrows:{ type:'array', items:{ type:'object', properties:{ from:{ type:'string' }, to:{ type:'string' }, label:{ type:'string' } }, required:['from','to'] } } }, required:['cards','arrows'] } } });
+  } catch(e){ loading(false); if (e.code === 'BADKEY' || e.code === 'NOKEY') aiAskKey(e.message).catch(() => {}); return toast(e.message, 7000); }
   try {
-    if (r.status === 401 || r.status === 403){ toast('Your Claude key was not accepted — change it in the command palette: “Claude key”'); return; }
-    if (r.status === 429 || r.status === 529 || r.status >= 500){ toast('Claude is busy right now. Try again in a moment.'); return; }
-    if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} toast(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com' : 'Claude could not make the map: ' + (m || r.status)); return; }
-    const j = await r.json();
-    let u = (j.content || []).find(c => c.type === 'tool_use');
+    let u = res.input ? { input: res.input } : null;
     if (!u){   // no tool call: take the JSON from the text answer instead
-      const txt = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n');
+      const txt = res.text || '';
       const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
       try { if (a >= 0 && b > a) u = { input: JSON.parse(txt.slice(a, b + 1)) }; } catch(e){}
     }
-    if (!u || !u.input || !(u.input.cards || []).length){ toast('Claude returned no map. Try again.'); return; }
+    if (!u || !u.input || !(u.input.cards || []).length){ toast(AIN() + ' returned no map. Try again.'); return; }
     $('loadSub').textContent = 'Drawing the map';
     const m = await createNote(n.name + ' (map)', aiMapText(n.name, u.input), n.folder);
     if (S.notes.get(n.path) === n && !n.locked && !(n.body || '').includes('[[' + m.name + ']]')){
@@ -5486,7 +5673,7 @@ Rules:
    2. My Notes searches the vault on this PC and picks the best-fitting notes (locked notes are never used).
    3. Only those notes go to Claude, which answers from them and cites them as [1], [2] …
    Follow-up questions keep the conversation; "Save as note" writes it into the vault with [[links]]. */
-const ASK_MODEL = 'claude-sonnet-5-5', ASK_KW_MODEL = 'claude-haiku-5-5';
+const ASK_MODEL = 'main', ASK_KW_MODEL = 'small';
 const ASK_MAX_NOTES = 14, ASK_BUDGET = 70000, ASK_PER_NOTE = 7000;
 const ASK_STOP = new Set(('the and for are was were what which who whom when where why how did does do about with from that this these those have has had into onto over under than then them they there their our your you yours mine my me i we us his her its not but can could would should will just also any all some more most very' +
   ' que qué los las del por para con una uno unos unas como cómo cuál cual cuando cuándo donde dónde quien quién sobre entre pero sus mis tus fue era son está estan están esto esta este eso esa ese hay hice hizo dije' +
@@ -5494,37 +5681,28 @@ const ASK_STOP = new Set(('the and for are was were what which who whom when whe
 const ASK = { turns: [], sources: [], msgs: [], scope: '', busy: false };
 const askWords = q => [...new Set(fold(q).split(/[^\p{L}\p{N}]+/u).filter(w => w.length >= 3 && !ASK_STOP.has(w)))];
 
+// v52: goes to the AI chosen in AI settings (name kept from v24); model = 'main' / 'small'
 async function askClaude(model, messages, maxTokens, system){
-  let r;
-  try {
-    r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{ 'content-type':'application/json', 'x-api-key':aiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify(Object.assign({ model, max_tokens: maxTokens, messages }, system ? { system } : {}))
-    });
-  } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
-  if (r.status === 401 || r.status === 403) throw new Error('Your Claude key was not accepted — click ✨ next to a note title, then “Claude key”, to change it.');
-  if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
-  if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')')); }
-  const j = await r.json();
-  AI_USAGE.last = j.usage || null; AI_USAGE.stop = j.stop_reason || '';
-  return (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+  const r = await aiCall({ tier:model, messages, max:maxTokens, system });
+  AI_USAGE.last = r.usage || null; AI_USAGE.stop = r.stop || '';
+  return (r.text || '').trim();
 }
 // v50: token use and cost (USD per million tokens; web search per search)
 const AI_USAGE = { last:null };
-const AI_PRICE = { 'claude-sonnet-5-5':{ in:2, out:10, cw:2.5, cr:0.2 }, 'claude-haiku-5-5':{ in:1, out:5, cw:1.25, cr:0.1 } };
-const AI_SEARCH_USD = 0.01;
 function usageAdd(a, u){
   a = a || { in:0, out:0, cw:0, cr:0, web:0 }; if (!u) return a;
+  if (u.model) a.model = u.model; if (u.off != null) a.off = u.off;
+  if (u.input_tokens == null && u.in != null){ a.in += u.in; a.out += u.out; a.cw += u.cw || 0; a.cr += u.cr || 0; a.web += u.web || 0; return a; }   // already counted (from aiCall)
   a.in += u.input_tokens || 0; a.out += u.output_tokens || 0; a.cw += u.cache_creation_input_tokens || 0; a.cr += u.cache_read_input_tokens || 0;
   a.web += (u.server_tool_use && u.server_tool_use.web_search_requests) || 0; return a;
 }
-function usageLine(a, model){
+// "*Haiku 5.5 · Tokens: 1,234 in · 456 out · cost $0.0035*" — the model that answered, and the cost when its price is known
+function usageLine(a, tier){
   if (!a || !(a.in + a.out + a.cw + a.cr)) return '';
-  const p = AI_PRICE[model] || AI_PRICE['claude-sonnet-5-5'];
-  const usd = (a.in * p.in + a.out * p.out + a.cw * p.cw + a.cr * p.cr) / 1e6 + a.web * AI_SEARCH_USD;
-  const f = n => n.toLocaleString('en-US');
-  return '*Tokens: ' + f(a.in + a.cw + a.cr) + ' in · ' + f(a.out) + ' out' + (a.web ? ' · ' + a.web + ' web search' + (a.web === 1 ? '' : 'es') : '') + ' · cost $' + usd.toFixed(4) + '*';
+  const model = a.model || aiModel(tier || 'main'), p = aiPrice(model), f = n => n.toLocaleString('en-US');
+  let t = '*' + aiLabel(model) + ' · Tokens: ' + f(a.in + a.cw + a.cr) + ' in · ' + f(a.out) + ' out' + (a.web ? ' · ' + a.web + ' web search' + (a.web === 1 ? '' : 'es') : '');
+  if (p){ const k = a.off && p.off ? p.off : 1; t += ' · cost $' + (((a.in * p.in + a.out * p.out + a.cw * (p.cw || p.in) + a.cr * (p.cr || p.in)) * k) / 1e6 + a.web * AI_SEARCH_USD).toFixed(4); }
+  return t + '*';
 }
 // search words for the question (Haiku), with the earlier questions so "and the agency plan?" still makes sense
 async function askKeywords(q){
@@ -5610,16 +5788,16 @@ async function askRun(q){
     const pick = askPick(q, kws);
     const blk = askSourceBlock(pick.list, pick.terms);
     turn.sent = blk.added; turn.found = pick.list.length;
-    turn.state = (blk.added.length ? 'Claude is reading ' + blk.added.length + ' note' + (blk.added.length === 1 ? '' : 's') : 'Claude is thinking') + '…'; askRender();
+    turn.state = (blk.added.length ? AIN() + ' is reading ' + blk.added.length + ' note' + (blk.added.length === 1 ? '' : 's') : AIN() + ' is thinking') + '…'; askRender();
     const content = (blk.text ? 'New notes for this question:\n\n' + blk.text : (ASK.sources.length ? '(No new notes found for this question — use the notes given earlier if they help.)' : '(No notes matched this question.)')) + '\n\nQUESTION: ' + q;
     const msgs = ASK.msgs.concat([{ role:'user', content }]);
     const a = await askClaude(ASK_MODEL, msgs, 1500, ASK_SYSTEM);
     ASK.msgs = msgs.concat([{ role:'assistant', content: a || '…' }]);
-    turn.a = a || 'Claude gave no answer. Try asking in other words.';
+    turn.a = a || AIN() + ' gave no answer. Try asking in other words.';
     turn.cited = [...new Set([...turn.a.matchAll(/\[(\d+(?:\s*[,;]\s*\d+)*)\]/g)].flatMap(m => m[1].split(/[,;]/).map(x => +x.trim())))].filter(i => i >= 1 && i <= ASK.sources.length);
   } catch(e){
     turn.err = e.message;
-    if (/key/i.test(e.message)) aiAskKey('Your Claude key was not accepted — paste it again').catch(() => {});
+    if (e.code === 'BADKEY' || e.code === 'NOKEY') aiAskKey(e.message).catch(() => {});
   } finally { ASK.busy = false; turn.state = ''; askRender(); }
 }
 function askSrcNote(i){ const p = ASK.sources[i - 1]; return p ? S.notes.get(p) : null; }
@@ -5638,7 +5816,7 @@ function askRender(){
       <span class="askex" data-askex="What did I decide about the website budget?">What did I decide about the website budget?</span>
       <span class="askex" data-askex="Which clients asked for a new homepage this year?">Which clients asked for a new homepage this year?</span>
       <span class="askex" data-askex="¿Qué ideas tengo para el blog?">¿Qué ideas tengo para el blog?</span>
-      <p>My Notes searches your vault on this PC, then sends only the best-fitting notes (up to ${ASK_MAX_NOTES}) to Claude. Locked notes are never sent. Tip: add <b>folder:Clients</b> or <b>tag:website</b> to narrow it down. About 2–5 cents per question.</p></div>`;
+      <p>My Notes searches your vault on this PC, then sends only the best-fitting notes (up to ${ASK_MAX_NOTES}) to ${AIN()}. Locked notes are never sent. Tip: add <b>folder:Clients</b> or <b>tag:website</b> to narrow it down. About 2–5 cents per question.</p></div>`;
     return;
   }
   box.innerHTML = ASK.turns.map(t => {
@@ -5700,7 +5878,7 @@ async function askSave(){
   const out = ['---', 'tags:', '  - ask', 'importance: low', '---', ''];
   turns.forEach(t => out.push('## ' + t.q, '', linked(t.a), ''));
   if (used.length) out.push('### Sources', ...used.map(i => '- ' + link(i)).filter(x => x !== '- '), '');
-  out.push('*Answered by Claude from your notes on ' + new Date().toISOString().slice(0, 10) + '.*');
+  out.push('*Answered by ' + AIN() + ' (' + aiLabel(aiModel('main')) + ') from your notes on ' + new Date().toISOString().slice(0, 10) + '.*');
   const n = await createNote(v.name.trim(), out.join('\n'), v.folder || '');
   askClose(); openPath(n.path); toast('Saved as “' + n.name + '”');
 }
@@ -5839,7 +6017,7 @@ NOTE TITLE: ${n.name}
 <note>
 ${body}
 </note>`;
-  if (msg) msg.textContent = 'Claude is reading the note…';
+  if (msg) msg.textContent = AIN() + ' is reading the note…';
   const btn = box.querySelector('[data-stai]'); if (btn) btn.disabled = true;
   try {
     const t = await askClaude(ASK_KW_MODEL, [{ role:'user', content: prompt }], 600);
@@ -5857,7 +6035,7 @@ ${body}
       else { el.value = c.type === 'date' ? v.slice(0, 10) : v; k++; }
       el.classList.add('staifilled');
     }
-    if (msg) msg.textContent = k ? '✓ ' + k + ' field' + (k === 1 ? '' : 's') + ' filled — check and change if needed' : 'Claude had nothing to add';
+    if (msg) msg.textContent = k ? '✓ ' + k + ' field' + (k === 1 ? '' : 's') + ' filled — check and change if needed' : AIN() + ' had nothing to add';
   } catch(e){ if (msg) msg.textContent = e.message; }
   finally { if (btn) btn.disabled = false; }
 }
@@ -6414,7 +6592,7 @@ function aibBtn(){
    Select text in a note → a small ✨ button appears → ask a question (or click a quick button) →
    Claude answers → Insert below (as an AI box: "> [!ai] question" callout), Replace the selection, or Copy.
    Only the open note goes to Claude. Locked notes: turned off. */
-const SELAI_MODEL = 'claude-sonnet-5-5';
+const SELAI_MODEL = 'main';
 const SELAI_QUICK = [
   ['Explain', 'Explain this in simple words.'],
   ['Summarize', 'Summarize this in a few short bullet points.'],
@@ -6434,7 +6612,7 @@ window.qnQuoteClass = (doc, pos) => {
   let cls = 'cm-aibox';
   if (head.number === line.number) cls += ' cm-aihead';
   else if (/^\s*>\s*\*\*You:\*\*/.test(line.text)) cls += ' cm-aiyou';
-  else if (/^\s*>\s*\*Tokens: /.test(line.text)) cls += ' cm-aicost';
+  else if (/^\s*>\s*\*(?:[^*]* · )?Tokens: /.test(line.text)) cls += ' cm-aicost';
   if (line.number === doc.lines || !isQ(doc.line(line.number + 1))) cls += ' cm-ailast';
   return { cls, mark: head.number === line.number ? [head.from + m[1].length, head.from + m[0].length] : null };
 };
@@ -6454,56 +6632,27 @@ const TH_SYS = `You are Claude, in a conversation thread inside My Notes, the us
 const WEB_KEY = 'qn-web';
 function webOn(){ try { return localStorage.getItem(WEB_KEY) !== '0'; } catch(e){ return true; } }
 function webSet(on){ try { localStorage.setItem(WEB_KEY, on ? '1' : '0'); } catch(e){} }
-const thSys = web => TH_SYS.replace('- You can\'t browse the web or see live prices; say so briefly when it matters and give your best general knowledge.',
+const thSys = web => TH_SYS.replace('You are Claude,', aiProv() === 'claude' ? 'You are Claude,' : 'You are an AI assistant,').replace('- You can\'t browse the web or see live prices; say so briefly when it matters and give your best general knowledge.',
   web ? '- You can search the web. Do it when the answer depends on current, local or specific facts (prices, news, opening times, rules, products, people, companies); otherwise answer from what you know. You can\'t book anything or see live booking-site fares; for those, give the best public information you find and say where to check.\n- Reuse what is already in this thread: facts, dates, prices and sources found in earlier answers count as known — build on them and don\'t search for them again. Search only for what is missing or new (for example dates or topics not covered yet). Re-check an earlier fact only if it matters and may have changed. Keep searches few and focused.'
       : '- You can\'t browse the web or see live prices in this setup; say so briefly when it matters and give your best general knowledge.');
 // like askClaude, but with web search; returns { text, sources:[{url,title}], noWeb }
+// v52: Claude and OpenAI search with their own web search tool; DeepSeek has none → { noWeb:true }
 async function askClaudeWeb(model, messages, maxTokens, system){
-  const key = aiKey(), msgs = messages.slice();
-  let text = '', sources = [], seen = new Set(), usage = null, stop = '';
-  for (let turn = 0; turn < 8; turn++){
-    let r;
-    try {
-      r = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-        body: JSON.stringify({ model, max_tokens:maxTokens, system, messages:msgs, tools:[{ type:'web_search_20250305', name:'web_search', max_uses:5 }] })
-      });
-    } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
-    if (r.status === 401) throw new Error('Your Claude key was not accepted — click ✨ next to a note title, then “Claude key”, to change it.');
-    if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
-    if (!r.ok){
-      let m = ''; try { m = (await r.json()).error.message; } catch(e){}
-      if (r.status === 400 || r.status === 403){ if (/web.?search|tool|not (enabled|allowed|available)|disabled/i.test(m) || r.status === 403) return { noWeb:true, why:m }; }
-      throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')'));
-    }
-    const j = await r.json();
-    usage = usageAdd(usage, j.usage);
-    for (const c of (j.content || [])){
-      if (c.type === 'text'){
-        text += c.text;
-        for (const ct of (c.citations || [])) if (ct.url && !seen.has(ct.url)){ seen.add(ct.url); sources.push({ url:ct.url, title:(ct.title || ct.url).replace(/[\[\]]/g, '') }); }
-      } else if (c.type === 'web_search_tool_result' && c.content && c.content.error_code){
-        if (/disabled|not_enabled|unavailable/i.test(c.content.error_code)) return { noWeb:true, why:c.content.error_code };
-      }
-    }
-    stop = j.stop_reason || '';
-    if (stop !== 'pause_turn') break;   // a long search: let Claude carry on
-    msgs.push({ role:'assistant', content:j.content });
-  }
-  return { text: text.trim(), sources, usage, stop };
+  const r = await aiCall({ tier:model, messages, max:maxTokens, system, web:true });
+  if (r.noWeb) return r;
+  return { text:(r.text || '').trim(), sources:r.sources, usage:r.usage, stop:r.stop };
 }
 let WEB_WARNED = false;
 // v50: say why an answer is empty or cut off
 function thNoAnswer(stop){
-  if (stop === 'max_tokens') return '⚠️ Claude ran out of room before it could write the answer (big request with many searches). Ask for a smaller part, e.g. “first week only”, or reply “continue”.';
-  if (stop === 'pause_turn') return '⚠️ Claude was still searching when the time ran out. Reply “continue” to let it finish, or ask for a smaller part.';
-  if (stop === 'refusal') return '⚠️ Claude declined to answer this one.';
-  return '⚠️ Claude gave no answer (' + (stop || 'unknown reason') + '). Try again or ask in other words.';
+  if (stop === 'max_tokens') return '⚠️ ' + AIN() + ' ran out of room before it could write the answer (big request with many searches). Ask for a smaller part, e.g. “first week only”, or reply “continue”.';
+  if (stop === 'pause_turn') return '⚠️ ' + AIN() + ' was still searching when the time ran out. Reply “continue” to let it finish, or ask for a smaller part.';
+  if (stop === 'refusal') return '⚠️ ' + AIN() + ' declined to answer this one.';
+  return '⚠️ ' + AIN() + ' gave no answer (' + (stop || 'unknown reason') + '). Try again or ask in other words.';
 }
-const thCut = stop => stop === 'max_tokens' ? '\n\n*(The answer was cut off here — reply “continue” for the rest.)*' : stop === 'pause_turn' ? '\n\n*(Claude was still searching — reply “continue” to let it finish.)*' : '';
+const thCut = stop => stop === 'max_tokens' ? '\n\n*(The answer was cut off here — reply “continue” for the rest.)*' : stop === 'pause_turn' ? '\n\n*(' + AIN() + ' was still searching — reply “continue” to let it finish.)*' : '';
 async function thAsk(msgs){
-  if (webOn()){
+  if (webOn() && AIP[aiProv()].web){
     const r = await askClaudeWeb(SELAI_MODEL, msgs, 16000, thSys(true));
     if (!r.noWeb){
       let t = r.text ? r.text + thCut(r.stop) : thNoAnswer(r.stop);
@@ -6511,13 +6660,15 @@ async function thAsk(msgs){
       const u = usageLine(r.usage, SELAI_MODEL);
       return t + (u ? '\n\n' + u : '');
     }
-    if (!WEB_WARNED){ WEB_WARNED = true; toast('Web search isn’t available for your Claude key (it can be turned on in console.anthropic.com → Settings → Privacy). Answering without it.', 9000); }
+    if (!WEB_WARNED){ WEB_WARNED = true; const p = aiProv(); toast(p === 'deepseek' ? 'DeepSeek can’t search the web — answering without it. For web search choose Claude or OpenAI in AI settings.' : p === 'openai' ? 'Web search didn’t work with your OpenAI key or model — answering without it.' : 'Web search isn’t available for your Claude key (it can be turned on in console.anthropic.com → Settings → Privacy). Answering without it.', 9000); }
   }
   const a = (await askClaude(SELAI_MODEL, msgs, 12000, thSys(false))).trim();
   const t = a ? a + thCut(AI_USAGE.stop) : thNoAnswer(AI_USAGE.stop), u = usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL);
   return t + (u ? '\n\n' + u : '');
 }
-const webToggle = () => `<label class="webtog" title="Let Claude search the web when the answer depends on current facts (about 1 cent per search)"><input type="checkbox" data-web="1" ${webOn() ? 'checked' : ''}>${UI('globe')}<span>Search the web</span></label>`;
+const webToggle = () => AIP[aiProv()].web
+  ? `<label class="webtog" title="Let ${AIN()} search the web when the answer depends on current facts (about 1 cent per search)"><input type="checkbox" data-web="1" ${webOn() ? 'checked' : ''}>${UI('globe')}<span>Search the web</span></label>`
+  : `<label class="webtog off" title="DeepSeek can’t search the web — choose Claude or OpenAI in AI settings for that"><input type="checkbox" disabled>${UI('globe')}<span>No web search with ${AIN()}</span></label>`;
 const TH_YOU = /^\*\*You:\*\*\s?/;
 const TH_SKIP = /%%(chat-wait-\d+|th-err)%%/;
 let TH_N = 0;
@@ -6529,7 +6680,7 @@ function thMessages(doc, x, n){
   const turns = []; let cur = null;
   for (let i = x.head + 1; i <= x.last; i++){
     const t = doc.line(i).text.replace(/^\s*>\s?/, '');
-    if (TH_SKIP.test(t) || /^\*Tokens: .* cost \$[\d.]+\*\s*$/.test(t) || /^⚠️ Claude (ran out of room|was still searching|declined|gave no answer)/.test(t)) continue;
+    if (TH_SKIP.test(t) || /^\*(?:[^*]* · )?Tokens: [^*]*\*\s*$/.test(t) || /^⚠️ (Claude|OpenAI|DeepSeek) (ran out of room|was still searching|declined|gave no answer)/.test(t)) continue;
     if (TH_YOU.test(t)){ turns.push({ role:'user', content: t.replace(TH_YOU, '') }); cur = null; continue; }
     if (!cur){ cur = { role:'assistant', content:'' }; turns.push(cur); }
     cur.content += t + '\n';
@@ -6548,7 +6699,7 @@ function thMessages(doc, x, n){
   for (const t of tt){ const l = msgs[msgs.length - 1]; if (l.role === t.role) l.content += '\n\n' + t.content; else msgs.push(t); }
   return msgs;
 }
-function thWarnOnce(){ try { if (!localStorage.getItem('qn-chat-warned')){ localStorage.setItem('qn-chat-warned', '1'); toast('💬 Each reply sends the note and the whole thread to Claude — long threads use more tokens (about 1–5 cents per reply)', 6000); } } catch(e){} }
+function thWarnOnce(){ try { if (!localStorage.getItem('qn-chat-warned')){ localStorage.setItem('qn-chat-warned', '1'); toast('💬 Each reply sends the note and the whole thread to ' + AIN() + ' — long threads use more tokens (about 1–5 cents per reply)', 6000); } } catch(e){} }
 // ask Claude and put the answer where the waiting line (mark) is
 async function thRun(n, mark){
   const v = S.editor && S.editorPath === n.path ? S.editor.view : null; if (!v) return;
@@ -6568,13 +6719,13 @@ async function thRun(n, mark){
   aibBtn();
   if (err) toast(err + ' — reply again to retry', 6000);
 }
-const thWait = id => '⏳ Claude is writing… %%chat-wait-' + id + '%%';
+const thWait = id => '⏳ ' + AIN() + ' is writing… %%chat-wait-' + id + '%%';
 // new thread under the selected text
 async function thStart(q){
   q = (q || '').trim();
   const n = SELAI.sel && S.notes.get(SELAI.sel.path); if (!n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
-  if (!aiKey() && !(await aiAskKey('Turn on AI to chat with Claude'))) return;
+  if (!aiKey() && !(await aiAskKey('Turn on AI to chat in your notes'))) return;
   const id = ++TH_N, mark = '%%chat-wait-' + id + '%%';
   Object.assign(SELAI, { a: (q ? '**You:** ' + q.replace(/\n+/g, ' ') + '\n\n' : '') + thWait(id), label:'Thread', q:'' });
   if (!selAiInsert('below', true)) return;
@@ -6585,7 +6736,7 @@ async function thReply(q){
   q = (q || '').trim(); if (!q) return;
   const v = S.editor && S.editor.view, s = SELAI.sel; if (!v || !s || S.editorPath !== s.path) return toast('Open the note first');
   const n = S.notes.get(s.path); if (!n) return;
-  if (!aiKey() && !(await aiAskKey('Turn on AI to chat with Claude'))) return;
+  if (!aiKey() && !(await aiAskKey('Turn on AI to chat in your notes'))) return;
   const doc = v.state.doc, x = thFind(doc, doc.lineAt(Math.min(SELAI.thread, doc.length)).number);
   if (!x) return toast('This thread is no longer there');
   const about = s.text && s.text.trim() ? '(about “' + s.text.replace(/\s+/g, ' ').trim().slice(0, 80) + (s.text.trim().length > 80 ? '…' : '') + '”) ' : '';
@@ -6639,14 +6790,14 @@ async function thSummarize(head){
   if (msgs.length < 2) return toast('Nothing to summarize yet');
   if (last.role === 'user') last.content += '\n\n' + TH_SUM_Q; else msgs.push({ role:'user', content: TH_SUM_Q });
   const id = ++TH_N, mark = '%%chat-wait-' + id + '%%';
-  const box = '> [!ai] Summary of thread\n> ' + thWait(id).replace('Claude is writing', 'Claude is summarizing');
+  const box = '> [!ai] Summary of thread\n> ' + thWait(id).replace(' is writing', ' is summarizing');
   const old = thSumBox(doc, x), L = doc.line(x.last);
   const change = old ? { from: doc.line(old.head).from, to: doc.line(old.last).to, insert: box } : { from: L.to, insert: '\n\n' + box };
   v.dispatch({ changes: change, userEvent:'input' });
   thSetFold(x.head, true);
   thWarnOnce();
   let out = '', err = '';
-  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, thSys(false))).trim() || 'Claude gave no summary. Try again.'; { const u = usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL); if (u) out += '\n\n' + u; } }
+  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, thSys(false))).trim() || AIN() + ' gave no summary. Try again.'; { const u = usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL); if (u) out += '\n\n' + u; } }
   catch(e){ err = e.message; out = '⚠️ ' + e.message + ' — click ✓ Summarize again %%th-err%%'; }
   const put = d => { const i = d.indexOf(mark); if (i < 0) return null; const a = d.lastIndexOf('\n', i) + 1, b = d.indexOf('\n', i); return { from:a, to: b < 0 ? d.length : b, insert: thLines(out) }; };
   const m = S.notes.get(n.path) || n;
@@ -6681,9 +6832,9 @@ function thWidget(){
     ignoreEvent(){ return true; }
     toDOM(){
       const el = document.createElement('div'); el.className = 'cm-threply';
-      const b = document.createElement('button'); b.innerHTML = UI('reply') + 'Reply'; b.title = 'Continue this thread with Claude';
+      const b = document.createElement('button'); b.innerHTML = UI('reply') + 'Reply'; b.title = 'Continue this thread with ' + AIN();
       b.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thOpenReply(this.head, b); };
-      const s = document.createElement('button'); s.innerHTML = UI('list-checks') + 'Summarize'; s.title = 'Done? Claude writes a short summary under the thread (decisions, plan, open questions, next steps) and folds the thread';
+      const s = document.createElement('button'); s.innerHTML = UI('list-checks') + 'Summarize'; s.title = 'Done? ' + AIN() + ' writes a short summary under the thread (decisions, plan, open questions, next steps) and folds the thread';
       s.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSummarize(this.head); };
       const f = document.createElement('button'); f.className = 'thfold'; f.innerHTML = UI('chevron-up') + 'Fold'; f.title = 'Fold the thread into a small chip (nothing is deleted)';
       f.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSetFold(this.head, true); };
@@ -6737,7 +6888,7 @@ function selAiRender(){
       ${short ? `<div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>` : ''}
       <div class="saquick">${prChips('saq', false)}</div>
       <div class="sabar"><input id="selAiIn" placeholder="${short ? 'Ask about this part… (Enter)' : 'Your reply or question… (Enter)'}" autocomplete="off"><button class="primary" data-sa="ask">Send</button></div>
-      <div class="thwarn">${webToggle()}<span>Claude gets the note and the whole thread each time, so long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
+      <div class="thwarn">${webToggle()}<span>${AIN()} gets the note and the whole thread each time, so long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
     selAiFit();
     const ti = $('selAiIn'); if (ti) ti.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); thReply(ti.value); } };
     return;
@@ -6746,7 +6897,7 @@ function selAiRender(){
     <div class="sasel" title="${esc(short.slice(0, 600))}">“${esc(short.length > 140 ? short.slice(0, 140) + '…' : short)}”</div>
     <div class="saquick">${prChips('saq', false)}</div>
     <div class="sabar"><input id="selAiIn" placeholder="Ask or chat about this text… (Enter)" autocomplete="off"><button class="primary" data-sa="ask">Ask</button></div>
-    <div class="thwarn">${webToggle()}<span>Claude answers in the note, right under your text. Continue there with Reply. Long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
+    <div class="thwarn">${webToggle()}<span>${AIN()} answers in the note, right under your text. Continue there with Reply. Long threads use more tokens (about 1–5 cents per reply, plus about 1 cent per web search).</span></div>`;
   selAiFit();
   const inp = $('selAiIn');
   if (inp) inp.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); selAiAsk(inp.value); } };
@@ -6762,7 +6913,7 @@ async function selAiAsk(q, rewrite, label){
   // rewrites (Improve, translations) replace the selected text directly
   const sel = SELAI.sel;
   SELAI.q = q; SELAI.label = label || ''; SELAI.a = ''; SELAI.err = ''; SELAI.busy = true; SELAI.rewrite = true;
-  $('selAi').style.display = 'none'; toast('Claude is working on the selected text…');
+  $('selAi').style.display = 'none'; toast(AIN() + ' is working on the selected text…');
   let body = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
   if (body.length > 14000){ const at = Math.max(0, body.indexOf(SELAI.sel.text) - 6000); body = (at ? '[…]\n' : '') + body.slice(at, at + 14000) + '\n[…]'; }
   const system = `You help the user with a passage they selected in one of their personal notes. The whole note is given for context; focus on the selected passage.
@@ -6774,7 +6925,7 @@ async function selAiAsk(q, rewrite, label){
   try { ans = (await askClaude(SELAI_MODEL, [{ role:'user', content }], 3000, system)).trim(); }
   catch(e){ SELAI.busy = false; return toast(e.message, 6000); }
   SELAI.busy = false;
-  if (!ans) return toast('Claude gave no answer. Try again.');
+  if (!ans) return toast(AIN() + ' gave no answer. Try again.');
   Object.assign(SELAI, { sel, a: ans });
   if (selAiInsert('replace', true)) toast('Replaced — Ctrl+Z to undo' + (usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL) ? ' · ' + usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL).replace(/\*/g, '') : ''), 6000);
 }
@@ -6849,7 +7000,7 @@ function selAiRemoveBox(){
   document.body.appendChild(b);
   const p = document.createElement('div'); p.id = 'selAi'; document.body.appendChild(p);
   p.addEventListener('mousedown', e => { if (!e.target.closest('input,label')) e.preventDefault(); });
-  p.addEventListener('change', e => { const w = e.target.closest('[data-web]'); if (w){ webSet(w.checked); toast(w.checked ? 'Claude may search the web in threads' : 'Web search off — Claude answers from what it knows'); } });
+  p.addEventListener('change', e => { const w = e.target.closest('[data-web]'); if (w){ webSet(w.checked); toast(w.checked ? AIN() + ' may search the web in threads' : 'Web search off — ' + AIN() + ' answers from what it knows'); } });
   p.addEventListener('click', e => {
     const q = e.target.closest('[data-saq]'); if (q){ if (q.dataset.saq === 'edit') return prEdit(); const x = prompts()[+q.dataset.saq]; return x && selAiAsk(x.p, !!x.rw, x.name); }
     const a = e.target.closest('[data-sa]'); if (!a) return;
@@ -6883,7 +7034,7 @@ async function aiOpen(n, opts){
     S.ai.state = 'ready'; S.ai.data = d;
   } catch(e){
     if (!S.ai || S.ai.path !== n.path) return;
-    if (e.message === 'BADKEY'){ S.ai.state = 'error'; S.ai.err = 'Claude didn’t accept your API key.'; S.ai.badKey = true; }
+    if (e.message === 'BADKEY'){ S.ai.state = 'error'; S.ai.err = AIN() + ' didn’t accept your API key.'; S.ai.badKey = true; }
     else if (e.message === 'NOKEY'){ S.ai = null; }
     else { S.ai.state = 'error'; S.ai.err = e.message; }
   }
@@ -6918,7 +7069,7 @@ function aiRender0(){
     ${it.imp ? `<div class="arow"><label>Importance</label><span class="ach" data-aiimp="${it.imp}"><span class="dot ${it.imp}"></span>${impL(it.imp)}</span><span class="why">${esc(A.data.why)}</span></div>` : ''}
     ${it.folder ? `<div class="arow"><label>Folder</label><span class="ach" data-aifolder="${esc(it.folder)}">${UI('folder')} ${esc(it.folder)}</span></div>` : ''}
     ${it.summary ? `<div class="arow"><label>Summary</label><span class="asum" data-aisum="1" title="Click to add this summary at the top of the note">${esc(it.summary)}</span></div>` : ''}
-    <div class="afoot"><kbd>Esc</kbd> close · <a data-aix="retry">ask again</a> · <a data-aix="keymenu">Claude key</a></div>
+    <div class="afoot"><kbd>Esc</kbd> close · <a data-aix="retry">ask again</a> · <a data-aix="keymenu">AI settings</a></div>
   </div>`;
 }
 
@@ -6970,7 +7121,7 @@ function prEdit(){
         <div class="prtop"><input data-f="name" value="${esc(x.name)}" placeholder="Button name" maxlength="40">
           <label class="prrw" title="Offer “Replace” for the answer (for rewrites and translations)"><input type="checkbox" data-f="rw" ${x.rw ? 'checked' : ''}> replaces the text</label>
           <span class="sp"></span><button class="ghost" data-pr="up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="ghost" data-pr="down" title="Move down" ${i < l.length - 1 ? '' : 'disabled'}>↓</button><button class="ghost danger" data-pr="del" title="Remove">✕</button></div>
-        <textarea data-f="p" rows="2" placeholder="What should Claude do? e.g. “Turn this into a LinkedIn post.”">${esc(x.p)}</textarea></div>`).join('')}</div>
+        <textarea data-f="p" rows="2" placeholder="What should the AI do? e.g. “Turn this into a LinkedIn post.”">${esc(x.p)}</textarea></div>`).join('')}</div>
       <div class="prft"><button class="ghost" data-pr="add">＋ Add button</button><button class="ghost" data-pr="reset">Reset to the standard buttons</button><span class="sp"></span><button class="ghost" data-pr="close">Cancel</button><button class="primary" data-pr="save">Save</button></div></div>`;
   };
   bg.onclick = e => {
@@ -7000,7 +7151,7 @@ function naiHtml(n){
   return `<div class="nai"><div class="arow"><label>Ask</label><div class="naiw">
       <div class="saquick">${prChips('naq', NAI.busy)}</div>
       <div class="sabar"><input id="naiIn" placeholder="Ask anything about this note… (Enter)" value="${esc(NAI.label ? '' : NAI.q)}" ${NAI.busy ? 'disabled' : ''} autocomplete="off"><button class="primary" data-nai="ask" ${NAI.busy ? 'disabled' : ''}>${NAI.busy ? '…' : 'Ask'}</button></div>
-      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> Claude is reading the note…</div>` : ''}
+      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> ${AIN()} is reading the note…</div>` : ''}
       ${NAI.err ? `<div class="saans saerr">${esc(NAI.err)}</div>` : ''}
       ${NAI.a && !NAI.busy ? `${NAI.label ? `<div class="nailbl">${esc(NAI.label)}</div>` : ''}<div class="saans">${mdToPrintHtml(NAI.a, [])}</div>
         <div class="saact">${NAI.rw ? `<button class="primary" data-nai="replace" title="Put the answer in place of the whole note text (Ctrl+Z undoes it)">Replace note text</button>` : ''}
@@ -7039,7 +7190,7 @@ async function naiAsk(q, rw, label){
 - If the request is to rewrite, improve or translate, return ONLY the new text of the whole note, keeping its formatting (headings, lists, links like [[...]]).
 - Otherwise answer in the language of the request.`;
   const content = `NOTE TITLE: ${n.name}\n<note>\n${body}\n</note>\n\nREQUEST: ${q}`;
-  try { NAI.a = (await askClaude(SELAI_MODEL, [{ role:'user', content }], rw ? 8000 : 2500, system)) || 'Claude gave no answer. Try asking in other words.'; }
+  try { NAI.a = (await askClaude(SELAI_MODEL, [{ role:'user', content }], rw ? 8000 : 2500, system)) || AIN() + ' gave no answer. Try asking in other words.'; }
   catch(e){ NAI.err = e.message; }
   NAI.busy = false;
   if (S.ai && cur() === n) aiRender();
@@ -7066,7 +7217,7 @@ async function naiClick(b, n){
   const title = (NAI.label || NAI.q).replace(/\s+/g, ' ').trim().slice(0, 140);
   const box = '> [!ai] ' + title + '\n' + a.split('\n').map(l => l.trim() ? '> ' + l : '>').join('\n');
   if (k === 'replace'){
-    if (!await confirmIt('Replace the whole text of “' + n.name + '” with Claude’s answer? (Ctrl+Z undoes it; Version history keeps the old text too.)', 'Replace')) return;
+    if (!await confirmIt('Replace the whole text of “' + n.name + '” with ' + AIN() + '’s answer? (Ctrl+Z undoes it; Version history keeps the old text too.)', 'Replace')) return;
     naiEdit(n, d => ({ from:0, to:d.length, insert:a + '\n' })); toast('Note text replaced — Ctrl+Z to undo');
   }
   else if (k === 'top'){
@@ -7133,9 +7284,9 @@ async function aiTidy(folder){
 function aiKeyMenu(){
   const has = !!aiKey();
   return [
-    { head: has ? 'Claude key: saved on this PC (…' + esc(aiKey().slice(-4)) + ')' : 'No Claude key on this PC yet' },
-    { icon:'🔑', label: has ? 'Change Claude key…' : 'Add Claude key…', run: async () => { if (await aiAskKey(has ? 'Change your Claude API key' : 'Turn on ✨ AI suggestions')){ const n = cur(); if (S.ai && n && S.ai.path === n.path) aiOpen(n); } } },
-    ...(has ? [{ icon:'🗑', label:'Remove Claude key from this PC', danger:true, run: () => { try { localStorage.removeItem('qn-claude-key'); } catch(e){} AI.cache.clear(); S.ai = null; renderEditor(); toast('Claude key removed from this PC'); } }] : [])
+    { head: 'AI: ' + AIN() + ' · ' + esc(aiLabel(aiChosen())) + (has ? ' · key …' + esc(aiKey().slice(-4)) : ' · no key yet') },
+    { icon:'⚙', label:'AI settings (provider, key, model)…', run: async () => { if (await aiSettings()){ const n = cur(); if (S.ai && n && S.ai.path === n.path) aiOpen(n); } } },
+    ...(has ? [{ icon:'🗑', label:'Remove ' + AIN() + ' key from this PC', danger:true, run: () => { lsSet(AIP[aiProv()].keyLS, ''); AI.cache.clear(); S.ai = null; renderEditor(); toast(AIN() + ' key removed from this PC'); } }] : [])
   ];
 }
 $('aiBtn').addEventListener('contextmenu', e => { e.preventDefault(); showCtx(e.clientX, e.clientY, aiKeyMenu()); });
@@ -7215,7 +7366,7 @@ $('orgBtn').onclick = () => orgOpenPage();
 $('sendTblBtn').onclick = () => { const n = cur(); if (n) guard(() => sendToTable(n))(); };
 // opening a note from the sidebar or a tab closes the Organize page
 ['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (orgIsOpen() && e.target.closest('.item[data-p], .tab, [data-p]')) orgClose(); }, true));
-$('aiBtn').title = 'AI suggestions: tags, importance, folder, summary (right-click: Claude key)';
+$('aiBtn').title = 'AI suggestions: tags, importance, folder, summary (right-click: AI settings)';
 (function(){   // one quiet line-icon style for the app's own buttons
   const set = (id, name, label) => { const b = $(id); if (b) b.innerHTML = UI(name) + (label ? ' ' + label : ''); };
   set('clipBtn', 'globe'); set('newMapBtn', 'waypoints'); set('todayBtn', 'calendar'); set('newFolderBtn', 'folder-plus'); set('orgBtn', 'folder-tree'); set('expandAll', 'chevrons-up-down'); set('collapseAll', 'chevrons-down-up');
@@ -7237,7 +7388,7 @@ $('scroll').addEventListener('click', async e => {
     if (a === 'close'){ S.ai = null; renderEditor(); return; }
     if (a === 'all') return aiAcceptAll();
     if (a === 'retry'){ for (const k of [...AI.cache.keys()]) if (k.startsWith(n.path + '|')) AI.cache.delete(k); return aiOpen(n); }
-    if (a === 'key'){ if (await aiAskKey('Change your Claude API key')) aiOpen(n); return; }
+    if (a === 'key'){ if (await aiSettings()) aiOpen(n); return; }
     if (a === 'keymenu'){ const r = x.getBoundingClientRect(); showCtx(r.left, r.bottom + 4, aiKeyMenu()); return; }
   }
   if (t) return aiApply(n, 'tag', t.dataset.aitag);
@@ -8512,7 +8663,7 @@ function renderEditor(){
       <div><label>Tags</label><span class="tags" id="tags">
         ${n.tags.map(t => `<span class="chip">#${esc(t)}<button data-t="${esc(t)}" title="Remove">×</button></span>`).join('')}
         <input class="taginput" id="tagIn" placeholder="add tag…" list="tagList"><datalist id="tagList"></datalist>
-        ${!n.locked && (!n.tags.length || !n.importance) && !(S.ai && S.ai.path === n.path) && !aiSkipFolder(n.folder) ? '<button class="aihint" data-aihint="1" title="Let AI suggest tags, importance, folder and a short summary (right-click: Claude key)">' + UI('sparkles') + ' Suggest</button>' : ''}
+        ${!n.locked && (!n.tags.length || !n.importance) && !(S.ai && S.ai.path === n.path) && !aiSkipFolder(n.folder) ? '<button class="aihint" data-aihint="1" title="Let AI suggest tags, importance, folder and a short summary (right-click: AI settings)">' + UI('sparkles') + ' Suggest</button>' : ''}
       </span></div>
       ${stInTablesRow(n)}
     </div>
@@ -9826,9 +9977,9 @@ function cmdList(){
     ['AI', 'Turn this note into a map (AI)…', '', note && !isMap(n) && !n.locked, () => noteToMap(n)],
     ['AI', 'Suggest tags and importance (AI)', '', note && !n.locked, () => aiOpen(n)],
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
-    ['AI', 'Claude key (add, change or remove)…', '', true, () => { const m = aiKeyMenu(); showCtx(innerWidth / 2 - 120, 120, m); }],
+    ['AI', 'AI settings: Claude, OpenAI or DeepSeek (provider, key, model)…', '', true, () => aiSettings()],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
-    ['AI', webOn() ? 'Turn off web search for AI threads' : 'Turn on web search for AI threads', '', true, () => { webSet(!webOn()); toast(webOn() ? 'Claude may search the web in threads' : 'Web search off'); }],
+    ['AI', webOn() ? 'Turn off web search for AI threads' : 'Turn on web search for AI threads', '', true, () => { webSet(!webOn()); toast(webOn() ? AIN() + ' may search the web in threads' : 'Web search off'); }],
     ['Lock', 'Lock this note…', '', note && !n.locked, () => lockNoteNow(n)],
     ['Lock', 'Remove lock from this note…', '', note && !!n.locked, () => removeLock(n)],
     ['Lock', 'Lock all locked notes now', '', !!S.lockPass, () => lockAll()],

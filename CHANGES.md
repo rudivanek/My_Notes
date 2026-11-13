@@ -4,6 +4,17 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v52-2026-11-13
+**Choose your AI: Claude, OpenAI or DeepSeek.**
+- New **AI settings** (command palette: *AI settings*, or right-click ✨ next to a note title, or *AI settings* at the bottom of the Suggestions panel): pick the provider, paste its key and choose a model. Each provider keeps its own key, so you can switch back and forth.
+- Every AI feature uses the provider you choose: ✨ on selected text, threads, summaries, suggestions, Ask your notes, Note → map and table fields.
+- Each model menu starts with two choices: **recommended** (good and cheap: Claude Haiku 5.5, GPT-6.1 Terra, DeepSeek Flash) and **best quality** (Claude Sonnet 5.5, GPT-6.1 Sol, DeepSeek V4 Pro). **Show all models from your key…** lists every text model your key can use.
+- **Test** checks a key and model right away and says what's wrong (wrong key, no credit, unknown model).
+- **Web search** in threads works with Claude and OpenAI. DeepSeek can't search the web; the switch says so.
+- The grey cost line now starts with the model that answered, for example *Haiku 5.5 · Tokens: 1,200 in · 300 out · cost $0.0027*. DeepSeek's off-peak discount is included.
+- Keys are still saved only in this browser on this PC and go only to that company. Locked notes are never sent.
+- **Note:** the default Claude model is now **Haiku 5.5** (half the price of Sonnet 5.5). To keep Sonnet, choose it in AI settings.
+
 ## v51-2026-11-13
 **Threads reuse what Claude already found.**
 - In a thread with web search, Claude now treats facts, dates, prices and sources from its earlier answers as known and builds on them. It only searches for what is missing or new, for example dates not covered yet, and re-checks an earlier fact only when it matters and may have changed.
