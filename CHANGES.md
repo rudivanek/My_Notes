@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v53-2026-11-13
+**AI settings button in the sidebar.**
+- New robot icon at the bottom left, next to the Appearance (palette) icon: one click opens **AI settings** (Claude, OpenAI or DeepSeek, key, model). Hover over it to see which AI and model are in use.
+- The sidebar footer now wraps to a second line when the sidebar is narrow, so the Appearance and AI settings icons are always visible.
+- In AI threads, your own lines (**You:** …) are now set off like a chat message: moved to the right, with a stronger tint and a little space above, so it's easy to see what you asked.
+
 ## v52-2026-11-13
 **Choose your AI: Claude, OpenAI or DeepSeek.**
 - New **AI settings** (command palette: *AI settings*, or right-click ✨ next to a note title, or *AI settings* at the bottom of the Suggestions panel): pick the provider, paste its key and choose a model. Each provider keeps its own key, so you can switch back and forth.
