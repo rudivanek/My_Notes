@@ -4,6 +4,14 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v43-2026-11-13
+**▶ Run as prompt (optional, off by default).**
+- Write a request in a note — "Plan a trip to Austria", "Outline an app idea about … — market, workflow, risks", "Make me a 3-day workout plan" — and click **▶ Run as prompt** in the ✨ panel.
+- If something important is missing, Claude adds up to 5 questions at the end of the note under **## Questions**. Write your answers after the → and click ▶ again. **⏩ Just go** answers right away and lists what it assumed.
+- The answer goes into a new note "*name* – Answer" next to the request, with links both ways. No templates needed: Claude picks headings that fit the topic and ends with next steps.
+- Optional web search for current facts (prices, competitors…). If your Claude key can't use web search, it answers without it.
+- Turn it on in **✎ My AI buttons** (or the command palette: *Turn on ▶ Run as prompt*). The setting syncs to your other PCs.
+
 ## v42-2026-11-12
 **Pasting tables from Claude (and other web pages) works.**
 - A table copied from Claude, ChatGPT, Google Docs or a web page now becomes a normal Markdown table. Before, tables without a separate header part (like Claude's) were pasted as raw HTML code.

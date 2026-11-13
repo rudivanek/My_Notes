@@ -733,6 +733,10 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .prtop button{padding:3px 8px}.prrw input{width:auto!important;margin:0!important;flex:none}.prrw{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
 .prrow textarea{width:100%;box-sizing:border-box;resize:vertical;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:13px}
 .prft{display:flex;gap:6px;align-items:center;margin-top:10px}
+.rpsep{display:inline-block;width:1px;height:16px;background:var(--line);margin:0 4px;vertical-align:middle}
+.aip .rpinfo{border-left-color:var(--muted);color:var(--fg)}
+.rpset{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 10px;flex:none}.rpset label{cursor:pointer;display:flex;align-items:flex-start;gap:8px}.rpset input[type=checkbox]{width:auto!important;display:inline-block!important;margin:2px 0 0!important;flex:none}
+.rpdesc{color:var(--muted);font-size:12.5px;margin:3px 0 6px 22px}.rpset .rpweb{font-size:12.5px;margin-left:22px;color:var(--muted)}
 .aip .nailbl{margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
 .aip .nailbl+.saans{margin-top:3px}
 .manm{width:min(900px,96vw);height:min(92vh,1100px);max-height:92vh;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
@@ -759,7 +763,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v42-2026-11-12</span>
+      <span class="appver" id="appVer" title="My Notes version">v43-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6638,12 +6642,20 @@ function prEdit(){
     bg.innerHTML = `<div class="modal prm" style="width:min(640px,96vw);max-height:90vh;display:flex;flex-direction:column">
       <div class="prhd"><b>My AI buttons</b><span class="sp"></span><button class="ghost" data-pr="close">✕</button></div>
       <div class="prsub">One list for ✨ Suggestions (whole note) and for selected text. Shared with your other PCs.</div>
+      <div class="rpset"><label><input type="checkbox" data-rp="on" ${rpOn() ? 'checked' : ''}> <b>▶ Run as prompt</b></label>
+        <div class="rpdesc">Adds a ▶ button that treats the note as a request (“plan a trip to Austria…”, “outline an app idea about…”). Claude asks up to 5 questions in the note if something important is missing, then writes the answer into a new linked note.</div>
+        <label class="rpweb"><input type="checkbox" data-rp="web" ${rpWeb() ? 'checked' : ''} ${rpOn() ? '' : 'disabled'}> let it search the web for current facts (prices, competitors…) — a little slower and costs about 1 cent per search</label></div>
       <div class="prlist">${l.map((x, i) => `<div class="prrow" data-i="${i}">
         <div class="prtop"><input data-f="name" value="${esc(x.name)}" placeholder="Button name" maxlength="40">
           <label class="prrw" title="Offer “Replace” for the answer (for rewrites and translations)"><input type="checkbox" data-f="rw" ${x.rw ? 'checked' : ''}> replaces the text</label>
           <span class="sp"></span><button class="ghost" data-pr="up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="ghost" data-pr="down" title="Move down" ${i < l.length - 1 ? '' : 'disabled'}>↓</button><button class="ghost danger" data-pr="del" title="Remove">✕</button></div>
         <textarea data-f="p" rows="2" placeholder="What should Claude do? e.g. “Turn this into a LinkedIn post.”">${esc(x.p)}</textarea></div>`).join('')}</div>
       <div class="prft"><button class="ghost" data-pr="add">＋ Add button</button><button class="ghost" data-pr="reset">Reset to the standard buttons</button><span class="sp"></span><button class="ghost" data-pr="close">Cancel</button><button class="primary" data-pr="save">Save</button></div></div>`;
+  };
+  bg.onchange = e => {
+    const c = e.target.closest('[data-rp]'); if (!c) return;
+    if (c.dataset.rp === 'on'){ rpSet(c.checked); const w = bg.querySelector('[data-rp=web]'); if (w) w.disabled = !c.checked; toast(c.checked ? '▶ Run as prompt is on — find it in ✨ next to a note title' : '▶ Run as prompt is off'); aiRender(); }
+    else rpSetWeb(c.checked);
   };
   bg.onclick = e => {
     const b = e.target.closest('[data-pr]'); if (!b) return;
@@ -6668,11 +6680,12 @@ function prEdit(){
 // Ask about the whole note (inside the ✨ Suggestions panel)
 const NAI = { path:null, q:'', a:'', busy:false, err:'', label:'', rw:false };
 function naiHtml(n){
-  if (NAI.path !== n.path) Object.assign(NAI, { path:n.path, q:'', a:'', busy:false, err:'', label:'', rw:false });
+  if (NAI.path !== n.path) Object.assign(NAI, { path:n.path, q:'', a:'', busy:false, err:'', info:'', label:'', rw:false });
   return `<div class="nai"><div class="arow"><label>Ask</label><div class="naiw">
-      <div class="saquick">${prChips('naq', NAI.busy)}</div>
+      <div class="saquick">${rpChips(n)}${prChips('naq', NAI.busy)}</div>
       <div class="sabar"><input id="naiIn" placeholder="Ask anything about this note… (Enter)" value="${esc(NAI.label ? '' : NAI.q)}" ${NAI.busy ? 'disabled' : ''} autocomplete="off"><button class="primary" data-nai="ask" ${NAI.busy ? 'disabled' : ''}>${NAI.busy ? '…' : 'Ask'}</button></div>
-      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> Claude is reading the note…</div>` : ''}
+      ${NAI.busy ? `<div class="saans saw"><span class="aspin"></span> ${/Run|Just/.test(NAI.label) ? 'Claude is working on your request… (with web search this can take a minute)' : 'Claude is reading the note…'}</div>` : ''}
+      ${NAI.info && !NAI.busy ? `<div class="saans rpinfo">${esc(NAI.info)}</div>` : ''}
       ${NAI.err ? `<div class="saans saerr">${esc(NAI.err)}</div>` : ''}
       ${NAI.a && !NAI.busy ? `${NAI.label ? `<div class="nailbl">${esc(NAI.label)}</div>` : ''}<div class="saans">${mdToPrintHtml(NAI.a, [])}</div>
         <div class="saact">${NAI.rw ? `<button class="primary" data-nai="replace" title="Put the answer in place of the whole note text (Ctrl+Z undoes it)">Replace note text</button>` : ''}
@@ -6703,7 +6716,7 @@ async function naiAsk(q, rw, label){
   q = (q || '').trim(); const n = cur(); if (!q || NAI.busy || !n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
   if (!aiKey() && !(await aiAskKey('Turn on AI to ask about this note'))) return;
-  Object.assign(NAI, { path:n.path, q, a:'', err:'', busy:true, label: label || '', rw: !!rw }); aiRender();
+  Object.assign(NAI, { path:n.path, q, a:'', err:'', info:'', busy:true, label: label || '', rw: !!rw }); aiRender();
   let body = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
   if (body.length > 40000) body = body.slice(0, 40000) + '\n[…]';
   const system = `You help the user with one of their personal notes (given in full).
@@ -6716,6 +6729,120 @@ async function naiAsk(q, rw, label){
   NAI.busy = false;
   if (S.ai && cur() === n) aiRender();
 }
+/* ---------- v43: ▶ Run as prompt (off by default — turn it on in ✎ My AI buttons) ----------
+   The note is a request ("plan a trip to Austria…"). Claude either asks up to 5 questions
+   (written into the note under "## Questions", answer them there and run again)
+   or writes the answer into a new note that links back to the request. */
+const RP_KEY = 'qn-runprompt', RP_WEB = 'qn-runprompt-web';
+const RP_MODEL = 'claude-sonnet-5-5';
+function rpOn(){ try { return localStorage.getItem(RP_KEY) === '1'; } catch(e){ return false; } }
+function rpWeb(){ try { return localStorage.getItem(RP_WEB) !== '0'; } catch(e){ return true; } }
+function rpSet(on){ try { localStorage.setItem(RP_KEY, on ? '1' : '0'); } catch(e){} }
+function rpSetWeb(on){ try { localStorage.setItem(RP_WEB, on ? '1' : '0'); } catch(e){} }
+const RP_QHEAD = '## Questions';
+const rpHasQuestions = t => /^## Questions\s*$/m.test(t || '');
+function rpSystem(force){
+  return `The user wrote a request in one of their personal notes (given in full) and wants you to carry it out: answer it, plan it, outline it — whatever it asks.
+
+First decide whether you have enough to give a genuinely useful answer.
+${force ? '- The user wants the answer NOW. Do not ask anything. Fill every gap with a sensible assumption and list your assumptions.\n' : `- If details are missing that would substantially change the answer (for a trip: dates, who is going, budget, purpose; for a workout plan: goal, level, time per week…), ask instead of answering.
+- Never ask about something the note already answers. If the note already has a "## Questions" section, the user has answered what they wanted to — do NOT ask again: answer now, and fill blanks with sensible assumptions.
+- Ask only what really changes the result: at most 5 short questions.`}
+
+Reply in exactly one of these two forms, in the language the note is written in:
+
+QUESTIONS
+- first question?
+- second question?
+
+or
+
+ANSWER
+<the full answer in Markdown>
+
+For an ANSWER:
+- Answer every question and point in the request. Organise it with ## headings that fit the topic (for an app idea e.g. market, workflow, features, risks; for a trip e.g. route, days, budget, logistics).
+- Be concrete and practical. Use bullet points, short paragraphs, and tables where they help.
+- If you assumed anything, say so briefly near the top ("Assumed: …").
+- End with a "## Next steps" section of 3–6 checkboxes (- [ ] …).
+- Facts that change over time (prices, competitors, opening times, rules) — ${rpWeb() ? 'use web search for the important ones and mention where they come from' : 'say they are from your general knowledge and should be checked'}.
+- No preamble like "Sure!". Do not repeat the request.`;
+}
+async function rpCall(system, content){
+  const key = aiKey();
+  const once = async web => {
+    const msgs = [{ role:'user', content }];
+    let out = '';
+    for (let turn = 0; turn < 4; turn++){
+      let r;
+      try {
+        r = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+          body: JSON.stringify(Object.assign({ model:RP_MODEL, max_tokens:8000, system, messages:msgs }, web ? { tools:[{ type:'web_search_20250305', name:'web_search', max_uses:5 }] } : {}))
+        });
+      } catch(e){ throw new Error('No connection to Claude. Check your internet and try again.'); }
+      if (r.status === 401 || r.status === 403) throw new Error('Your Claude key was not accepted — click ✨ next to a note title, then “Claude key”, to change it.');
+      if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
+      if (!r.ok){
+        let m = ''; try { m = (await r.json()).error.message; } catch(e){}
+        if (web && /web.?search|tool/i.test(m)){ const e = new Error('NOWEB'); e.noWeb = true; throw e; }
+        throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')'));
+      }
+      const j = await r.json();
+      out += (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+      if (j.stop_reason !== 'pause_turn') break;   // a long web search: let Claude continue
+      msgs.push({ role:'assistant', content: j.content });
+    }
+    return out.trim();
+  };
+  if (!rpWeb()) return once(false);
+  try { return await once(true); }
+  catch(e){ if (!e.noWeb) throw e; toast('Web search isn’t available for your Claude key — answering without it'); return once(false); }
+}
+async function rpRun(force){
+  const n = cur(); if (!n || NAI.busy) return;
+  if (n.locked) return toast('AI is turned off for locked notes');
+  if (!(n.body || '').trim()) return toast('Write your request in the note first');
+  if (!aiKey() && !(await aiAskKey('Turn on AI to run this note as a prompt'))) return;
+  if (S.editor && S.editorPath === n.path) n.body = S.editor.view.state.doc.toString();
+  Object.assign(NAI, { path:n.path, q:'', a:'', err:'', info:'', busy:true, label: force ? '⏩ Just go' : '▶ Run as prompt', rw:false }); aiRender();
+  let body = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]');
+  if (body.length > 40000) body = body.slice(0, 40000) + '\n[…]';
+  const content = `NOTE TITLE: ${n.name}\n<note>\n${body}\n</note>`;
+  let t = '';
+  try { t = await rpCall(rpSystem(force), content); }
+  catch(e){ NAI.busy = false; NAI.err = e.message; if (S.ai && cur() === n) aiRender(); return; }
+  NAI.busy = false;
+  const m = t.match(/^\s*(QUESTIONS|ANSWER)\s*\n?/);
+  const kind = m ? m[1] : (/^\s*-\s.*\?\s*$/m.test(t) && t.length < 900 && !/^#/m.test(t) ? 'QUESTIONS' : 'ANSWER');
+  const rest = (m ? t.slice(m[0].length) : t).trim();
+  if (!rest){ NAI.err = 'Claude gave no answer. Try again.'; if (S.ai && cur() === n) aiRender(); return; }
+  if (kind === 'QUESTIONS' && !force){
+    const qs = rest.split('\n').map(l => l.trim()).filter(l => /^[-*•]\s+/.test(l) || /\?$/.test(l)).map(l => l.replace(/^[-*•]\s+/, '')).slice(0, 5);
+    const block = RP_QHEAD + '\n' + (qs.length ? qs : [rest.replace(/\s+/g, ' ')]).map(q => '- ' + q + ' → ').join('\n') + '\n';
+    naiEdit(n, d => ({ from:d.length, insert: (d.trim() ? (d.endsWith('\n') ? '\n' : '\n\n') : '') + block }));
+    NAI.info = 'Claude has ' + (qs.length || 1) + ' question' + ((qs.length || 1) === 1 ? '' : 's') + ' — answer them after the → in the note, then ▶ Run again. Or ⏩ Just go to let Claude assume.';
+    if (S.ai && cur() === n) aiRender();
+    toast('Questions added at the end of the note');
+    return;
+  }
+  // the answer goes into a new note next to the request, linked both ways
+  await guard(async () => {
+    const nn = await createNote((n.name + ' – Answer').slice(0, 90), rest + '\n\n---\nFrom [[' + n.name + ']] · ▶ Run as prompt · ' + new Date().toISOString().slice(0, 10) + '\n', n.external ? '' : n.folder);
+    naiEdit(n, d => ({ from:d.length, insert: (d.endsWith('\n') ? '\n' : '\n\n') + '→ Answer: [[' + nn.name + ']]\n' }));
+    Object.assign(NAI, { info:'', label:'' });
+    S.ai = null; renderSidebar(); openPath(nn.path);
+    toast('Answer saved as “' + nn.name + '” — the request links to it');
+  })();
+}
+function rpChips(n){
+  if (!rpOn()) return '';
+  const q = rpHasQuestions(n.body);
+  return `<button class="primary prchip" data-nrp="run" title="Treat this note as a request: Claude asks what's missing or writes the answer into a new linked note" ${NAI.busy ? 'disabled' : ''}>▶ Run as prompt</button>`
+    + (q ? `<button class="ghost prchip" data-nrp="go" title="Answer now and assume whatever is still open" ${NAI.busy ? 'disabled' : ''}>⏩ Just go</button>` : '')
+    + `<span class="rpsep"></span>`;
+}
 function naiEdit(n, change){   // change: doc text → { from, to, insert }
   if (S.editor && S.editorPath === n.path){
     const v = S.editor.view, c = change(v.state.doc.toString());
@@ -6725,6 +6852,7 @@ function naiEdit(n, change){   // change: doc text → { from, to, insert }
   queueSave(n);
 }
 async function naiClick(b, n){
+  if (b.dataset.nrp) return rpRun(b.dataset.nrp === 'go');
   if (b.dataset.naq != null){
     if (b.dataset.naq === 'edit') return prEdit();
     const x = prompts()[+b.dataset.naq]; if (x) naiAsk(x.p, !!x.rw, x.name); return;
@@ -6903,7 +7031,7 @@ $('scroll').addEventListener('click', async e => {
   const n = cur(); if (!n || !S.ai) return;
   const x = e.target.closest('[data-aix]'), t = e.target.closest('[data-aitag]'), i = e.target.closest('[data-aiimp]'), f = e.target.closest('[data-aifolder]'), sm = e.target.closest('[data-aisum]');
   e.stopPropagation();
-  const nb = e.target.closest('[data-nai],[data-naq]'); if (nb) return naiClick(nb, n);
+  const nb = e.target.closest('[data-nai],[data-naq],[data-nrp]'); if (nb) return naiClick(nb, n);
   if (x){
     const a = x.dataset.aix;
     if (a === 'close'){ S.ai = null; renderEditor(); return; }
@@ -9494,6 +9622,8 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Claude key (add, change or remove)…', '', true, () => { const m = aiKeyMenu(); showCtx(innerWidth / 2 - 120, 120, m); }],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
+    ['AI', 'Run this note as a prompt ▶', '', rpOn() && note && !n.locked, () => { if (!S.ai || S.ai.path !== n.path) aiOpen(n); rpRun(false); }],
+    ['AI', rpOn() ? 'Turn off ▶ Run as prompt' : 'Turn on ▶ Run as prompt', '', true, () => { rpSet(!rpOn()); toast(rpOn() ? '▶ Run as prompt is on — find it in ✨ next to a note title' : '▶ Run as prompt is off'); aiRender(); }],
     ['Lock', 'Lock this note…', '', note && !n.locked, () => lockNoteNow(n)],
     ['Lock', 'Remove lock from this note…', '', note && !!n.locked, () => removeLock(n)],
     ['Lock', 'Lock all locked notes now', '', !!S.lockPass, () => lockAll()],
@@ -9860,7 +9990,7 @@ window.addEventListener('drop', e => { if (!hasFiles(e)) return; if (e.defaultPr
 
 /* ---------- settings stored in the vault (.quietnotes/settings.json) ---------- */
 // Same pins, folders, tabs and look on every PC that opens this vault. The Firecrawl key stays on each PC.
-const VS_SHARED = ['qn-prompts','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
+const VS_SHARED = ['qn-prompts','qn-runprompt','qn-runprompt-web','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
 const VS_PERVAULT = ['qn-savedsearch','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
 const VS_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md';
 const VS = { dir:null, mtime:0, applying:false, timer:null, ready:false };

@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v42 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v43 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [▶ Watch the intro video](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4) (63 seconds, no sound). It was made with version 28, so a few buttons have moved since then: the note buttons now sit next to the note title (see [The screen](#2-the-screen)). The video file is also in the app's folder on GitHub: `Manual/My Notes - intro.mp4`.
@@ -95,6 +95,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Summarize or translate a paragraph | Select it, click the **✨** that appears (needs AI) |
 | Ask anything about the whole note | **✨** next to the note title → **Ask** row (needs AI) |
 | Make my own AI button | **✎** after the AI buttons, or **☆ Save as button** after a question |
+| Let AI plan or outline something I wrote as a request | Turn on **▶ Run as prompt** (✎ My AI buttons), then **✨** → **▶ Run as prompt**, see [Suggestions](#18-suggestions-and-tidy-up) |
 | Save a note as PDF | **Ctrl+Shift+P** |
 | Get changes from my other PC right now | Right-click **All notes** → **Check for changes on disk** |
 
@@ -521,7 +522,7 @@ All AI features use **Claude** by Anthropic. They're optional; everything else w
 - **Locked notes are never sent.**
 - Nothing is sent to anyone else. My Notes has no server of its own.
 
-**Costs** go to your Anthropic account. Rough guide: a suggestion or a selection question costs a fraction of a cent to about a cent; *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
+**Costs** go to your Anthropic account. Rough guide: a suggestion or a selection question costs a fraction of a cent to about a cent; ▶ *Run as prompt* a few cents (plus about 1 cent per web search); *Ask your notes* about 2–5 cents per question; turning a long note into a map a few cents.
 
 ---
 
@@ -544,6 +545,23 @@ At the bottom of the Suggestions panel there's an **Ask** line, so you can do mo
 
 ### My AI buttons
 The buttons are one list, shared by the Suggestions panel and the panel for selected text, and by your PCs (it's stored in the vault's settings note). Click **✎** after the buttons (or the command palette: *My AI buttons*) to change them: rename, reword what Claude should do, tick **replaces the text** for rewrites and translations, move up/down, remove, **＋ Add button**, or **Reset to the standard buttons**.
+
+### ▶ Run as prompt (optional)
+Use a note as a **request** instead of text to work on: "Plan a trip to Austria", "Outline a new app idea about … — tell me about the market and the workflow", "Make me a workout plan for 3 days a week". It works for any topic, without templates.
+
+**Turn it on:** click **✎** after the AI buttons (or the command palette: *Turn on ▶ Run as prompt*) and tick **▶ Run as prompt**. It's off by default. The setting syncs to your other PCs.
+
+1. Write the request in a note, click **✨** next to the title, then **▶ Run as prompt** (or the command palette: *Run this note as a prompt*).
+2. If something important is missing, Claude adds up to 5 questions at the end of the note:
+   ```
+   ## Questions
+   - When are you travelling? → July, 10 days
+   - Personal or business? → personal
+   ```
+   Write your answers after the **→** and click **▶ Run as prompt** again. Leave a question empty if you don't care. **⏩ Just go** answers right away and lists what it assumed.
+3. The answer is saved as a new note **"*name* – Answer"** next to the request, and the request gets a link to it. Claude organises the answer with headings that fit the topic and ends with **Next steps** as checkboxes. Run it again any time for a fresh answer note.
+
+**Web search:** tick *let it search the web* to have Claude look up current facts (prices, competitors, opening times). It's a bit slower and costs about 1 cent per search on top of the answer. If your Claude key can't use web search, the answer comes without it and you get a short notice.
 
 ### Tidy up: notes missing tags or importance
 **Tidy up** (bottom left), or right-click a folder → **Tidy up: notes here missing tags or importance**. My Notes collects the notes that lack tags or importance and walks you through them one by one in **triage** mode, with ✨ suggestions ready.
