@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v41 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v42 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -206,6 +206,8 @@ The formatting bar above the text has bold, italic, strikethrough, headings, nor
 | Ctrl+Alt+T | Insert a table |
 | Ctrl+K (in the text) | Web link |
 | Ctrl+Shift+V | Paste as plain text |
+
+Copied text with formatting (from Claude, a web page, Google Docs…) is turned into Markdown when you paste it: headings, bold, lists, links and **tables** come out as normal Markdown. The first row of a pasted table becomes its header row.
 
 ### Linking notes
 - Type **`[[`** and pick a note from the list, e.g. `[[Website relaunch plan]]`. Or press **Ctrl+Shift+K**.

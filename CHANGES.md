@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v42-2026-11-12
+**Pasting tables from Claude (and other web pages) works.**
+- A table copied from Claude, ChatGPT, Google Docs or a web page now becomes a normal Markdown table. Before, tables without a separate header part (like Claude's) were pasted as raw HTML code.
+- The first row becomes the header row. Text that sits in several paragraphs inside one cell is joined into one line, and `|` inside a cell is kept as text, so the table never breaks.
+- Ctrl+Shift+V still pastes plain text.
+
 ## v41-2026-11-12
 **My Notes on your phone.**
 - **My Notes Mobile** (`m/`, online at https://rudivanek.github.io/My_Notes/m/) is a separate phone app with its own design. It works on the same vault through **Dropbox**. Start screen: recent notes and pins. It also has folders, search (`tag:`, `folder:`), tags, reading with links, backlinks, pictures and tappable checkboxes, editing with a small formatting bar, **+** for quick notes (to *Inbox*), importance, tags, pin and trash.
