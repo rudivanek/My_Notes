@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v49 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v50 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -626,6 +626,8 @@ Have a conversation with Claude **inside the note**, starting from any text:
 The thread is saved in the note like any other text: come back tomorrow and reply again, edit or delete parts, or hide it with **✦ Hide AI**. If Claude can't answer (no connection, busy), a ⚠️ line appears in the thread; just reply again.
 
 **Web search:** in threads, Claude can search the web when the answer depends on current facts (news, prices, products, opening times, rules, companies), and lists its **Sources** as links at the end of the answer. It uses Claude's own web search, so you don't need an extra account or key; it costs about 1 cent per search. Switch it off with **Search the web** in the ✨ popup. If web search is turned off for your Claude key (some company accounts), you get a short notice and the answer comes without it. Claude can't book anything or see live booking-site fares.
+
+**Cost of each answer:** every thread answer and summary ends with a small grey line like *Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0321* (USD, at Claude Sonnet 5.5 prices: $2 per million input tokens, $10 per million output tokens, about $0.01 per web search). If a very big request gets cut off, the thread says so; reply "continue" or ask for a smaller part.
 
 **What Claude sees:** the note and the whole thread, every time. **Costs:** long threads use more tokens, roughly 1–5 cents per reply; the reply box reminds you. 
 

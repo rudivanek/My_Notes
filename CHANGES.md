@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v50-2026-11-13
+**Token use and cost after every AI answer. Big requests no longer come back empty.**
+- Every thread answer and every thread summary now ends with a small grey line, for example *Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0321*. The cost is in USD with four decimals, at Claude Sonnet 5.5 prices ($2 per million input tokens, $10 per million output tokens, about $0.01 per web search). Improve and the translations show it in the notice after replacing the text.
+- These lines are not sent back to Claude in the next reply.
+- Fix: very big requests (for example an 18-day plan with many searches) sometimes ended with "Claude gave no answer", because Claude ran out of room while searching. Claude now has much more room for an answer (16,000 output tokens with web search). If an answer still gets cut off or is empty, the thread says why and suggests replying "continue" or asking for a smaller part.
+
 ## v49-2026-11-13
 **AI threads can search the web.**
 - In threads (and Explain, Summarize… started from ✨), Claude can now search the web when the answer depends on current facts: news, prices, products, opening times, rules, companies. It decides by itself when a search is worth it.

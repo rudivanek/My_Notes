@@ -733,6 +733,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .prtop button{padding:3px 8px}.prrw input{width:auto!important;margin:0!important;flex:none}.prrw{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
 .prrow textarea{width:100%;box-sizing:border-box;resize:vertical;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:13px}
 .prft{display:flex;gap:6px;align-items:center;margin-top:10px}
+.cm-line.cm-aicost{font-size:11.5px;color:var(--muted)!important;font-style:normal}
 .cm-line.cm-aiyou{font-weight:600;padding-top:4px!important;background:color-mix(in srgb,var(--accent) 14%,transparent)!important}
 .cm-threply{display:flex;align-items:center;gap:10px;margin:2px 0 10px;padding-left:4px;font-size:12px;color:var(--muted)}
 .cm-threply button{font:inherit;font-weight:600;color:var(--accent);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px 10px;cursor:pointer}
@@ -769,7 +770,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v49-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v50-2026-11-13</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -5506,7 +5507,24 @@ async function askClaude(model, messages, maxTokens, system){
   if (r.status === 429 || r.status === 529 || r.status >= 500) throw new Error('Claude is busy right now. Try again in a moment.');
   if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')')); }
   const j = await r.json();
+  AI_USAGE.last = j.usage || null; AI_USAGE.stop = j.stop_reason || '';
   return (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+}
+// v50: token use and cost (USD per million tokens; web search per search)
+const AI_USAGE = { last:null };
+const AI_PRICE = { 'claude-sonnet-5-5':{ in:2, out:10, cw:2.5, cr:0.2 }, 'claude-haiku-5-5':{ in:1, out:5, cw:1.25, cr:0.1 } };
+const AI_SEARCH_USD = 0.01;
+function usageAdd(a, u){
+  a = a || { in:0, out:0, cw:0, cr:0, web:0 }; if (!u) return a;
+  a.in += u.input_tokens || 0; a.out += u.output_tokens || 0; a.cw += u.cache_creation_input_tokens || 0; a.cr += u.cache_read_input_tokens || 0;
+  a.web += (u.server_tool_use && u.server_tool_use.web_search_requests) || 0; return a;
+}
+function usageLine(a, model){
+  if (!a || !(a.in + a.out + a.cw + a.cr)) return '';
+  const p = AI_PRICE[model] || AI_PRICE['claude-sonnet-5-5'];
+  const usd = (a.in * p.in + a.out * p.out + a.cw * p.cw + a.cr * p.cr) / 1e6 + a.web * AI_SEARCH_USD;
+  const f = n => n.toLocaleString('en-US');
+  return '*Tokens: ' + f(a.in + a.cw + a.cr) + ' in · ' + f(a.out) + ' out' + (a.web ? ' · ' + a.web + ' web search' + (a.web === 1 ? '' : 'es') : '') + ' · cost $' + usd.toFixed(4) + '*';
 }
 // search words for the question (Haiku), with the earlier questions so "and the agency plan?" still makes sense
 async function askKeywords(q){
@@ -6416,6 +6434,7 @@ window.qnQuoteClass = (doc, pos) => {
   let cls = 'cm-aibox';
   if (head.number === line.number) cls += ' cm-aihead';
   else if (/^\s*>\s*\*\*You:\*\*/.test(line.text)) cls += ' cm-aiyou';
+  else if (/^\s*>\s*\*Tokens: /.test(line.text)) cls += ' cm-aicost';
   if (line.number === doc.lines || !isQ(doc.line(line.number + 1))) cls += ' cm-ailast';
   return { cls, mark: head.number === line.number ? [head.from + m[1].length, head.from + m[0].length] : null };
 };
@@ -6441,8 +6460,8 @@ const thSys = web => TH_SYS.replace('- You can\'t browse the web or see live pri
 // like askClaude, but with web search; returns { text, sources:[{url,title}], noWeb }
 async function askClaudeWeb(model, messages, maxTokens, system){
   const key = aiKey(), msgs = messages.slice();
-  let text = '', sources = [], seen = new Set();
-  for (let turn = 0; turn < 4; turn++){
+  let text = '', sources = [], seen = new Set(), usage = null, stop = '';
+  for (let turn = 0; turn < 8; turn++){
     let r;
     try {
       r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -6459,6 +6478,7 @@ async function askClaudeWeb(model, messages, maxTokens, system){
       throw new Error(/credit|balance|billing/i.test(m) ? 'Your Anthropic account has no credit left. Add some at console.anthropic.com.' : 'Claude couldn’t answer' + (m ? ': ' + m : ' (' + r.status + ')'));
     }
     const j = await r.json();
+    usage = usageAdd(usage, j.usage);
     for (const c of (j.content || [])){
       if (c.type === 'text'){
         text += c.text;
@@ -6467,23 +6487,35 @@ async function askClaudeWeb(model, messages, maxTokens, system){
         if (/disabled|not_enabled|unavailable/i.test(c.content.error_code)) return { noWeb:true, why:c.content.error_code };
       }
     }
-    if (j.stop_reason !== 'pause_turn') break;   // a long search: let Claude carry on
+    stop = j.stop_reason || '';
+    if (stop !== 'pause_turn') break;   // a long search: let Claude carry on
     msgs.push({ role:'assistant', content:j.content });
   }
-  return { text: text.trim(), sources };
+  return { text: text.trim(), sources, usage, stop };
 }
 let WEB_WARNED = false;
+// v50: say why an answer is empty or cut off
+function thNoAnswer(stop){
+  if (stop === 'max_tokens') return '⚠️ Claude ran out of room before it could write the answer (big request with many searches). Ask for a smaller part, e.g. “first week only”, or reply “continue”.';
+  if (stop === 'pause_turn') return '⚠️ Claude was still searching when the time ran out. Reply “continue” to let it finish, or ask for a smaller part.';
+  if (stop === 'refusal') return '⚠️ Claude declined to answer this one.';
+  return '⚠️ Claude gave no answer (' + (stop || 'unknown reason') + '). Try again or ask in other words.';
+}
+const thCut = stop => stop === 'max_tokens' ? '\n\n*(The answer was cut off here — reply “continue” for the rest.)*' : stop === 'pause_turn' ? '\n\n*(Claude was still searching — reply “continue” to let it finish.)*' : '';
 async function thAsk(msgs){
   if (webOn()){
-    const r = await askClaudeWeb(SELAI_MODEL, msgs, 4000, thSys(true));
+    const r = await askClaudeWeb(SELAI_MODEL, msgs, 16000, thSys(true));
     if (!r.noWeb){
-      let t = r.text || 'Claude gave no answer. Try asking in other words.';
+      let t = r.text ? r.text + thCut(r.stop) : thNoAnswer(r.stop);
       if (r.sources.length) t += '\n\n**Sources:**\n' + r.sources.slice(0, 8).map(s => '- [' + s.title.slice(0, 90) + '](' + s.url + ')').join('\n');
-      return t;
+      const u = usageLine(r.usage, SELAI_MODEL);
+      return t + (u ? '\n\n' + u : '');
     }
     if (!WEB_WARNED){ WEB_WARNED = true; toast('Web search isn’t available for your Claude key (it can be turned on in console.anthropic.com → Settings → Privacy). Answering without it.', 9000); }
   }
-  return (await askClaude(SELAI_MODEL, msgs, 3000, thSys(false))).trim() || 'Claude gave no answer. Try asking in other words.';
+  const a = (await askClaude(SELAI_MODEL, msgs, 12000, thSys(false))).trim();
+  const t = a ? a + thCut(AI_USAGE.stop) : thNoAnswer(AI_USAGE.stop), u = usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL);
+  return t + (u ? '\n\n' + u : '');
 }
 const webToggle = () => `<label class="webtog" title="Let Claude search the web when the answer depends on current facts (about 1 cent per search)"><input type="checkbox" data-web="1" ${webOn() ? 'checked' : ''}>${UI('globe')}<span>Search the web</span></label>`;
 const TH_YOU = /^\*\*You:\*\*\s?/;
@@ -6497,7 +6529,7 @@ function thMessages(doc, x, n){
   const turns = []; let cur = null;
   for (let i = x.head + 1; i <= x.last; i++){
     const t = doc.line(i).text.replace(/^\s*>\s?/, '');
-    if (TH_SKIP.test(t)) continue;
+    if (TH_SKIP.test(t) || /^\*Tokens: .* cost \$[\d.]+\*\s*$/.test(t) || /^⚠️ Claude (ran out of room|was still searching|declined|gave no answer)/.test(t)) continue;
     if (TH_YOU.test(t)){ turns.push({ role:'user', content: t.replace(TH_YOU, '') }); cur = null; continue; }
     if (!cur){ cur = { role:'assistant', content:'' }; turns.push(cur); }
     cur.content += t + '\n';
@@ -6614,7 +6646,7 @@ async function thSummarize(head){
   thSetFold(x.head, true);
   thWarnOnce();
   let out = '', err = '';
-  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, thSys(false))).trim() || 'Claude gave no summary. Try again.'; }
+  try { out = (await askClaude(SELAI_MODEL, msgs, 2000, thSys(false))).trim() || 'Claude gave no summary. Try again.'; { const u = usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL); if (u) out += '\n\n' + u; } }
   catch(e){ err = e.message; out = '⚠️ ' + e.message + ' — click ✓ Summarize again %%th-err%%'; }
   const put = d => { const i = d.indexOf(mark); if (i < 0) return null; const a = d.lastIndexOf('\n', i) + 1, b = d.indexOf('\n', i); return { from:a, to: b < 0 ? d.length : b, insert: thLines(out) }; };
   const m = S.notes.get(n.path) || n;
@@ -6744,7 +6776,7 @@ async function selAiAsk(q, rewrite, label){
   SELAI.busy = false;
   if (!ans) return toast('Claude gave no answer. Try again.');
   Object.assign(SELAI, { sel, a: ans });
-  selAiInsert('replace');
+  if (selAiInsert('replace', true)) toast('Replaced — Ctrl+Z to undo' + (usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL) ? ' · ' + usageLine(usageAdd(null, AI_USAGE.last), SELAI_MODEL).replace(/\*/g, '') : ''), 6000);
 }
 // v48: the paragraph around pos — neighbouring non-empty lines, stopping at a new list item, heading, callout or "You:" line
 function paraRange(doc, pos){
