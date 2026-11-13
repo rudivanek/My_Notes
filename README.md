@@ -35,7 +35,7 @@ A calm, fast notes app for your own computer. Your notes are plain **Markdown fi
 
 ## My Notes and Obsidian
 
-My Notes is a lightweight **Obsidian alternative** for people who want something simpler. Your vault works in both: you can open the same folder in My Notes and in Obsidian, even side by side.
+My Notes is a lighter app for the same kind of vault, for people who want something simpler. Your vault works in both: you can open the same folder in My Notes and in Obsidian, even side by side.
 
 **The same in both**
 - Plain Markdown files in your own folder, with `[[links]]`, backlinks, tags and properties (YAML front matter)
