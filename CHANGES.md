@@ -4,6 +4,11 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v57-2026-11-14
+**Organize vault waits for Dropbox.**
+- A cleanup could stop with *"An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk"*: Dropbox was still syncing a file while it was being moved. Now each file is read in one go and, if it is busy, tried again up to 6 times with a short wait (the progress line says *Waiting for Dropbox…*).
+- **Undo** does the same. If some files are still busy, it now says *Partly undone* and keeps only those, so you can click **Undo this cleanup** again later — before, they were skipped for good.
+
 ## v56-2026-11-14
 **Organize vault — AI suggests a tidier folder structure, you decide, one button undoes it.**
 - New **Organize** button at the bottom left of the sidebar, next to **Tidy up** (also in the command palette: *Organize vault*).

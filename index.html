@@ -801,7 +801,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v56-2026-11-14</span>
+      <span class="appver" id="appVer" title="My Notes version">v57-2026-11-14</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -10180,14 +10180,32 @@ async function vorgDirOf(path, create){   // directory handle for a folder path 
 }
 async function vorgExists(dir, name, isDir){ try { isDir ? await dir.getDirectoryHandle(name) : await dir.getFileHandle(name); return true; } catch(e){ return false; } }
 // move one file on disk; never overwrites — a clash becomes "name 2". Returns the new path.
+// v57: Dropbox (or a virus scanner) may touch a file while it is copied — Chrome then says "the state had changed since it was read from disk".
+// Such errors are retried with a fresh read, waiting a little longer each time, instead of stopping the cleanup.
+const vorgBusyErr = e => e && /InvalidStateError|NotReadableError|NoModificationAllowedError|InvalidModificationError|AbortError/.test(e.name || '') || /state had changed|could not be read|being used/i.test(e && e.message || '');
+const vorgWait = ms => new Promise(r => setTimeout(r, ms));
 async function vorgMoveFile(fromPath, toFolder, wantName){
-  const name = fromPath.split('/').pop(), want = wantName || name, src = await vorgDirOf(parentOf(fromPath)), dst = await vorgDirOf(toFolder, true);
-  const h = await src.getFileHandle(name), file = await h.getFile();
-  const nm = await vorgExists(dst, want, false) ? await uniqueIn(dst, want, false) : want;
-  const nh = await dst.getFileHandle(nm, { create:true }); const w = await nh.createWritable(); await w.write(file); await w.close();
-  if ((await nh.getFile()).size !== file.size) throw new Error('copy of “' + name + '” is incomplete');
-  await src.removeEntry(name);
-  return (toFolder ? toFolder + '/' : '') + nm;
+  const name = fromPath.split('/').pop(), want = wantName || name;
+  let lastErr = null, nm = null;
+  for (let attempt = 0; attempt < 6; attempt++){
+    if (attempt){ $('loadSub') && ($('loadSub').textContent = 'Waiting for Dropbox to release “' + name + '”… (try ' + (attempt + 1) + ' of 6)'); await vorgWait(700 * attempt); }
+    try {
+      const src = await vorgDirOf(parentOf(fromPath)), dst = await vorgDirOf(toFolder, true);
+      const file = await (await src.getFileHandle(name)).getFile(), bytes = await file.arrayBuffer();   // read it all at once, right away
+      if (!nm) nm = await vorgExists(dst, want, false) ? await uniqueIn(dst, want, false) : want;
+      const nh = await dst.getFileHandle(nm, { create:true }); const w = await nh.createWritable(); await w.write(bytes); await w.close();
+      if ((await nh.getFile()).size !== bytes.byteLength) throw Object.assign(new Error('copy of “' + name + '” is incomplete'), { name:'InvalidStateError' });
+      await src.removeEntry(name);
+      return (toFolder ? toFolder + '/' : '') + nm;
+    } catch(e){
+      lastErr = e;
+      if (e && e.name === 'NotFoundError' && nm){   // the original is gone but the copy is there: it was moved after all
+        try { await (await vorgDirOf(toFolder)).getFileHandle(nm); try { await (await vorgDirOf(parentOf(fromPath))).getFileHandle(name); } catch(e2){ return (toFolder ? toFolder + '/' : '') + nm; } } catch(e3){}
+      }
+      if (!vorgBusyErr(e)) throw e;
+    }
+  }
+  throw new Error('“' + name + '” stayed busy (Dropbox still syncing?) — ' + (lastErr && lastErr.message || 'unknown error'));
 }
 async function vorgFilesUnder(folder){   // every file under a folder on disk, as vault paths (folders listed too, deepest last)
   const files = [], dirs = [];
@@ -10276,7 +10294,7 @@ async function vorgUndo(){
   if (!J || J.undone || !J.steps || !J.steps.length) return toast('There is no cleanup to undo');
   if (!await confirmIt('Undo the cleanup from ' + new Date(J.at).toLocaleString() + '? Every moved file goes back to where it was.', 'Undo')) return;
   VORG.busy = true; await flushAll();
-  let back = 0, miss = [];
+  let back = 0, miss = [], failed = [];
   loading(true, 'Undoing the cleanup…'); clearInterval(S.loadTick);
   try {
     const steps = [...J.steps].reverse();
@@ -10291,18 +10309,23 @@ async function vorgUndo(){
       if (st.k === 'rmdir'){ try { await vorgDirOf(st.path, true); } catch(e){} }
       if (st.k === 'file'){
         $('loadSub').textContent = back + ' files back';
-        try { await vorgMoveFile(st.to, parentOf(st.from), st.from.split('/').pop()); back++; } catch(e){ miss.push(st.to); }
+        try { await vorgMoveFile(st.to, parentOf(st.from), st.from.split('/').pop()); back++; st.back = true; }
+        catch(e){ if (e && e.name === 'NotFoundError') miss.push(st.to); else { failed.push(st.to); st.failMsg = e.message; } }
       }
     }
     // 3. folders the cleanup created: removed again when empty
     for (const st of steps) if (st.k === 'mkdir'){ try { const pd = await vorgDirOf(parentOf(st.path)); if (!(await vorgFilesUnder(st.path)).files.length) await pd.removeEntry(st.path.split('/').pop(), { recursive:true }); } catch(e){} }
     for (const st of steps) if (st.k === 'remap'){ remapPaths(st.to, st.from); remapSettingPaths(st.to, st.from); await remapIcons(st.to, st.from).catch(() => {}); }
-    J.undone = true; J.undoneAt = Date.now(); await vorgSave(J);
+    if (failed.length){   // some files are still busy: keep only those, so "Undo" can be clicked again later
+      J.steps = J.steps.filter(st => st.k === 'file' ? !st.back && !miss.includes(st.to) : st.k === 'remap' ? (delete st.refs, true) : st.k === 'mkdir');
+      J.moved = J.steps.filter(st => st.k === 'file').length; J.partUndo = Date.now();
+    } else { J.undone = true; J.undoneAt = Date.now(); }
+    await vorgSave(J);
     await loadVault(S.root, true);
     { const ok = x => S.notes.has(x) || S.bases.has(x); S.tabs = S.tabs.filter(ok); if (!ok(S.current)) S.current = S.tabs[0] || null; saveTabs(); }
-    await vorgLogUndo(J, back, miss);
+    await vorgLogUndo(J, back, miss, failed);
   } finally { VORG.busy = false; loading(false); }
-  VORG.result = { undo:true, moved:back, html:`<b>Undone.</b> ${back} file${back === 1 ? '' : 's'} moved back to where ${back === 1 ? 'it was' : 'they were'}.` +
+  VORG.result = { undo:!failed.length, stopped:failed.length > 0, moved:failed.length, html:(failed.length ? `<b>Partly undone.</b> ${failed.length} file${failed.length === 1 ? ' is' : 's are'} still busy (Dropbox syncing?). Wait until Dropbox shows it is up to date, then click <b>Undo this cleanup</b> again — it only moves the ones that are left.<br>` : `<b>Undone.</b> `) + `${back} file${back === 1 ? '' : 's'} moved back to where ${back === 1 ? 'it was' : 'they were'}.` +
     (miss.length ? `<br>${miss.length} file${miss.length === 1 ? '' : 's'} could not be found any more (moved or deleted since) — listed in the log note.` : '') +
     `<br>The emptied folders are back too (their earlier copies also stay in the Trash).` };
   VORG.step = 'done'; renderAll(); vorgRender();
@@ -10330,8 +10353,9 @@ async function vorgLog(J, renamed){
   L.push('', '</details>', '');
   await vorgLogAdd(L.join('\n'));
 }
-async function vorgLogUndo(J, back, miss){
-  const L = ['## ' + new Date().toLocaleString() + ' — undid the cleanup from ' + new Date(J.at).toLocaleString(), '', '- ' + back + ' file' + (back === 1 ? '' : 's') + ' moved back'];
+async function vorgLogUndo(J, back, miss, failed){
+  const L = ['## ' + new Date().toLocaleString() + ' — ' + (failed && failed.length ? 'partly undid' : 'undid') + ' the cleanup from ' + new Date(J.at).toLocaleString(), '', '- ' + back + ' file' + (back === 1 ? '' : 's') + ' moved back'];
+  if (failed && failed.length){ L.push('- Still busy, not moved back yet (click Undo again later):'); for (const m of failed) L.push('  - `' + m + '`'); }
   if (miss.length){ L.push('- Not found any more:'); for (const m of miss) L.push('  - `' + m + '`'); }
   L.push('');
   await vorgLogAdd(L.join('\n'));
