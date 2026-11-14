@@ -310,6 +310,14 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .seg button{flex:1;padding:4px 0;font-size:12px;border-radius:6px;color:var(--muted);border:1px solid transparent}
 .seg button.on{background:var(--bg);border-color:var(--line);color:var(--text)}
 .tagcloud{display:flex;flex-wrap:wrap;gap:4px;max-height:84px;overflow:auto}
+.tagwrap{display:flex;flex-direction:column;gap:2px}.tagcloud.hid{max-height:none}.tagcloud:empty{display:none}
+.tagtoggle{align-self:flex-start;display:inline-flex;align-items:center;gap:3px;border:0;background:none;color:var(--muted);font-size:11.5px;padding:1px 2px;cursor:pointer}.tagtoggle:hover{color:var(--text)}.tagtoggle .uic{width:12px;height:12px;margin:0}
+.srtree{display:flex;align-items:center;gap:4px}.srtree .car,.srtnote .car,.srtnotes .car{width:14px;flex:none;display:inline-flex}.srtree .car .uic,.srtnotes .car .uic{width:13px;height:13px;margin:0}
+.srtree .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.srtree .fcount{color:var(--muted);font-size:11.5px;margin-left:4px}
+.srtree .srjump{border:0;background:none;padding:0 2px;color:var(--muted);opacity:0;cursor:pointer;display:inline-flex}.srtree:hover .srjump{opacity:1}.srtree .srjump .uic{width:13px;height:13px;margin:0}
+.srtnote{display:flex;align-items:center;gap:4px}.srtnote .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srtnotes{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:12.5px}.srtnotes>.uic{width:13px;height:13px;margin:0}
+.focusbar{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:4px 0;border-radius:7px;background:color-mix(in srgb,var(--accent) 8%,var(--bg));font-size:12.5px}.focusbar span{flex:1}.focusbar .uic{width:14px;height:14px;margin:0;color:var(--accent)}.focusbar .ghost{padding:2px 6px;font-size:12px}
 .tagcloud button{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--hover);color:var(--muted)}
 .tagcloud button.on{background:var(--accent);color:#fff}
 .listhead{display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap;padding:6px 10px 6px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
@@ -802,7 +810,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v58-2026-11-14</span>
+      <span class="appver" id="appVer" title="My Notes version">v59-2026-11-14</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -815,7 +823,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <div class="seg segd" id="dateFilter" title="Show only notes edited in this time">
         <button data-d="" class="on">Any time</button><button data-d="today">Today</button><button data-d="week">7 days</button><button data-d="month">30 days</button>
       </div>
-      <div class="tagcloud" id="tagCloud"></div>
+      <div class="tagwrap"><div class="tagcloud" id="tagCloud"></div><button class="tagtoggle" id="tagToggle" title="Hide / show the tags"></button></div>
     </div>
     <div class="listhead"><span id="count"></span><span style="display:flex;gap:2px;align-items:center"><button class="smallbtn" id="newFolderBtn" title="New folder">＋📁</button><button class="smallbtn" id="newMapBtn" title="New map">map</button><button class="smallbtn" id="newTableBtn" title="New table (like Notion: columns + rows)">table</button><button class="smallbtn" id="orgBtn" title="Organize: rearrange folders and notes in a big tree">org</button><button class="smallbtn" id="expandAll" title="Expand all folders">⊞</button><button class="smallbtn" id="collapseAll" title="Collapse all folders">⊟</button></span>
       <select id="sort" title="Sort notes"><option value="imp">Importance</option><option value="name">Name A–Z</option><option value="namedesc">Name Z–A</option><option value="recent">Newest edited</option><option value="oldest">Oldest edited</option><option value="opened">Last opened</option></select>
@@ -8479,6 +8487,29 @@ function sorted(arr, mode){
 /* ---------- rendering ---------- */
 const SR_STEP = { recent:5, titles:8, folders:5, text:5, only:25 };
 function srMore(g){ return (S.srMore || {})[g] || SR_STEP[g]; }
+// v59: a folder found by search opens like a tree — ▸ shows its sub-folders; a sub-folder shows its sub-folders and notes.
+// The folder itself lists its own notes behind one extra row, so its sub-folders come first. Open/closed is kept while you search.
+S.srOpen = new Set();
+function srFolderTree(f, depth, srch){
+  const all = allFolders(), kidsOf = x => all.filter(k => parentOf(k) === x).sort((a, b) => NCOLL.compare(a.split('/').pop(), b.split('/').pop()));
+  const countIn = x => { let c = 0; for (const n of S.notes.values()) if (!n.external && (n.folder === x || n.folder.startsWith(x + '/'))) c++; return c; };
+  const pad = d => 'padding-left:' + (6 + d * 16) + 'px';
+  const kids = kidsOf(f), notes = [...S.notes.values()].filter(n => !n.external && n.folder === f).sort((a, b) => NCOLL_N.compare(a.name, b.name));
+  const open = S.srOpen.has(f), canOpen = kids.length || notes.length;
+  const nm = depth || !srch ? esc(f.split('/').pop()) : hl(f.split('/').pop(), srch.any);
+  let h = `<div class="item fres srtree" draggable="true" data-showfolder="${esc(f)}" data-srtog="${esc(f)}" style="${pad(depth)}" title="${canOpen ? 'Click: open / close' : 'Empty folder'} · right-click: move, rename… · drag onto another folder to move it">` +
+    `<span class="car">${canOpen ? UI(open ? 'chevron-down' : 'chevron-right') : ''}</span>${iconHtml(f, DEF_FOLDER, 'fic')}<span class="nm"${nameColor(f)}>${nm}</span>` +
+    `${depth ? '' : `<span class="srwhere">${esc(parentOf(f) || '')}</span>`}<span class="fcount">${countIn(f)}</span>` +
+    `<button class="srjump" data-srjump="${esc(f)}" title="Show this folder in the full tree (leaves the search)">${UI('arrow-up-right')}</button></div>`;
+  if (!open) return h;
+  for (const k of kidsOf(f)) h += srFolderTree(k, depth + 1);
+  const noteRows = () => notes.map(n => `<div class="item srtnote ${n.path === S.current ? 'sel' : ''}" draggable="true" data-p="${esc(n.path)}" title="${esc(n.path)}" style="${pad(depth + 1)}"><span class="car"></span>${noteDot(n)}${iconHtml(n.path, isMap(n) ? MAP_ICON : null)}<span class="nm"${nameColor(n.path)}>${esc(n.name)}</span></div>`).join('');
+  if (!notes.length) return h;
+  if (depth || !kids.length) return h + noteRows();
+  const nk = f + '\u0000notes', no = S.srOpen.has(nk);   // the found folder: its own notes behind one row
+  h += `<div class="item srtnotes" data-srtog="${esc(nk)}" style="${pad(depth + 1)}"><span class="car">${UI(no ? 'chevron-down' : 'chevron-right')}</span>${UI('file-text')}<span class="nm">${notes.length} note${notes.length === 1 ? '' : 's'} directly in ${esc(f.split('/').pop())}</span></div>`;
+  return h + (no ? noteRows().replace(/padding-left:(\d+)px/g, (m, x) => 'padding-left:' + (+x + 16) + 'px') : '');
+}
 function renderSearchResults(){
   const srch = S.srch, terms = srch.terms, ops = srch.ops || [];
   const ok = n => !n.external && (!S.imp || n.importance === S.imp) && (!S.tag || allTags(n).includes(S.tag)) && dateOk(n) && opsPass(n, ops);
@@ -8544,8 +8575,7 @@ function renderSearchResults(){
   }
   if (folders.length){
     H.push(sect('Folders', folders.length));
-    H.push(folders.slice(0, srMore('folders')).map(({ f }) => { const c = [...S.notes.values()].filter(n => n.folder === f || n.folder.startsWith(f + '/')).length;
-      return `<div class="item fres" draggable="true" data-showfolder="${esc(f)}" title="Click: show this folder · right-click: move, rename… · drag onto another folder to move it">${iconHtml(f, DEF_FOLDER, 'fic')}<span class="nm">${hl(f.split('/').pop(), srch.any)}</span><span class="srwhere">${esc(parentOf(f) || '')}</span><span class="fcount">${c}</span></div>`; }).join(''));
+    H.push(folders.slice(0, srMore('folders')).map(({ f }) => srFolderTree(f, 0, srch)).join(''));
     H.push(more('folders', folders.length));
   }
   if (text.length){
@@ -8560,7 +8590,7 @@ function renderSearchResults(){
   srKeyMark();
 }
 /* keyboard in the results: ↓/↑ move, Enter opens, Ctrl+Enter opens and stays in the search */
-function srItems(){ return [...$('list').querySelectorAll('.item[data-p], .item[data-showfolder], .item[data-sugg], .item[data-ss]')]; }
+function srItems(){ return [...$('list').querySelectorAll('.item[data-p], .item[data-showfolder], .item[data-srtog], .item[data-sugg], .item[data-ss]')]; }
 function srKeyMark(){ const it = srItems(); $('list').querySelectorAll('.kact').forEach(x => x.classList.remove('kact')); if (S.kIdx == null || S.kIdx < 0) return; S.kIdx = Math.min(S.kIdx, it.length - 1); const el = it[S.kIdx]; if (el){ el.classList.add('kact'); el.scrollIntoView({ block:'nearest' }); } }
 const ssKey = () => 'qn-savedsearch' + (S.root ? ':' + S.root.name : '');
 function savedSearches(){ try { const v = JSON.parse(localStorage.getItem(ssKey()) || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } }
@@ -8584,7 +8614,13 @@ function renderSidebar(){
   for (const n of S.notes.values()) for (const t of allTags(n)) counts[t] = (counts[t] || 0) + 1;
   const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
   if (S.tag && !counts[S.tag]) S.tag = '';
-  $('tagCloud').innerHTML = tags.map(t => `<button data-t="${esc(t)}" class="${t === S.tag ? 'on' : ''}">#${esc(t)} <span style="opacity:.6">${counts[t]}</span></button>`).join('');
+  { // v59: the tags can be hidden (remembered on this PC); a chosen tag stays visible so you can see the filter is on
+    const hid = localStorage.getItem('qn-tagshid') === '1', shown = hid ? tags.filter(t => t === S.tag) : tags;
+    $('tagCloud').innerHTML = shown.map(t => `<button data-t="${esc(t)}" class="${t === S.tag ? 'on' : ''}">#${esc(t)} <span style="opacity:.6">${counts[t]}</span></button>`).join('');
+    $('tagCloud').classList.toggle('hid', hid);
+    $('tagToggle').innerHTML = hid ? UI('chevron-right') + 'Tags (' + tags.length + ')' : UI('chevron-down') + 'Hide tags';
+    $('tagToggle').style.display = tags.length ? '' : 'none';
+  }
   document.querySelectorAll('#impFilter button').forEach(b => b.classList.toggle('on', b.dataset.v === S.imp));
   document.querySelectorAll('#dateFilter button').forEach(b => b.classList.toggle('on', b.dataset.d === (S.dateF || '')));
   $('searchClear').style.display = S.q ? 'block' : 'none';
@@ -8658,9 +8694,9 @@ function renderSidebar(){
     if (m === 'opened') return k.sort((a, b) => ((fstat[b] || {}).o || 0) - ((fstat[a] || {}).o || 0) || ((fstat[b] || {}).m || 0) - ((fstat[a] || {}).m || 0));
     return k;
   };
-  const tree = (parent, depth) => {
+  const tree = (parent, depth, only) => {
     let h = '';
-    for (const f of kids(parent)){
+    for (const f of (only ? [only] : kids(parent))){
       const c = countIn(f);
       if (filtering && !c) continue;
       const hasBase = fbase.has(f);
@@ -8668,13 +8704,19 @@ function renderSidebar(){
       h += `<div class="frow" draggable="true" data-f="${esc(f)}" style="padding-left:${4 + depth * 16}px"><span class="car">${UI(open ? 'chevron-down' : 'chevron-right')}</span>${iconHtml(f, DEF_FOLDER, 'fic')}<span class="fn"${nameColor(f)}>${esc(f.split('/').pop())}</span>${fs[f] ? `<span class="fsort" title="Notes here sorted by: ${esc(SORTS[fs[f]] || fs[f])}">${UI('arrow-up-down')}</span>` : ''}<span class="fc">${c || (hasBase ? '▦' : '')}</span>${pinBtn('f', f, isPinnedAny('f', f), false)}<button class="fadd" data-newin="${esc(f)}" title="New note in this folder">${UI('plus')}</button></div>`;
       if (open) h += tree(f, depth + 1);
     }
+    if (only) return h;
     for (const n of (byFolder[parent] || [])) h += item(n, parent ? depth : 0, false);
     if (!filtering) for (const b of [...S.bases.values()].filter(b => b.folder === parent).sort((x, y) => x.name.localeCompare(y.name)))
       h += `<div class="item ${b.path === S.current ? 'sel' : ''}" data-p="${esc(b.path)}" style="padding-left:${8 + (parent ? depth : 0) * 16}px" title="Base (table view)">${iconHtml(b.path, DEF_BASE, 'bicon')}<span class="nm"${nameColor(b.path)}>${esc(b.name)}</span><span class="bbadge">BASE</span>${pinBtn('b', b.path, isPinnedAny('b', b.path), false)}</div>`;
     return h;
   };
-  const body = tree('', 0);
-  if (body){ html += `<div class="sect frow-root" data-f="">${pinRows.length && !S.srch ? "All notes" : "Notes"}</div>` + body; }
+  // v59: "Show only this folder" — the tree starts at that folder
+  let focus = localStorage.getItem('qn-focusf') || '';
+  if (focus && !folders.includes(focus)) focus = '';   // not in this vault (or not loaded yet): show everything, but keep the choice
+  if (focus) S.collapsed.delete(focus);
+  const body = focus ? tree(parentOf(focus), 0, focus) : tree('', 0);
+  if (focus) html += `<div class="focusbar">${UI('folder-open')}<span>Showing only <b>${esc(fname(focus))}</b></span><button class="ghost" data-unfocus="1" title="Show all folders again">✕ Show all</button></div>`;
+  if (body){ html += focus ? body : `<div class="sect frow-root" data-f="">${pinRows.length && !S.srch ? "All notes" : "Notes"}</div>` + body; }
   $('list').innerHTML = html || `<div class="empty">${S.notes.size ? 'No notes match these filters.' : 'No notes yet.'}</div>`;
 }
 function rememberTabState(){
@@ -9367,11 +9409,17 @@ function baseMenu(b){
     { icon:'🗑', label:'Delete', danger:true, run: guard(async () => { if (await confirmIt('Move the Base “' + b.name + '” to the trash? (Your notes are not affected.)', 'Move to trash')) await trashBase(b); }) }
   ];
 }
+function focusFolder(f){
+  if (f){ localStorage.setItem('qn-focusf', f); let x = f; while (x){ S.collapsed.delete(x); x = parentOf(x); } saveCollapsed(); if (S.q){ $('search').value = ''; setSearch(''); } }
+  else localStorage.removeItem('qn-focusf');
+  renderSidebar(); $('list').scrollTop = 0;
+}
 function folderMenu(f){
   const inside = [...S.notes.values()].filter(n => n.folder === f || n.folder.startsWith(f + '/')).length;
   const sub = allFolders().filter(x => x === f || x.startsWith(f + '/'));
   return [
     { head: f },
+    localStorage.getItem('qn-focusf') === f ? { icon:'⤢', label:'Show all folders again', run: () => focusFolder('') } : { icon:'⌖', label:'Show only this folder', hint:'in the sidebar', run: () => focusFolder(f) },
     { icon:'＋', label:'New note here', run: guard(async () => { const n = await createNote('Untitled', '', f); S.collapsed.delete(f); saveCollapsed(); openPath(n.path); const t = $('title'); if (t){ t.focus(); t.select(); } }) },
     { icon:'📁', label:'New folder inside…', run: guard(async () => { const v = await askName('New folder inside “' + f.split('/').pop() + '”', '', 'Create'); if (v){ const fp = await createFolder(v, f); if (fp){ renderSidebar(); toast('Folder created'); } } }) },
     { icon:'✎', label:'Rename folder…', run: guard(async () => { const v = await askName('Rename folder', f.split('/').pop(), 'Rename'); if (v) await renameFolder(f, v); }) },
@@ -10456,6 +10504,8 @@ function cmdList(){
     ['AI', 'Suggest tags and importance (AI)', '', note && !n.locked, () => aiOpen(n)],
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
+    ['View', localStorage.getItem('qn-tagshid') === '1' ? 'Show the tags in the sidebar' : 'Hide the tags in the sidebar', '', true, () => $('tagToggle').click()],
+    ['View', 'Show all folders again (leave “Show only this folder”)', '', !!localStorage.getItem('qn-focusf') && allFolders().includes(localStorage.getItem('qn-focusf')), () => focusFolder('')],
     ['Vault', 'Undo the last vault cleanup (Organize vault)…', '', !!S.root && !S.demo, () => vorgUndo()],
     ['AI', 'AI settings: Claude, OpenAI or DeepSeek (provider, key, model)…', '', true, () => aiSettings()],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
@@ -10629,6 +10679,7 @@ $('list').addEventListener('drop', e => {
   keys.splice(at, 0, from); setPinOrder(keys); renderSidebar();
 }, true);
 $('list').addEventListener('dragend', () => { S.pinDrag = null; document.querySelectorAll('.pinbefore,.pinafter').forEach(x => x.classList.remove('pinbefore', 'pinafter')); }, true);
+$('tagToggle').onclick = () => { localStorage.setItem('qn-tagshid', localStorage.getItem('qn-tagshid') === '1' ? '0' : '1'); renderSidebar(); };
 $('tagCloud').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tag = S.tag === b.dataset.t ? '' : b.dataset.t; renderSidebar(); };
 $('list').addEventListener('mouseover', e => { const r = e.target.closest('.item, .frow'), pb = r && r.querySelector('.rpin:empty'); if (pb) pb.innerHTML = UI('pin');
   const it = e.target.closest('.item[data-p]:not([title])'); if (!it) return; const n = S.notes.get(it.dataset.p); if (n && !n.external) it.title = sbTip(n); });
@@ -10647,9 +10698,16 @@ $('list').onclick = async e => {
     return;
   }
   if (e.target.closest('[data-textopen]')){ S.textOpen = !S.textOpen; renderSidebar(); return; }
-  const sf = e.target.closest('[data-showfolder]');
+  if (e.target.closest('[data-unfocus]')){ focusFolder(''); return; }
+  const tg = !e.target.closest('[data-srjump]') && e.target.closest('[data-srtog]');
+  if (tg){   // v59: open / close a folder inside the search results
+    const k = tg.dataset.srtog, top = $('list').scrollTop;
+    S.srOpen.has(k) ? S.srOpen.delete(k) : S.srOpen.add(k);
+    renderSidebar(); $('list').scrollTop = top; return;
+  }
+  const sf = e.target.closest('[data-srjump]');
   if (sf){   // leave search and show that folder in the tree
-    const f = sf.dataset.showfolder;
+    const f = sf.dataset.srjump;
     $('search').value = ''; setSearch('');
     let x = f; while (x){ S.collapsed.delete(x); x = parentOf(x); } saveCollapsed(); renderSidebar();
     const row = [...$('list').querySelectorAll('.frow[data-f]')].find(r => r.dataset.f === f);

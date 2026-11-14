@@ -4,6 +4,15 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v59-2026-11-14
+**Folders in search results open like a tree.**
+- Search finds a folder (e.g. *Projects*) → click it to see its sub-folders; click a sub-folder to see its notes and deeper folders. The folder's own notes sit behind one row (*“N notes directly in PROJECTS”*), so the sub-folders come first. Folders stay open while you search; clicking a note opens it as before.
+- The ↗ button at the end of a folder row leaves the search and shows that folder in the full tree (what clicking a found folder did before).
+
+**Show only this folder.** Right-click a folder → **Show only this folder**: the sidebar shows just that folder's tree, with a *Showing only …* bar and **✕ Show all**. Remembered on this PC.
+
+**Hide the tags.** **Hide tags** under the tag list folds it away; **Tags (N)** brings it back. A chosen tag stays visible while hidden. Remembered on this PC. Also in the command palette.
+
 ## v58-2026-11-14
 **Organize vault: a restore point for every cleanup, and fewer stops.**
 - Every cleanup now keeps its own restore point. Before, a new cleanup replaced the previous one, so only the latest could be undone. The Organize start screen lists **Earlier cleanups** (newest first) with **Undo this one** on the newest that isn't undone yet.

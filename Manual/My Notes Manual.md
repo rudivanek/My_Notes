@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v58 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v59 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -83,6 +83,8 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Link two notes | Type `[[` and pick the note |
 | Move a note | Drag it onto a folder, or change **Folder** at the top of the note |
 | Move a folder | Right-click it → **Move folder to…**, or drag it onto another folder |
+| See only one folder in the sidebar | right-click it → **Show only this folder** |
+| Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
 | Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
@@ -233,6 +235,7 @@ Copied text with formatting (from Claude, a web page, Google Docs…) is turned 
   - If the target already has a folder with the same name, you choose: **merge** them (files with the same name become "name 2"; nothing is overwritten), or keep them separate under a new name.
 - **Delete a folder:** right-click → **Delete folder**. It goes to the Trash with everything inside.
 - **Expand / collapse all:** the two arrow buttons above the note list.
+- **Show only this folder:** right-click a folder → **Show only this folder**. The sidebar then shows just that folder's tree, with a **Showing only …** bar on top; **✕ Show all** (or right-click → **Show all folders again**) brings everything back. Remembered on this PC. Search still looks through the whole vault.
 
 ### The Organize page (big tree)
 
@@ -290,7 +293,7 @@ Type in the search box at the top of the sidebar. Results are grouped:
 
 - **Recently opened:** matches you opened in the last two weeks
 - **Titles:** note names and tables (marked TABLE)
-- **Folders**
+- **Folders** — open like a tree: click a folder (or its ▸) to see its sub-folders; click a sub-folder to see its notes and deeper folders. The folder's own notes sit behind a row *“N notes directly in …”*. The ↗ button at the end of a folder row leaves the search and shows that folder in the full tree.
 - **Found inside notes:** the text, tags or properties, with the matching line shown
 
 Each group shows the first few results; **Show more** shows the rest. Every result shows its folder on the right.
@@ -325,7 +328,7 @@ The fastest way to open a note when you roughly know its name. It searches names
 ### Filters and sorting in the sidebar
 - **Importance:** All / High / Med / Low.
 - **Date:** Any time / Today / 7 days / 30 days (edited within).
-- **Tags:** click one to filter, click again to stop.
+- **Tags:** click one to filter, click again to stop. **Hide tags** (under the tags) folds them away to save space; **Tags (N)** shows them again. While hidden, a tag you chose stays visible so you can see the filter is on. Remembered on this PC.
 - **Sort** (menu above the note list): Importance, Name A–Z, Name Z–A, Newest edited, Oldest edited, Last opened. Folders follow the same order.
 - **Sort one folder differently:** right-click it → **Sort notes here…** Its sub-folders follow; a small ↕ shows it has its own order.
 - **Recent:** your last opened notes, below Pinned. Hide or show it by right-clicking **All notes**.
