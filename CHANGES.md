@@ -4,6 +4,19 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v56-2026-11-14
+**Organize vault — AI suggests a tidier folder structure, you decide, one button undoes it.**
+- New **Organize** button at the bottom left of the sidebar, next to **Tidy up** (also in the command palette: *Organize vault*).
+- Choose *Tidy what I have* or *PARA* (Projects, Areas, Resources, Archive), optionally add a hint, and click **Make a plan**. The AI sees folder names, note counts, last-edit dates and a few note titles — never the note text.
+- You get a list of suggestions (merge, move, archive, rename) with a reason each. Tick what you want, change any target folder, then **Apply**. Folders with almost the same name are found without AI.
+- Safe: nothing is deleted (emptied folders go to the Trash), nothing is overwritten (same names become "name 2"), every move is recorded as it happens, the run stops at the first problem, tables and `[[folder/links]]` follow, and **Undo this cleanup** puts every file back. Every run is listed in the note **Vault organizer log**.
+
+**Settings moved to a hidden folder `.mynotes`.**
+- The app's settings used to live in a normal-looking folder called **My Notes**, which was easy to delete or merge by mistake. They now live in `.mynotes/settings.md` — a dot folder, like Obsidian's `.obsidian`. The move happens by itself the first time v56 opens your vault; nothing is lost.
+- `.mynotes` also holds a **README** ("My Notes app settings — please do not delete") and a **backup** (`settings.backup.md`, refreshed at most once an hour). If `settings.md` goes missing, it is restored from the backup.
+- The old `My Notes/settings.md` (and Dropbox's "conflicted copy" of it) goes to the Trash; empty Chrome leftovers (`.crswap`) are removed. If you had notes of your own in that folder, they stay and now show in the sidebar like any other folder.
+- Update My Notes on **all** your PCs: an older version keeps writing to `My Notes/settings.md`. v56 picks up those changes when it opens the vault and moves them over.
+
 ## v55-2026-11-14
 **Thread total.**
 - Under every AI thread, below Reply / Summarize / Fold, a small line now adds up all the grey cost lines of the thread (and of its summary): *Thread total: 14 answers · 182,400 in · 9,800 out · 6 web searches · $0.412*.

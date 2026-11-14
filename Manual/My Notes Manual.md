@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v55 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v56 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -84,6 +84,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Move a note | Drag it onto a folder, or change **Folder** at the top of the note |
 | Move a folder | Right-click it → **Move folder to…**, or drag it onto another folder |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
+| Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
 | Protect a password or private note | **Lock** button next to the note title (or **⋯** → Lock note…) |
 | Get an old version back | **⋯** next to the note title → **Version history** |
@@ -245,6 +246,24 @@ When the sidebar feels too narrow for a big cleanup, click **org** above the not
 - **Undo:** every move and rename happens right away; the bar at the bottom says what happened and offers **Undo** (also **Ctrl+Z**). Deletions are undone from the Trash instead.
 - **Filter names…** at the top shows only matching notes and folders (with the folders they're in).
 - **Keyboard:** ↑/↓ move, → / ← open or close a folder, Space ticks, Enter opens a note (and leaves the page), **Esc** clears the selection, then closes the page.
+
+### Organize vault (AI suggests, you decide)
+When the whole vault needs a cleanup — several inboxes, duplicate folders, old projects lying around — click **Organize** at the bottom left of the sidebar (next to **Tidy up**), or the command palette: *Organize vault*.
+
+1. **Choose how:** *Tidy what I have* (keep your folders; merge duplicates, gather loose inbox and scratch folders, archive what's old) or *PARA* (sort your top folders into Projects, Areas, Resources and Archive, reusing folders you already have). Optionally tell it what to keep in mind, e.g. *Leave SHARPEN.STUDIO alone*.
+2. **Make a plan.** The AI sees only your **folder names, how many notes they hold, when they were last edited and a few note titles** — not the text of your notes. It returns a list of suggestions, each with a short reason. Folders with almost the same name (like *My Notes* and *My_Notes*) are found without AI and added to the list.
+3. **Decide.** Tick or untick each suggestion. You can change any target folder — type a new name and it will be created. Suggestions that can't work (a folder that doesn't exist, a folder into itself) are shown greyed out with the reason. Tips (things to check by hand) are shown but never applied.
+4. **Apply.** After one confirmation, the ticked changes run one after another with a progress line.
+
+**Safe by design:**
+- **Nothing is deleted.** Files are moved; a folder that ends up empty goes to the **Trash**.
+- **Nothing is overwritten.** If the target already has a file with the same name, the moved one is kept as *name 2*.
+- **Restore point.** Every single move is recorded as it happens, so **Undo this cleanup** (on the result screen, on the Organize start screen, or the palette: *Undo the last vault cleanup*) puts every file back where it was — merges included — and brings back the emptied folders.
+- **Stops at the first problem** (for example a file Dropbox is still syncing). It tells you what went wrong; everything before it stays done, and you can undo it.
+- **Links and tables follow.** Tables that look at a moved folder, and `[[folder/path]]` links in notes, are updated (and changed back by Undo). Pins, icons and open folders follow too.
+- **A log.** The note **Vault organizer log** in the vault root lists every cleanup and undo, newest first, with every file that moved.
+
+Tip: make a backup or let Dropbox finish syncing before a big cleanup — and close My Notes on your other PCs while it runs.
 
 ### Pins
 Pin notes, folders and tables to the top of the sidebar: the **pin** button at the top, the pin that appears when you hover a row, or the right-click menu. **Drag pinned items** to put them in your own order.
@@ -675,7 +694,7 @@ Your original note stays as it is; only one line is added at its end, `🗺 Map:
 
 - Put your vault in Dropbox (or OneDrive, Google Drive…) and set the folder to **Available offline**.
 - On each PC, install My Notes and choose that folder once with **Open vault…**
-- **Pins, icons, appearance, property types, saved searches** and other settings are stored in the vault in `My Notes/settings.md`, so every PC looks the same. Don't edit that note by hand.
+- **Pins, icons, appearance, property types, saved searches** and other settings are stored in the vault in the hidden folder `.mynotes` (`.mynotes/settings.md`, with a backup `settings.backup.md` and a README), so every PC looks the same. Don't edit or delete that folder. If `settings.md` ever goes missing, My Notes restores it from the backup. (Before v56 the settings were in a folder called `My Notes`; v56 moves them by itself the first time it opens the vault. Update My Notes on all your PCs: an older version on another PC keeps writing to the old place — v56 picks those changes up, but only when it opens the vault.)
 - Some things are kept **per PC**: the AI keys (Claude, OpenAI, DeepSeek), the Firecrawl key, your recently opened notes, and which AI boxes you've hidden.
 - My Notes re-reads the vault when you come back to it after **2 minutes or more** in another window. To pick up changes right away, right-click **All notes** → **Check for changes on disk**.
 - Try not to edit the same note on two PCs at the same moment. If it happens, Dropbox keeps a *conflicted copy*; compare the two and delete one.
@@ -704,7 +723,7 @@ Your original note stays as it is; only one line is added at its end, `🗺 Map:
 - Notes deleted on the phone go to the vault's **.trash**, and the PC's **Trash** can restore them.
 - The app only changes the lines it has to. Opening and closing a note without typing doesn't touch the file.
 
-**Good to know:** pins, icons and other settings in `My Notes/settings.md` aren't used on the phone. The phone uses the **pinned** property in the note's header (the pin button next to a note's title on the PC does the same). Links to files on your PC (`D:\…`) don't open on the phone. **Settings → Disconnect Dropbox** signs the phone out and deletes the notes stored on it.
+**Good to know:** pins, icons and other settings in `.mynotes/settings.md` aren't used on the phone. The phone uses the **pinned** property in the note's header (the pin button next to a note's title on the PC does the same). Links to files on your PC (`D:\…`) don't open on the phone. **Settings → Disconnect Dropbox** signs the phone out and deletes the notes stored on it.
 
 ---
 
@@ -846,7 +865,7 @@ Everything is ordinary files in your vault. Nothing is hidden in a database.
 | Tables and Bases | a `.base` file plus one `.md` note per row |
 | Maps | normal `.md` notes with `type: map` |
 | Images and attachments | your attachment folder (or the vault root) |
-| Settings shared between your PCs (pins, icons, look, saved searches…) | `My Notes/settings.md` |
+| Settings shared between your PCs (pins, icons, look, saved searches…) | `.mynotes/settings.md` (backup: `.mynotes/settings.backup.md`) |
 | Version history | `.history/` (hidden) |
 | Trash | `.trash/` (hidden) |
 | AI keys (Claude / OpenAI / DeepSeek), Firecrawl key, recently opened, hidden AI boxes | only in Chrome on this PC |

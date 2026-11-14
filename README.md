@@ -65,7 +65,7 @@ Your notes stay ordinary Markdown files, so the core of your vault works in Obsi
 **Works in Obsidian, without the My Notes extras**
 - **Maps** show as normal notes: card text, `→` arrow lines and a `map-layout` property with the card positions. Everything is readable, there's just no map view.
 - **Tables** open as Obsidian Bases (each row is a note, each cell a property). Coloured choices, column types and saved filter views only show in My Notes. *Not tested yet:* changing a table's columns in Obsidian may remove the My Notes column settings — try it on a copy first.
-- **Pins, icons, saved searches and sort order** are kept in `My Notes/settings.md`, which Obsidian ignores.
+- **Pins, icons, saved searches and sort order** are kept in the hidden folder `.mynotes` (`.mynotes/settings.md`), which Obsidian ignores.
 
 **Only in My Notes**
 - **Locked notes** look like scrambled text in Obsidian and can't be opened there. ⚠️ **Never edit a locked note in Obsidian** — changing even one character breaks it and it can no longer be unlocked.

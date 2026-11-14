@@ -112,6 +112,26 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .ocnt{width:44px;text-align:right;color:var(--muted);font-size:12px}.odt{width:64px;text-align:right;color:var(--muted);font-size:12px}
 .oroot .onm{font-weight:600}.orgren{width:100%;font:inherit;padding:2px 6px;border:1px solid var(--accent);border-radius:5px;background:var(--bg);color:var(--text)}
 .orgfoot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:8px;font-size:12.5px;min-height:34px}
+#vorgPage{position:absolute;inset:0;z-index:41;display:none;flex-direction:column;background:var(--bg);padding:18px 26px 12px}
+.vorgbody{overflow:auto;max-width:760px}.vorgintro{margin:4px 0 14px;line-height:1.55}
+.vorgsafe{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--accent) 6%,var(--bg));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));font-size:13px;line-height:1.5;margin-bottom:14px}
+.vorgsafe.warn{background:color-mix(in srgb,#d97706 8%,var(--bg));border-color:color-mix(in srgb,#d97706 35%,var(--line))}
+.vorgsafe>.uic{width:18px;height:18px;flex:none;color:var(--accent);margin-top:2px}.vorgsafe.warn>.uic{color:#d97706}
+.vorglbl{display:block;font-weight:600;margin:12px 0 6px}.vorgopt{display:block;margin:4px 0;line-height:1.45;cursor:pointer}
+#vorgHint{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-size:13px;resize:vertical}
+.vorgbtns{display:flex;align-items:center;gap:10px;margin:14px 0}.vorgbtns .primary,.orgbar .primary{display:inline-flex;align-items:center;gap:6px}
+.vorgbtns .uic,.orgbar .primary .uic,.vorgnote .uic{width:14px;height:14px;margin:0}
+.vorgmuted{color:var(--muted);font-size:12.5px}.vorgnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.vorgnote .ghost{display:inline-flex;align-items:center;gap:5px}
+.vorglist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:8px}
+.vorgrow{display:flex;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}
+.vorgrow.on{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 4%,var(--bg))}
+.vorgrow.bad{opacity:.65}.vorgrow.tip{background:color-mix(in srgb,var(--muted) 6%,var(--bg))}
+.vorgchk{flex:none;padding-top:2px}.vorgchk .uic{width:16px;height:16px;color:var(--muted)}
+.vorgmain{flex:1;min-width:0}.vorgt{font-weight:600}.vorgr{font-size:13px;color:var(--muted);margin:2px 0 6px}
+.vorgmv{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}.vorgfrom{display:inline-flex;align-items:center;gap:4px;font-weight:500}.vorgfrom .uic{width:13px;height:13px}
+.vorgarr{color:var(--muted)}.vorgto{width:220px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px}
+.vorgerr{color:#c2410c;font-size:12.5px;margin-top:4px}
 .orghint{color:var(--muted);font-size:11.5px}
 .orgghost{position:fixed;top:-100px;left:-100px;padding:4px 10px;background:var(--accent);color:#fff;border-radius:6px;font-size:12.5px;font-weight:600}
 .stgrid{display:grid;grid-template-columns:minmax(90px,max-content) 1fr;gap:6px 10px;align-items:center;margin-top:10px}
@@ -781,7 +801,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v55-2026-11-14</span>
+      <span class="appver" id="appVer" title="My Notes version">v56-2026-11-14</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -808,6 +828,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button id="manBtn" title="Read the My Notes manual">Manual</button>
       <button id="trashBtn" title="Trash — restore deleted notes or delete them permanently">Trash</button>
       <button id="tidyBtn" title="Go through notes that are missing tags or importance, with AI suggestions">✨ Tidy up</button>
+      <button id="vorgBtn" title="Organize vault — AI suggests a tidier folder structure; you tick what to do; one button undoes it">Organize</button>
       <input type="file" id="fileIn" accept=".md,text/markdown" multiple hidden>
     </div>
   </aside>
@@ -3453,7 +3474,7 @@ async function walk(dir, prefix, seen, W, lim){
   const jobs = [];
   for await (const [name, h] of dir.entries()){
     if (name.startsWith('.')) continue;               // skips .obsidian, .trash, .git
-    if (!prefix && (name === VS_DIR || name === VS_OLD_DIR) && h.kind === 'directory') continue;   // the app's own settings note
+    if (/^(My Notes|Quiet Notes)\/$/.test(prefix) && /^settings( \(.*\))?\.md$/i.test(name)) continue;   // v56: an old settings note (or Dropbox's conflicted copy of it) — not a note of yours
     if (h.kind === 'directory'){
       const fp = prefix + name; W.folders.add(fp); W.dirs.set(fp, h);
       jobs.push(walk(h, fp + '/', seen, W, lim));
@@ -7403,11 +7424,13 @@ $('aiBtn').title = 'AI suggestions: tags, importance, folder, summary (right-cli
   const set = (id, name, label) => { const b = $(id); if (b) b.innerHTML = UI(name) + (label ? ' ' + label : ''); };
   set('clipBtn', 'globe'); set('newMapBtn', 'waypoints'); set('todayBtn', 'calendar'); set('newFolderBtn', 'folder-plus'); set('orgBtn', 'folder-tree'); set('expandAll', 'chevrons-up-down'); set('collapseAll', 'chevrons-down-up');
   set('searchClear', 'x'); set('menuBtn', 'menu', 'Notes'); set('qsBtn', 'search'); set('sideBtn', 'panel-left'); set('aiBtn', 'sparkles'); set('sendTblBtn', 'table'); set('askNotesBtn', 'message-circle-question-mark'); set('pinBtn', 'pin');
-  set('pdfBtn', 'file-down'); set('printBtn', 'printer'); set('delBtn', 'trash-2'); set('tidyBtn', 'wand-sparkles', 'Tidy up'); set('trashBtn', 'trash-2'); set('lockBtn', 'lock-open'); set('histBtn', 'history'); set('cpBtn', 'command'); set('newTableBtn', 'table'); set('graphBtn', 'share-2');
+  set('pdfBtn', 'file-down'); set('printBtn', 'printer'); set('delBtn', 'trash-2'); set('tidyBtn', 'wand-sparkles', 'Tidy up'); set('vorgBtn', 'folder-cog', 'Organize'); set('trashBtn', 'trash-2'); set('lockBtn', 'lock-open'); set('histBtn', 'history'); set('cpBtn', 'command'); set('newTableBtn', 'table'); set('graphBtn', 'share-2');
   $('qsBtn').removeAttribute('style'); $('pdfBtn').removeAttribute('style');
 })();
 $('aiBtn').onclick = () => { const n = cur(); if (!n) return; if (S.ai && S.ai.path === n.path){ S.ai = null; renderEditor(); } else aiOpen(n); };
 $('tidyBtn').onclick = () => { if (!S.root && !S.demo) return toast('Open your vault first'); aiTidy(null); };
+$('vorgBtn').onclick = () => vorgOpen();
+['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (vorgIsOpen() && !VORG.busy && e.target.closest('.item[data-p], .tab, [data-p]')) vorgClose(); }, true));
 $('scroll').addEventListener('click', async e => {
   if (e.target.closest('[data-aihint]')){ e.preventDefault(); return aiOpen(cur()); }
   const box = e.target.closest('#aip'); if (!box) return;
@@ -9968,6 +9991,353 @@ function gClose(){ $('graphBg').classList.remove('on'); $('gTip').style.display 
   $('graphBtn').onclick = () => openGraph('local');
 })();
 
+/* ---------- v56: Vault organizer — AI suggests a tidier folder structure, you tick what to do, one button undoes it all ----------
+   Safety rules: nothing is ever deleted (empty folders go to the Trash), files with the same name are kept as "name 2",
+   every change is written to a restore point (Chrome storage) as it happens, the run stops at the first error,
+   and "Undo this cleanup" puts every file back where it was. A log note ("Vault organizer log") lists what was done. */
+const VORG = { step:'start', plan:[], usage:null, style:'tidy', hint:'', busy:false, result:null };
+const VORG_LOG = 'Vault organizer log';
+const vorgKey = () => 'vorg:' + (S.root ? S.root.name : '');
+const vorgSkip = f => !f || f.split('/').some(x => x.startsWith('.'));
+const vorgClean = p => String(p || '').replace(/\\/g, '/').split('/').map(x => x.replace(/[:*?"<>|#^\[\]]/g, '').trim()).filter(Boolean).join('/');
+const vorgUnder = (p, f) => p === f || p.startsWith(f + '/');
+function vorgCounts(){
+  const c = new Map();   // folder → { direct, total, newest, titles }
+  const get = f => { if (!c.has(f)) c.set(f, { direct:0, total:0, newest:0, titles:[], bases:0 }); return c.get(f); };
+  for (const f of S.folders) if (!vorgSkip(f)) get(f);
+  for (const n of S.notes.values()){
+    if (n.external || vorgSkip(n.folder) && n.folder) continue;
+    const f = n.folder || ''; if (f) { const e = get(f); e.direct++; e.titles.push([n.mtime || 0, n.name]); }
+    let x = f; while (x){ const e = get(x); e.total++; if ((n.mtime || 0) > e.newest) e.newest = n.mtime || 0; x = parentOf(x); }
+  }
+  for (const b of S.bases.values()) if (b.folder && c.has(b.folder)) c.get(b.folder).bases++;
+  return c;
+}
+// what the AI sees: folder names, how many notes, when last edited, a few note titles — never the note text
+function vorgSummary(){
+  const c = vorgCounts(), d = t => t ? new Date(t).toISOString().slice(0, 10) : '—';
+  const rootNotes = [...S.notes.values()].filter(n => !n.external && !n.folder).length;
+  const lines = ['Vault root: ' + rootNotes + ' notes directly in the root'];
+  for (const f of [...c.keys()].sort(NCOLL.compare)){
+    const e = c.get(f), t = e.titles.sort((a, b) => b[0] - a[0]).slice(0, 6).map(x => x[1].slice(0, 60));
+    lines.push('- ' + f + ' | ' + e.total + ' notes (' + e.direct + ' directly)' + (e.bases ? ' | ' + e.bases + ' table' + (e.bases > 1 ? 's' : '') : '') + ' | last edit ' + d(e.newest) + (t.length ? ' | e.g. ' + t.join(' · ') : ''));
+    if (lines.length > 450){ lines.push('(more folders not shown)'); break; }
+  }
+  return lines.join('\n');
+}
+// folders whose names differ only in spaces, _ - or capitals ("My Notes" / "My_Notes") — found without AI
+function vorgTwins(){
+  const c = vorgCounts(), by = new Map(), out = [];
+  for (const f of c.keys()){ const k = parentOf(f) + '/' + f.split('/').pop().toLowerCase().replace(/[\s_\-.]+/g, ''); if (!by.has(k)) by.set(k, []); by.get(k).push(f); }
+  for (const list of by.values()) if (list.length > 1){
+    list.sort((a, b) => c.get(b).total - c.get(a).total);
+    for (const f of list.slice(1)) out.push({ action:'merge', from:f, to:list[0], title:'Merge “' + f.split('/').pop() + '” into “' + list[0].split('/').pop() + '”', reason:'The two folders have almost the same name.' });
+  }
+  return out;
+}
+// where everything in `from` ends up
+function vorgTarget(s){
+  const name = s.from.split('/').pop();
+  if (s.action === 'merge' || s.action === 'rename') return s.to;
+  return (s.to ? s.to + '/' : '') + name;
+}
+function vorgCheck(s){
+  const c = vorgCounts();
+  s.from = vorgClean(s.from); s.to = vorgClean(s.to);
+  if (s.action === 'tip') return '';
+  if (!['merge', 'move', 'archive', 'rename'].includes(s.action)) return 'unknown kind of change';
+  if (!s.from || !S.folders.has(s.from)) return 'the folder “' + s.from + '” doesn’t exist';
+  if (vorgSkip(s.from)) return 'that folder belongs to the app';
+  if ((s.action === 'merge' || s.action === 'rename') && !s.to) return 'no target folder';
+  if (s.to && vorgSkip(s.to)) return 'that target belongs to the app';
+  const t = vorgTarget(s);
+  if (!t || t === s.from) return 'nothing would change';
+  if (vorgUnder(t, s.from)) return 'a folder can’t go inside itself';
+  const e = c.get(s.from); s.count = e ? e.total : 0;
+  return '';
+}
+function vorgOpen(){
+  if (!S.root && !S.demo) return toast('Open your vault first');
+  hideCtx && hideCtx(); orgClose && orgClose();
+  let pg = $('vorgPage');
+  if (!pg){ pg = document.createElement('div'); pg.id = 'vorgPage'; document.querySelector('main.main').appendChild(pg);
+    pg.addEventListener('click', vorgClick); pg.addEventListener('change', vorgChange); pg.addEventListener('input', vorgChange); }
+  if (VORG.step !== 'review' && VORG.step !== 'done') VORG.step = 'start';
+  pg.style.display = 'flex'; vorgRender();
+}
+function vorgClose(){ const pg = $('vorgPage'); if (pg) pg.style.display = 'none'; if (VORG.step === 'done') VORG.step = 'start'; }
+const vorgIsOpen = () => { const pg = $('vorgPage'); return !!(pg && pg.style.display === 'flex'); };
+async function vorgRender(){
+  const pg = $('vorgPage'); if (!pg) return;
+  const head = sub => `<div class="orghead">${UI('folder-cog')}<b>Organize vault</b><span class="orgsub">${sub || ''}</span><span class="sp"></span><button class="ghost" data-v="close" title="Back to your notes (Esc)">✕ Close</button></div>`;
+  if (VORG.step === 'start'){
+    let last = null; try { last = S.root ? await idbGet(vorgKey()) : null; } catch(e){}
+    const lastHtml = last && !last.undone && last.steps && last.steps.length ? `<div class="vorgnote">${UI('history')} Last cleanup: ${esc(new Date(last.at).toLocaleString())} · ${last.moved} file${last.moved === 1 ? '' : 's'} moved${last.stopped ? ' (stopped early)' : ''}. <button class="ghost" data-v="undo">${UI('undo-2')} Undo that cleanup</button></div>` : '';
+    pg.innerHTML = head('AI suggests, you decide') + `<div class="vorgbody">
+      <p class="vorgintro">The AI looks at your <b>folder names, how many notes they hold, when they were last edited and a few note titles</b> (not the note text) and suggests a tidier structure. <b>Nothing changes until you tick suggestions and click Apply.</b></p>
+      <div class="vorgsafe">${UI('shield-check')}<div><b>Safe by design</b><br>Nothing is deleted — empty folders go to the Trash · files with the same name are kept as “name 2” · a restore point is saved before every change · it stops at the first problem · one button undoes the whole cleanup · every change is listed in the note “${VORG_LOG}”.</div></div>
+      <label class="vorglbl">How should it organize?</label>
+      <label class="vorgopt"><input type="radio" name="vstyle" value="tidy" ${VORG.style === 'tidy' ? 'checked' : ''}> <b>Tidy what I have</b> — keep my folders, merge duplicates, gather loose inboxes and scratch folders, archive what’s old</label>
+      <label class="vorgopt"><input type="radio" name="vstyle" value="para" ${VORG.style === 'para' ? 'checked' : ''}> <b>PARA</b> — sort top folders into Projects, Areas, Resources and Archive (reuses folders you already have, like PROJECTS or ARCHIVE)</label>
+      <label class="vorglbl">Anything it should know? <span class="vorgmuted">(optional)</span></label>
+      <textarea id="vorgHint" rows="3" placeholder="e.g. Leave SHARPEN.STUDIO alone · INBOX is my only inbox · archive anything not touched since summer">${esc(VORG.hint)}</textarea>
+      <div class="vorgbtns"><button class="primary" data-v="plan">${UI('sparkles')} Make a plan</button><span class="vorgmuted">${S.demo ? 'Works in the demo too — but changes need your own vault.' : 'Uses your AI (' + esc(AIN()) + '). Takes 10–40 seconds.'}</span></div>
+      ${lastHtml}</div>`;
+    return;
+  }
+  if (VORG.step === 'review'){
+    const items = VORG.plan, on = items.filter(s => s.on && !s.err && s.action !== 'tip'), files = on.reduce((a, s) => a + (s.count || 0), 0);
+    const opts = `<datalist id="vorgFolders">${allFolders().filter(f => !vorgSkip(f)).map(f => `<option value="${esc(f)}">`).join('')}</datalist>`;
+    const verb = { merge:'Merge into', move:'Move into', archive:'Archive into', rename:'Rename to' };
+    const rows = items.map((s, i) => s.action === 'tip'
+      ? `<div class="vorgrow tip"><span class="vorgchk">${UI('lightbulb')}</span><div class="vorgmain"><div class="vorgt">${esc(s.title || 'Tip')}</div><div class="vorgr">${esc(s.reason || '')}</div></div></div>`
+      : `<div class="vorgrow ${s.err ? 'bad' : ''} ${s.on && !s.err ? 'on' : ''}"><label class="vorgchk"><input type="checkbox" data-i="${i}" ${s.on && !s.err ? 'checked' : ''} ${s.err ? 'disabled' : ''}></label>
+        <div class="vorgmain"><div class="vorgt">${esc(s.title || '')}</div><div class="vorgr">${esc(s.reason || '')}</div>
+        <div class="vorgmv"><span class="vorgfrom">${UI('folder')} ${esc(s.from)}</span><span class="vorgmuted">${s.count || 0} note${s.count === 1 ? '' : 's'}</span>
+          <span class="vorgarr">${verb[s.action] || 'Move into'}</span><input class="vorgto" data-to="${i}" list="vorgFolders" value="${esc(s.to)}" placeholder="${s.action === 'move' || s.action === 'archive' ? 'Vault root' : 'Folder'}">
+          <span class="vorgmuted">→ ${esc(s.err ? '' : vorgTarget(s) || 'Vault root')}</span></div>
+        ${s.err ? `<div class="vorgerr">Can’t do this: ${esc(s.err)}</div>` : ''}</div></div>`).join('');
+    pg.innerHTML = head(items.length + ' suggestion' + (items.length === 1 ? '' : 's') + (VORG.usage ? ' · ' + esc(usageLine(VORG.usage).replace(/\*/g, '')) : '')) +
+      `<div class="orgbar"><span class="orgseln">${on.length} ticked · about ${files} note${files === 1 ? '' : 's'} to move</span><span class="sp"></span>
+        <button class="ghost" data-v="all">Tick all</button><button class="ghost" data-v="none">Untick all</button><button class="ghost" data-v="start">${UI('arrow-left')} Back</button>
+        <button class="primary" data-v="apply" ${on.length ? '' : 'disabled'}>${UI('check')} Apply ${on.length || ''}</button></div>
+      <div class="vorglist">${rows || '<div class="vorgmuted" style="padding:20px">The AI had no suggestions — your vault looks tidy.</div>'}</div>${opts}
+      <div class="orgfoot"><span class="vorgmuted">You can change any target folder — type a new name to create it. Nothing happens until you click Apply.</span></div>`;
+    return;
+  }
+  if (VORG.step === 'done'){
+    const r = VORG.result || {};
+    pg.innerHTML = head(r.undo ? 'Undone' : r.stopped ? 'Stopped' : 'Done') + `<div class="vorgbody">
+      <div class="vorgsafe ${r.stopped ? 'warn' : ''}">${UI(r.stopped ? 'triangle-alert' : 'circle-check')}<div>${r.html || ''}</div></div>
+      <div class="vorgbtns">${!r.undo && r.moved ? `<button class="ghost" data-v="undo">${UI('undo-2')} Undo this cleanup</button>` : ''}
+        ${S.notes.has(VORG_LOG + '.md') ? `<button class="ghost" data-v="log">${UI('file-text')} Open the log note</button>` : ''}
+        <button class="primary" data-v="close">Close</button></div></div>`;
+  }
+}
+function vorgChange(e){
+  const t = e.target;
+  if (t.name === 'vstyle') VORG.style = t.value;
+  if (t.id === 'vorgHint') VORG.hint = t.value;
+  if (t.dataset.i != null){ VORG.plan[+t.dataset.i].on = t.checked; if (e.type === 'change') vorgRender(); }
+  if (t.dataset.to != null && e.type === 'change'){ const s = VORG.plan[+t.dataset.to]; s.to = t.value; s.err = vorgCheck(s); if (!s.err) s.on = true; vorgRender(); }
+}
+async function vorgClick(e){
+  const b = e.target.closest('[data-v]'); if (!b || VORG.busy) return;
+  const v = b.dataset.v;
+  if (v === 'close') return vorgClose();
+  if (v === 'start'){ VORG.step = 'start'; return vorgRender(); }
+  if (v === 'plan') return vorgPlan();
+  if (v === 'all' || v === 'none'){ VORG.plan.forEach(s => { if (!s.err) s.on = v === 'all'; }); return vorgRender(); }
+  if (v === 'apply') return vorgApply();
+  if (v === 'undo') return vorgUndo();
+  if (v === 'log'){ vorgClose(); S.current = VORG_LOG + '.md'; if (!S.tabs.includes(S.current)) S.tabs.push(S.current); return renderAll(); }
+}
+async function vorgPlan(){
+  if (!aiKey()){ await aiAskKey('Organize vault needs AI to make its suggestions'); if (!aiKey()) return; }
+  const style = VORG.style === 'para'
+    ? `Style: PARA. Aim for four top-level groups: Projects (things with an end), Areas (ongoing responsibilities), Resources (reference and interests), Archive (inactive). Reuse existing top folders with similar names (e.g. PROJECTS, ARCHIVE) instead of creating new ones; new group folders may be created by naming them as a target. Move each top-level folder into the group it belongs to. Don't move folders that are inboxes or tools (templates, daily notes, tags, tasks) — leave those at the top.`
+    : `Style: tidy what exists. Keep the user's structure. Suggest: merging folders that are duplicates or hold the same kind of thing (e.g. several inbox / clippings / scratch folders into the main inbox), moving stray top-level folders into an obvious parent, and archiving folders with no edits for 6+ months into the existing archive folder (create "ARCHIVE" only if there is none).`;
+  const prompt = `You help someone tidy the folders of their personal notes vault (Markdown files). Below is every folder with its note count, last edit date and a few example note titles.
+
+${vorgSummary()}
+
+${style}
+${VORG.hint.trim() ? '\nThe user says: ' + VORG.hint.trim() + '\n' : ''}
+Rules:
+- Only suggest changes to FOLDERS: "merge" (put everything from \`from\` into the existing folder \`to\`), "move" (put the folder \`from\` inside the folder \`to\`; "" = vault root), "archive" (like move, into the archive folder), "rename" (\`to\` is the folder's new full path). Use "tip" for things the user should check by hand (no from/to needed).
+- Use folder paths exactly as listed. Never suggest anything for hidden folders or the app's own folders.
+- Never suggest deleting anything. Never move a folder into itself or its own sub-folder.
+- At most 15 suggestions, the most useful first. If two suggestions touch the same folder, keep only the better one. Fewer is fine — if the vault is already tidy, say so with one tip.
+- title: short, e.g. "Merge Clippings into INBOX". reason: one plain-English sentence a non-technical person understands.
+Return them by calling the organize_plan tool.`;
+  VORG.busy = true; loading(true, 'Making a plan for your vault…'); clearInterval(S.loadTick); $('loadSub').textContent = AIN() + ' is looking at your folders — this takes 10–40 seconds';
+  let res;
+  try {
+    res = await aiCall({ tier:'main', max:4000, messages:[{ role:'user', content: prompt }],
+      tool:{ name:'organize_plan', description:'Return the suggested folder changes.', schema:{ type:'object', properties:{
+        suggestions:{ type:'array', items:{ type:'object', properties:{ action:{ type:'string', enum:['merge','move','archive','rename','tip'] }, from:{ type:'string' }, to:{ type:'string' }, title:{ type:'string' }, reason:{ type:'string' } }, required:['action','title','reason'] } } }, required:['suggestions'] } }, force:true });
+  } catch(err){ VORG.busy = false; loading(false); if (err.code === 'BADKEY' || err.code === 'NOKEY') aiAskKey(err.message).catch(() => {}); return toast(err.message, 7000); }
+  VORG.busy = false; loading(false);
+  let input = res.input;
+  if (!input){ const t = res.text || '', a = t.indexOf('{'), z = t.lastIndexOf('}'); try { if (a >= 0 && z > a) input = JSON.parse(t.slice(a, z + 1)); } catch(e){} }
+  const got = ((input && input.suggestions) || []).map(s => ({ action:String(s.action || '').toLowerCase(), from:s.from || '', to:s.to || '', title:String(s.title || ''), reason:String(s.reason || '') }));
+  for (const t of vorgTwins()) if (!got.some(s => vorgClean(s.from) === t.from || vorgClean(s.to) === t.from)) got.unshift(t);
+  const seen = new Set(); VORG.plan = [];
+  for (const s of got){
+    s.err = vorgCheck(s);
+    if (s.action !== 'tip'){ if (seen.has(s.from)) continue; seen.add(s.from); }
+    s.on = !s.err && s.action !== 'tip'; VORG.plan.push(s);
+  }
+  // a folder that another ticked suggestion moves away can't also be a target — mark the later one
+  VORG.usage = usageAdd(null, res.usage || AI_USAGE.last);
+  VORG.step = 'review'; vorgRender();
+}
+/* ----- doing it ----- */
+async function vorgDirOf(path, create){   // directory handle for a folder path (creates missing folders when asked)
+  let d = S.root; if (!path) return d;
+  for (const seg of path.split('/')) d = await d.getDirectoryHandle(seg, create ? { create:true } : undefined);
+  return d;
+}
+async function vorgExists(dir, name, isDir){ try { isDir ? await dir.getDirectoryHandle(name) : await dir.getFileHandle(name); return true; } catch(e){ return false; } }
+// move one file on disk; never overwrites — a clash becomes "name 2". Returns the new path.
+async function vorgMoveFile(fromPath, toFolder, wantName){
+  const name = fromPath.split('/').pop(), want = wantName || name, src = await vorgDirOf(parentOf(fromPath)), dst = await vorgDirOf(toFolder, true);
+  const h = await src.getFileHandle(name), file = await h.getFile();
+  const nm = await vorgExists(dst, want, false) ? await uniqueIn(dst, want, false) : want;
+  const nh = await dst.getFileHandle(nm, { create:true }); const w = await nh.createWritable(); await w.write(file); await w.close();
+  if ((await nh.getFile()).size !== file.size) throw new Error('copy of “' + name + '” is incomplete');
+  await src.removeEntry(name);
+  return (toFolder ? toFolder + '/' : '') + nm;
+}
+async function vorgFilesUnder(folder){   // every file under a folder on disk, as vault paths (folders listed too, deepest last)
+  const files = [], dirs = [];
+  const go = async (d, p) => { for await (const [name, h] of d.entries()){ const fp = p + '/' + name; if (h.kind === 'directory'){ dirs.push(fp); await go(h, fp); } else files.push(fp); } };
+  await go(await vorgDirOf(folder), folder);
+  return { files, dirs };
+}
+async function vorgEnsure(path, J){   // make a folder (and parents), remembering which ones we created
+  let cur = '', d = S.root;
+  for (const seg of path.split('/')){
+    cur = cur ? cur + '/' + seg : seg;
+    if (!await vorgExists(d, seg, true)) J.steps.push({ k:'mkdir', path:cur });
+    d = await d.getDirectoryHandle(seg, { create:true });
+  }
+}
+async function vorgSave(J){ try { await idbSet(vorgKey(), J); } catch(e){ console.warn('[MN] organizer restore point', e); } }
+async function vorgApply(){
+  if (S.demo) return toast('Open your own vault to apply changes — the demo can only show the plan', 6000);
+  const todo = VORG.plan.filter(s => s.on && !s.err && s.action !== 'tip');
+  for (const s of todo){ s.err = vorgCheck(s); if (s.err) return vorgRender(), toast('Please check: ' + s.title + ' — ' + s.err, 6000); }
+  // two ticked suggestions must not fight over the same folders
+  for (const a of todo) for (const b of todo) if (a !== b && (vorgUnder(vorgTarget(b), a.from) || vorgUnder(b.from, a.from) && a.from !== b.from))
+    return toast('“' + a.title + '” and “' + b.title + '” touch the same folder — untick one of them', 7000);
+  const files = todo.reduce((x, s) => x + (s.count || 0), 0);
+  if (!await confirmIt('Apply ' + todo.length + ' change' + (todo.length === 1 ? '' : 's') + ' (about ' + files + ' note' + (files === 1 ? '' : 's') + ' plus their attachments)? A restore point is saved first — “Undo this cleanup” puts everything back.', 'Apply')) return;
+  VORG.busy = true; await flushAll();
+  const J = { at:Date.now(), steps:[], moved:0, done:[], stopped:'', undone:false };
+  let stopped = '', renamed = [];
+  loading(true, 'Organizing your vault…'); clearInterval(S.loadTick);
+  try {
+    for (const s of todo){
+      const T = vorgTarget(s);
+      $('loadSub').textContent = s.title;
+      try {
+        const { files: list, dirs } = await vorgFilesUnder(s.from);
+        for (const fp of list){
+          const rel = fp.slice(s.from.length + 1), destFolder = parentOf((T ? T + '/' : '') + rel);
+          if (destFolder) await vorgEnsure(destFolder, J);
+          const np = await vorgMoveFile(fp, destFolder);
+          J.steps.push({ k:'file', from:fp, to:np }); J.moved++;
+          if (np.split('/').pop() !== fp.split('/').pop()) renamed.push([fp, np]);
+          if (J.moved % 20 === 0){ $('loadSub').textContent = s.title + ' · ' + J.moved + ' files moved'; await vorgSave(J); }
+        }
+        if (T) await vorgEnsure(T, J);
+        // the emptied source folder (and its empty sub-folders) → Trash
+        const left = await vorgFilesUnder(s.from);
+        if (!left.files.length){
+          const pd = await vorgDirOf(parentOf(s.from)), name = s.from.split('/').pop();
+          const trash = await S.root.getDirectoryHandle('.trash', { create:true }), tname = await uniqueIn(trash, name, true);
+          await copyDir(await pd.getDirectoryHandle(name), await trash.getDirectoryHandle(tname, { create:true }));
+          await pd.removeEntry(name, { recursive:true }); await trashRecord(tname, s.from);
+          J.steps.push({ k:'rmdir', path:s.from, trash:tname });
+        }
+        J.steps.push({ k:'remap', from:s.from, to:T });
+        J.done.push({ title:s.title, from:s.from, to:T, files:list.length });
+        await vorgSave(J);
+      } catch(err){ stopped = s.title + ': ' + err.message; break; }
+    }
+    J.stopped = stopped; await vorgSave(J);
+    // bring the app up to date, then fix what points at the old folder paths (tables, [[folder/links]], pins, icons, settings)
+    $('loadSub').textContent = 'Reading the vault again…';
+    const wantTabs = [...S.tabs], wantCur = S.current;
+    for (const st of J.steps) if (st.k === 'remap'){ remapPaths(st.from, st.to); remapSettingPaths(st.from, st.to); await remapIcons(st.from, st.to).catch(() => {}); }
+    await loadVault(S.root, true);
+    for (const st of J.steps) if (st.k === 'remap'){
+      const snap = { bases:[...S.bases.values()].map(b => [b.path, b.text]), notes:[...S.notes.values()].filter(n => !n.external && !n.locked && (n.body || '').includes('[[' + st.from + '/')).map(n => [n.path, n.body]) };
+      const r = await remapFolderRefs(st.from, st.to);
+      st.refs = { bases:snap.bases.filter(([p, t]) => S.bases.get(p) && S.bases.get(p).text !== t), notes:snap.notes };
+      st.nb = r.nb; st.nn = r.nn;
+    }
+    await vorgSave(J);
+    { const ok = x => S.notes.has(x) || S.bases.has(x), t = S.tabs.filter(ok); S.tabs = t.length ? t : wantTabs.filter(ok); if (!ok(S.current)) S.current = S.tabs[0] || null; saveTabs(); }
+    await vorgLog(J, renamed);
+  } finally { VORG.busy = false; loading(false); }
+  const fx = J.steps.filter(s => s.k === 'remap').reduce((a, s) => [a[0] + (s.nb || 0), a[1] + (s.nn || 0)], [0, 0]);
+  VORG.result = { moved:J.moved, stopped, html:
+    (stopped ? `<b>Stopped at a problem:</b> ${esc(stopped)}<br>Everything before it was done. You can undo it all with the button below, or keep it.<br><br>` : `<b>Done.</b> `) +
+    `${J.done.length} change${J.done.length === 1 ? '' : 's'} · ${J.moved} file${J.moved === 1 ? '' : 's'} moved` +
+    (fx[0] ? ` · ${fx[0]} table${fx[0] === 1 ? '' : 's'} updated` : '') + (fx[1] ? ` · links fixed in ${fx[1]} note${fx[1] === 1 ? '' : 's'}` : '') +
+    (renamed.length ? `<br>${renamed.length} file${renamed.length === 1 ? ' was' : 's were'} kept as “name 2” because the name already existed — they are listed in the log note.` : '') +
+    `<br>Emptied folders are in the Trash.` };
+  VORG.step = 'done'; renderAll(); vorgRender();
+}
+async function vorgUndo(){
+  let J = null; try { J = await idbGet(vorgKey()); } catch(e){}
+  if (!J || J.undone || !J.steps || !J.steps.length) return toast('There is no cleanup to undo');
+  if (!await confirmIt('Undo the cleanup from ' + new Date(J.at).toLocaleString() + '? Every moved file goes back to where it was.', 'Undo')) return;
+  VORG.busy = true; await flushAll();
+  let back = 0, miss = [];
+  loading(true, 'Undoing the cleanup…'); clearInterval(S.loadTick);
+  try {
+    const steps = [...J.steps].reverse();
+    // 1. table and link fixes back (while the files are still at their new places)
+    for (const st of steps) if (st.k === 'remap' && st.refs){
+      for (const [p, t] of st.refs.bases){ const b = S.bases.get(p); if (!b) continue; try { const h = b.handle || await (await dirFor(b.folder)).getFileHandle(b.name + '.base'); const w = await h.createWritable(); await w.write(t); await w.close(); b.text = t; } catch(e){} }
+      const q = s2 => s2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), re = new RegExp('(\\[\\[)' + q(st.to) + '/', 'g');
+      for (const [p] of st.refs.notes){ const n = S.notes.get(p); if (n && !n.locked && n.body.includes('[[' + st.to + '/')){ n.body = n.body.replace(re, '$1' + st.from + '/'); try { await writeNote(n); } catch(e){} } }
+    }
+    // 2. folders that went to the Trash come back (empty), files go back
+    for (const st of steps){
+      if (st.k === 'rmdir'){ try { await vorgDirOf(st.path, true); } catch(e){} }
+      if (st.k === 'file'){
+        $('loadSub').textContent = back + ' files back';
+        try { await vorgMoveFile(st.to, parentOf(st.from), st.from.split('/').pop()); back++; } catch(e){ miss.push(st.to); }
+      }
+    }
+    // 3. folders the cleanup created: removed again when empty
+    for (const st of steps) if (st.k === 'mkdir'){ try { const pd = await vorgDirOf(parentOf(st.path)); if (!(await vorgFilesUnder(st.path)).files.length) await pd.removeEntry(st.path.split('/').pop(), { recursive:true }); } catch(e){} }
+    for (const st of steps) if (st.k === 'remap'){ remapPaths(st.to, st.from); remapSettingPaths(st.to, st.from); await remapIcons(st.to, st.from).catch(() => {}); }
+    J.undone = true; J.undoneAt = Date.now(); await vorgSave(J);
+    await loadVault(S.root, true);
+    { const ok = x => S.notes.has(x) || S.bases.has(x); S.tabs = S.tabs.filter(ok); if (!ok(S.current)) S.current = S.tabs[0] || null; saveTabs(); }
+    await vorgLogUndo(J, back, miss);
+  } finally { VORG.busy = false; loading(false); }
+  VORG.result = { undo:true, moved:back, html:`<b>Undone.</b> ${back} file${back === 1 ? '' : 's'} moved back to where ${back === 1 ? 'it was' : 'they were'}.` +
+    (miss.length ? `<br>${miss.length} file${miss.length === 1 ? '' : 's'} could not be found any more (moved or deleted since) — listed in the log note.` : '') +
+    `<br>The emptied folders are back too (their earlier copies also stay in the Trash).` };
+  VORG.step = 'done'; renderAll(); vorgRender();
+}
+async function vorgLogNote(){
+  let n = S.notes.get(VORG_LOG + '.md');
+  if (!n) n = await createNote(VORG_LOG, '# ' + VORG_LOG + '\n\nWhat “Organize vault” changed, newest first. Undo the last cleanup from Organize vault (bottom left).\n', '');
+  return n;
+}
+async function vorgLogAdd(text){
+  try {
+    const n = await vorgLogNote(); if (n.locked) return;
+    const b = n.body || '', i = b.indexOf('\n## ');
+    n.body = i >= 0 ? b.slice(0, i) + '\n' + text + b.slice(i) : b.replace(/\s*$/, '') + '\n\n' + text;
+    await writeNote(n);
+  } catch(e){ console.warn('[MN] organizer log', e); }
+}
+async function vorgLog(J, renamed){
+  const L = ['## ' + new Date(J.at).toLocaleString() + ' — cleanup' + (J.stopped ? ' (stopped)' : ''), ''];
+  for (const d of J.done) L.push('- **' + d.title + '** — `' + d.from + '` → `' + (d.to || 'vault root') + '` (' + d.files + ' file' + (d.files === 1 ? '' : 's') + ')');
+  if (J.stopped) L.push('', '⚠️ Stopped: ' + J.stopped);
+  if (renamed.length){ L.push('', 'Kept with a new name (the name already existed):'); for (const [a, b] of renamed) L.push('- `' + a + '` → `' + b + '`'); }
+  L.push('', '<details><summary>Every file moved (' + J.moved + ')</summary>', '');
+  for (const st of J.steps) if (st.k === 'file') L.push('- `' + st.from + '` → `' + st.to + '`');
+  L.push('', '</details>', '');
+  await vorgLogAdd(L.join('\n'));
+}
+async function vorgLogUndo(J, back, miss){
+  const L = ['## ' + new Date().toLocaleString() + ' — undid the cleanup from ' + new Date(J.at).toLocaleString(), '', '- ' + back + ' file' + (back === 1 ? '' : 's') + ' moved back'];
+  if (miss.length){ L.push('- Not found any more:'); for (const m of miss) L.push('  - `' + m + '`'); }
+  L.push('');
+  await vorgLogAdd(L.join('\n'));
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && vorgIsOpen() && !VORG.busy && !document.querySelector('#askBg[style*="grid"]')) vorgClose(); });
+
 /* ---------- command palette: every action, found by typing ---------- */
 function cmdList(){
   const n = cur(), note = !!(n && !n.external), b = S.bases.get(S.current), inMap = !!(n && S.map && S.map.path === n.path && $('mapvp'));
@@ -10009,6 +10379,8 @@ function cmdList(){
     ['AI', 'Turn this note into a map (AI)…', '', note && !isMap(n) && !n.locked, () => noteToMap(n)],
     ['AI', 'Suggest tags and importance (AI)', '', note && !n.locked, () => aiOpen(n)],
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
+    ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
+    ['Vault', 'Undo the last vault cleanup (Organize vault)…', '', !!S.root && !S.demo, () => vorgUndo()],
     ['AI', 'AI settings: Claude, OpenAI or DeepSeek (provider, key, model)…', '', true, () => aiSettings()],
     ['AI', 'My AI buttons (add, change, remove)…', '', true, () => prEdit()],
     ['AI', webOn() ? 'Turn off web search for AI threads' : 'Turn on web search for AI threads', '', true, () => { webSet(!webOn()); toast(webOn() ? AIN() + ' may search the web in threads' : 'Web search off'); }],
@@ -10380,7 +10752,11 @@ window.addEventListener('drop', e => { if (!hasFiles(e)) return; if (e.defaultPr
 // Same pins, folders, tabs and look on every PC that opens this vault. The Firecrawl key stays on each PC.
 const VS_SHARED = ['qn-prompts','qn-web','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
 const VS_PERVAULT = ['qn-savedsearch','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
-const VS_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md';
+// v56: settings live in the hidden folder ".mynotes" (a dot folder = app files, like Obsidian's .obsidian), with a backup and a README.
+// Before v56 they were in a normal-looking folder "My Notes" (and before that "Quiet Notes") — easy to delete by mistake.
+const VS_DIR = '.mynotes', VS_PREV_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md', VS_BACKUP = 'settings.backup.md', VS_README = 'README.md';
+const VS_BACKUP_EVERY = 60 * 60000;
+const VS_README_TEXT = '# My Notes app settings — please do not delete\n\nThis folder belongs to the **My Notes** app. It keeps your pins, icons, saved searches, look and other settings, and syncs them to your other PCs with the rest of the vault.\n\n- `settings.md` — the settings (My Notes updates it by itself)\n- `settings.backup.md` — a backup; if `settings.md` ever goes missing, My Notes restores it from here\n\nIf you delete this folder your notes are safe, but the app forgets its settings.\n';
 const VS = { dir:null, mtime:0, applying:false, timer:null, ready:false };
 function vsLocalKey(k){ return VS_PERVAULT.includes(k) && S.root ? k + ':' + S.root.name : k; }
 function vsIsSynced(key){
@@ -10400,7 +10776,11 @@ function vsCollect(){
   }
   return data;
 }
-async function vsFile(dir, create){ const d = await dir.getDirectoryHandle(VS_DIR, { create }); return d.getFileHandle(VS_NOTE, { create }); }
+async function vsFile(dir, create, name){ const d = await dir.getDirectoryHandle(VS_DIR, { create }); return d.getFileHandle(name || VS_NOTE, { create }); }
+async function vsTryRead(dir, folder, name){   // { j, mtime } or null
+  try { const f = await (await (await dir.getDirectoryHandle(folder)).getFileHandle(name)).getFile(); return { j: vsParse(await f.text()), mtime: f.lastModified }; }
+  catch(e){ if (e && e.name !== 'NotFoundError' && e.name !== 'TypeMismatchError') console.warn('[MN] settings file unreadable: ' + folder + '/' + name, e); return null; }
+}
 function vsParse(text){
   text = text.replace(/^﻿/, '');
   const m = text.match(/```json\s*\n([\s\S]*?)\n```/);
@@ -10411,10 +10791,15 @@ function vsRender(obj){
     'Settings for the **My Notes** app (pins, look, icons, property types, attachment folder, open folders). It syncs to your other PCs with the rest of the vault, so they all match. My Notes updates it by itself — no need to edit it.\n\n' +
     '```json\n' + JSON.stringify(obj, null, 2) + '\n```\n';
 }
-async function vsReadAny(dir){   // the note; or the note in the app's old folder; or the first version's hidden file (moved over once)
-  try { const f = await (await vsFile(dir, false)).getFile(); return { j: vsParse(await f.text()), mtime: f.lastModified, note: true }; }
-  catch(e){ if (e && e.name !== 'NotFoundError' && e.name !== 'TypeMismatchError') console.warn('[QN] settings note unreadable', e); }
-  try { const f = await (await (await dir.getDirectoryHandle(VS_OLD_DIR)).getFileHandle(VS_NOTE)).getFile(); return { j: vsParse(await f.text()), mtime: 0, note: false, old: true }; } catch(e){}
+async function vsReadAny(dir){   // .mynotes/settings.md; its backup; the note in an older folder ("My Notes", "Quiet Notes"); or the first version's hidden file
+  const cur = await vsTryRead(dir, VS_DIR, VS_NOTE), prev = await vsTryRead(dir, VS_PREV_DIR, VS_NOTE);
+  // a PC still on an older version writes to "My Notes/settings.md" — if that is newer, its changes win (and it is moved over)
+  if (prev && (!cur || prev.mtime > cur.mtime)) return { j: prev.j, mtime: 0, note: false, old: VS_PREV_DIR, moved: !cur };
+  if (cur) return { j: cur.j, mtime: cur.mtime, note: true };
+  const bak = await vsTryRead(dir, VS_DIR, VS_BACKUP);
+  if (bak) return { j: bak.j, mtime: 0, note: false, restored: true };
+  const old = await vsTryRead(dir, VS_OLD_DIR, VS_NOTE);
+  if (old) return { j: old.j, mtime: 0, note: false, old: VS_OLD_DIR, moved: true };
   try { const f = await (await (await dir.getDirectoryHandle('.quietnotes')).getFileHandle('settings.json')).getFile(); return { j: JSON.parse((await f.text()).replace(/^﻿/, '')), mtime: 0, note: false }; } catch(e){}
   return null;
 }
@@ -10425,12 +10810,43 @@ async function vsWrite(){
     const fh = await vsFile(VS.dir, true);
     const w = await fh.createWritable();
     const data = vsCollect(); VS.lastIcons = data.icons ? JSON.stringify(data.icons.map) : VS.lastIcons;
-    await w.write(vsRender({ app:'My Notes', version:3, saved:new Date().toISOString(), settings:data }));
+    const text = vsRender({ app:'My Notes', version:3, saved:new Date().toISOString(), settings:data });
+    await w.write(text);
     await w.close();
     VS.mtime = (await fh.getFile()).lastModified;
+    await vsExtras(VS.dir, text);
   } catch(e){ console.warn('[QN] could not save settings to vault', e); }
 }
 function vsSchedule(){ clearTimeout(VS.timer); VS.timer = setTimeout(vsWrite, 700); }
+// the README (once) and a backup copy (at most once an hour) next to the settings note
+async function vsExtras(dir, text){
+  try {
+    const d = await dir.getDirectoryHandle(VS_DIR, { create:true });
+    try { await d.getFileHandle(VS_README); } catch(e){ const h = await d.getFileHandle(VS_README, { create:true }); const w = await h.createWritable(); await w.write(VS_README_TEXT); await w.close(); }
+    let old = 0; try { old = (await (await d.getFileHandle(VS_BACKUP)).getFile()).lastModified; } catch(e){}
+    if (text == null) try { text = await (await (await d.getFileHandle(VS_NOTE)).getFile()).text(); vsParse(text); } catch(e){ text = null; }
+    if (text && Date.now() - old > VS_BACKUP_EVERY){ const h = await d.getFileHandle(VS_BACKUP, { create:true }); const w = await h.createWritable(); await w.write(text); await w.close(); }
+  } catch(e){ console.warn('[MN] settings backup/README', e); }
+}
+// v56: after the settings moved to .mynotes, take the old settings note out of "My Notes" / "Quiet Notes"
+// (into the Trash). The folder itself is removed only when nothing else is left in it — notes of yours stay.
+async function vsRetireOld(dir, folder){
+  try {
+    const od = await dir.getDirectoryHandle(folder);
+    try { const h = await od.getFileHandle(VS_NOTE), f = await h.getFile();
+      const trash = await dir.getDirectoryHandle('.trash', { create:true }), tn = await uniqueIn(trash, 'settings (' + folder + ').md', false);
+      const nh = await trash.getFileHandle(tn, { create:true }); const w = await nh.createWritable(); await w.write(f); await w.close();
+      await od.removeEntry(VS_NOTE); await trashRecord(tn, folder + '/' + VS_NOTE);
+    } catch(e){}
+    const extra = []; for await (const [name, h] of od.entries()) if (h.kind === 'file' && (/\.crswap$/i.test(name) || /^settings \(.*\)\.md$/i.test(name))) extra.push([name, h]);
+    for (const [name, h] of extra){   // Chrome's empty leftovers go; Dropbox's conflicted copies of the settings go to the Trash
+      try { if (/\.md$/i.test(name)){ const trash = await dir.getDirectoryHandle('.trash', { create:true }), tn = await uniqueIn(trash, name, false);
+          const nh = await trash.getFileHandle(tn, { create:true }); const w = await nh.createWritable(); await w.write(await h.getFile()); await w.close(); await trashRecord(tn, folder + '/' + name); }
+        await od.removeEntry(name); } catch(e){} }
+    let empty = true; for await (const _ of od.keys()){ empty = false; break; }
+    if (empty) await dir.removeEntry(folder);
+  } catch(e){ console.warn('[MN] could not tidy the old settings folder', e); }
+}
 function vsToLocal(data){
   VS.applying = true;
   try {
@@ -10499,12 +10915,12 @@ async function vsOpen(dir){
   if (!set || !('qn-obimport' in set)){ VS.applying = true; try { imported = await vsImportObsidian(dir, set); } finally { VS.applying = false; } }
   VS.ready = true;
   if (!r || !r.note || imported) await vsWrite();
-  if (r && r.old && VS.mtime){   // settings moved to the new “My Notes” folder: remove the old copy
-    try { const od = await dir.getDirectoryHandle(VS_OLD_DIR); await od.removeEntry(VS_NOTE);
-      let empty = true; for await (const _ of od.keys()){ empty = false; break; }
-      if (empty) await dir.removeEntry(VS_OLD_DIR);
-    } catch(e){ console.warn('[QN] could not remove the old settings note', e); }
+  if (r && r.old && VS.mtime){   // settings moved to .mynotes: take the old copy out of its folder
+    await vsRetireOld(dir, r.old);
+    if (r.old === VS_PREV_DIR) setTimeout(() => toast(r.moved ? 'Your My Notes settings moved to the hidden folder “.mynotes” — safe from being deleted by mistake' : 'Picked up settings saved by an older My Notes on another PC — update My Notes there too', 7000), 900);
   }
+  if (r && r.restored && VS.mtime) setTimeout(() => toast('The settings file was missing — restored from its backup', 7000), 900);
+  if (r && r.note && !S.demo) vsExtras(dir, null).catch(() => {});
   if (imported && imported.length) setTimeout(() => toast('Moved from Obsidian into My Notes: ' + imported.join(', ')), 800);
   return !!set;
 }
