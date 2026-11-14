@@ -744,6 +744,9 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .cm-line.cm-aicost{font-size:11.5px;color:var(--muted)!important;font-style:normal}
 #ed .cm-line.cm-aiyou,.cm-line.cm-aiyou{font-weight:600;padding-top:5px!important;padding-bottom:5px!important;padding-left:calc(12% + 12px)!important;padding-right:10px!important;background:linear-gradient(to right,color-mix(in srgb,var(--accent) 7%,transparent) 12%,color-mix(in srgb,var(--accent) 20%,transparent) 12%)!important;box-shadow:inset 0 3px 0 color-mix(in srgb,var(--accent) 7%,var(--bg))}
 .cm-threply{display:flex;align-items:center;gap:10px;margin:2px 0 10px;padding-left:4px;font-size:12px;color:var(--muted)}
+.cm-thbar .cm-threply{margin-bottom:4px}.cm-thbar{margin-bottom:10px}
+.cm-thtotal{padding-left:6px;font-size:11.5px;color:var(--muted);line-height:1.5;display:flex;flex-wrap:wrap;column-gap:10px}.cm-thtotal b{font-weight:600;color:var(--text);opacity:.75}
+.cm-thbar:not(:has(.cm-thtotal)) .cm-threply{margin-bottom:10px}
 .cm-threply button{font:inherit;font-weight:600;color:var(--accent);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px 10px;cursor:pointer}
 .cm-threply button:hover{background:var(--sel)}
 .cm-threply button{display:inline-flex;align-items:center;gap:5px}.cm-threply .uic{width:14px;height:14px;margin:0}
@@ -778,7 +781,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v54-2026-11-13</span>
+      <span class="appver" id="appVer" title="My Notes version">v55-2026-11-14</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -6568,8 +6571,8 @@ window.qnAiBlocks = (state, arr) => {
       if (!thIsBox(x)) continue;
       if (thFolded(doc, x)){
         let k = 1; for (let i = x.head + 1; i <= x.last; i++) if (/^\s*>\s*\*\*You:\*\*/.test(doc.line(i).text)) k += 2;
-        arr.push(B.replace({ widget: new FW(x.head, k), block: true }).range(doc.line(x.head).from, doc.line(x.last).to));
-      } else if (!/%%chat-wait-\d+%%/.test(doc.line(x.last).text)) arr.push(B.widget({ widget: new W(x.head), block: true, side: 1 }).range(doc.line(x.last).to));
+        const tt = thTotal(doc, x); arr.push(B.replace({ widget: new FW(x.head, k, tt.n ? Math.round(tt.usd * 1e4) / 1e4 : null), block: true }).range(doc.line(x.head).from, doc.line(x.last).to));
+      } else if (!/%%chat-wait-\d+%%/.test(doc.line(x.last).text)) arr.push(B.widget({ widget: new W(x.head, thTotalText(thTotal(doc, x))), block: true, side: 1 }).range(doc.line(x.last).to));
     }
     return;
   }
@@ -6811,15 +6814,38 @@ async function thSummarize(head){
   if (err) toast(err, 6000); else toast('Summary added — the thread is folded (click it to open)');
 }
 let TH_FW = null;
+// v55: thread total — adds up the grey cost lines of a thread (and of its summary box), split by model. Shown only, never saved or sent.
+const TH_COST_RE = /^\s*>\s*\*(?:([^*]*?) · )?Tokens: ([\d,]+) in · ([\d,]+) out(?: · (\d+) web search(?:es)?)?(?: · cost \$([\d.]+))?\*\s*$/;
+function thTotal(doc, x){
+  const t = { n:0, inT:0, outT:0, web:0, usd:0, nocost:0, by:new Map() };
+  const scan = (a, b) => { for (let i = a; i <= b; i++){
+    const m = TH_COST_RE.exec(doc.line(i).text); if (!m) continue;
+    const label = (m[1] || '').trim() || 'earlier answers', usd = m[5] != null ? parseFloat(m[5]) : null;
+    t.n++; t.inT += +m[2].replace(/,/g, ''); t.outT += +m[3].replace(/,/g, ''); t.web += +(m[4] || 0);
+    if (usd == null) t.nocost++; else t.usd += usd;
+    const g = t.by.get(label) || { n:0, usd:0, nocost:0 }; g.n++; if (usd == null) g.nocost++; else g.usd += usd; t.by.set(label, g);
+  } };
+  scan(x.head, x.last);
+  const sum = thSumBox(doc, x); if (sum) scan(sum.head, sum.last);
+  return t;
+}
+const thUsd = v => '$' + (v >= 1 ? v.toFixed(2) : v >= 0.01 || !v ? v.toFixed(3) : v.toFixed(4));
+function thTotalText(t){
+  if (!t || !t.n) return null;
+  const f = n => n.toLocaleString('en-US');
+  const main = 'Thread total: ' + t.n + ' answer' + (t.n === 1 ? '' : 's') + ' · ' + f(t.inT) + ' in · ' + f(t.outT) + ' out' + (t.web ? ' · ' + t.web + ' web search' + (t.web === 1 ? '' : 'es') : '') + ' · ' + thUsd(t.usd) + (t.nocost ? ' + ' + t.nocost + ' without a known price' : '');
+  const by = t.by.size > 1 ? [...t.by].map(([k, g]) => k + ' ' + (g.nocost === g.n ? '(price unknown)' : thUsd(g.usd))).join(' · ') : '';
+  return { main, by, usd: t.usd };
+}
 function thFoldWidget(){
   if (TH_FW || !window.qnCM) return TH_FW;
   TH_FW = class extends window.qnCM.Ht {
-    constructor(head, n){ super(); this.head = head; this.n = n; }
-    eq(o){ return o.head === this.head && o.n === this.n; }
+    constructor(head, n, usd){ super(); this.head = head; this.n = n; this.usd = usd; }
+    eq(o){ return o.head === this.head && o.n === this.n && o.usd === this.usd; }
     ignoreEvent(){ return true; }
     toDOM(){
       const el = document.createElement('div'); el.className = 'cm-aimini';
-      const b = document.createElement('span'); b.className = 'cm-aichip'; b.innerHTML = '✦ AI · Thread (' + this.n + ' message' + (this.n === 1 ? '' : 's') + ') ' + UI('chevron-down');
+      const b = document.createElement('span'); b.className = 'cm-aichip'; b.innerHTML = '✦ AI · Thread (' + this.n + ' message' + (this.n === 1 ? '' : 's') + (this.usd != null ? ' · ' + thUsd(this.usd) : '') + ') ' + UI('chevron-down');
       b.title = 'Folded thread — click to open it';
       b.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSetFold(this.head, false); };
       el.appendChild(b); return el;
@@ -6831,11 +6857,13 @@ let TH_W = null;
 function thWidget(){
   if (TH_W || !window.qnCM) return TH_W;
   TH_W = class extends window.qnCM.Ht {
-    constructor(head){ super(); this.head = head; }
-    eq(o){ return o.head === this.head; }
+    constructor(head, tot){ super(); this.head = head; this.tot = tot; }
+    eq(o){ return o.head === this.head && JSON.stringify(o.tot) === JSON.stringify(this.tot); }
     ignoreEvent(){ return true; }
     toDOM(){
-      const el = document.createElement('div'); el.className = 'cm-threply';
+      const wrap = document.createElement('div'); wrap.className = 'cm-thbar';
+      const el = document.createElement('div'); el.className = 'cm-threply'; wrap.appendChild(el);
+      if (this.tot){ const tt = document.createElement('div'); tt.className = 'cm-thtotal'; tt.title = 'Adds up the grey cost lines of this thread and its summary (prices in USD). Only shown here — not saved in the note, not sent to the AI.'; tt.innerHTML = '<b>' + esc(this.tot.main) + '</b>' + (this.tot.by ? '<span>' + esc(this.tot.by) + '</span>' : ''); wrap.appendChild(tt); }
       const b = document.createElement('button'); b.innerHTML = UI('reply') + 'Reply'; b.title = 'Continue this thread with ' + AIN();
       b.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thOpenReply(this.head, b); };
       const s = document.createElement('button'); s.innerHTML = UI('list-checks') + 'Summarize'; s.title = 'Done? ' + AIN() + ' writes a short summary under the thread (decisions, plan, open questions, next steps) and folds the thread';
@@ -6843,7 +6871,7 @@ function thWidget(){
       const f = document.createElement('button'); f.className = 'thfold'; f.innerHTML = UI('chevron-up') + 'Fold'; f.title = 'Fold the thread into a small chip (nothing is deleted)';
       f.onmousedown = e => { e.preventDefault(); e.stopPropagation(); thSetFold(this.head, true); };
       const t = document.createElement('span'); t.textContent = 'or select text in the thread';
-      el.appendChild(b); el.appendChild(s); el.appendChild(f); el.appendChild(t); return el;
+      el.appendChild(b); el.appendChild(s); el.appendChild(f); el.appendChild(t); return wrap;
     }
   };
   return TH_W;

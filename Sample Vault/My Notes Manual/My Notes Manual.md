@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v53 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v55 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [▶ Watch the intro video](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4) (63 seconds, no sound). It was made with version 28, so a few buttons have moved since then: the note buttons now sit next to the note title (see [The screen](#2-the-screen)). The video file is also in the app's folder on GitHub: `Manual/My Notes - intro.mp4`.
@@ -643,7 +643,7 @@ The thread is saved in the note like any other text: come back tomorrow and repl
 
 **Web search:** in threads, Claude can search the web when the answer depends on current facts (news, prices, products, opening times, rules, companies), and lists its **Sources** as links at the end of the answer. It uses the provider's own web search (Claude or OpenAI), so you don't need an extra account or key; it costs about 1 cent per search. **DeepSeek can't search the web**: the switch shows *No web search with DeepSeek*. In a thread, Claude reuses what it already found in earlier answers and only searches for what is new. Switch it off with **Search the web** in the ✨ popup. If web search is turned off for your key (some company accounts), you get a short notice and the answer comes without it. Claude can't book anything or see live booking-site fares.
 
-**Cost of each answer:** every thread answer and summary ends with a small grey line like *Haiku 5.5 · Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0254*: the model that answered, then the cost in USD at that model's prices (about $0.01 per web search). For a model whose price My Notes doesn't know, only the tokens are shown. If a very big request gets cut off, the thread says so; reply "continue" or ask for a smaller part.
+**Cost of each answer:** every thread answer and summary ends with a small grey line like *Haiku 5.5 · Tokens: 3,400 in · 600 out · 2 web searches · cost $0.0254*: the model that answered, then the cost in USD at that model's prices (about $0.01 per web search). For a model whose price My Notes doesn't know, only the tokens are shown. Under the thread (below Reply / Summarize / Fold), a **thread total** adds up all these lines, including the summary's, and splits the cost by model when you used more than one AI; a folded thread shows its total in the chip. The total is only shown on screen, never saved in the note. If a very big request gets cut off, the thread says so; reply "continue" or ask for a smaller part.
 
 **What Claude sees:** the note and the whole thread, every time. **Costs:** long threads use more tokens, roughly 1–5 cents per reply; the reply box reminds you. 
 

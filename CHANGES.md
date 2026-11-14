@@ -4,6 +4,13 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v55-2026-11-14
+**Thread total.**
+- Under every AI thread, below Reply / Summarize / Fold, a small line now adds up all the grey cost lines of the thread (and of its summary): *Thread total: 14 answers · 182,400 in · 9,800 out · 6 web searches · $0.412*.
+- When the thread used more than one AI, a second line splits the cost by model, e.g. *Haiku 5.5 $0.290 · DeepSeek Flash $0.012 · GPT-6.1 Terra $0.110*.
+- A folded thread shows its total in the chip: *✦ AI · Thread (9 messages · $0.180)*.
+- The total updates after every reply. It is only shown on screen: it isn't saved in the note and isn't sent to the AI.
+
 ## v54-2026-11-13
 **Fix: switching AI in the middle of a thread.**
 - If you switch to an AI that has no key yet (for example OpenAI) and then press Send in a thread, AI settings now opens on its own: the reply popup steps aside, and the dialog says which AI has no key and which ones already have a key saved (marked **✓ key saved** in the menu).
