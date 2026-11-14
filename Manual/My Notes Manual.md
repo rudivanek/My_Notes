@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v57 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v58 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -258,8 +258,8 @@ When the whole vault needs a cleanup — several inboxes, duplicate folders, old
 **Safe by design:**
 - **Nothing is deleted.** Files are moved; a folder that ends up empty goes to the **Trash**.
 - **Nothing is overwritten.** If the target already has a file with the same name, the moved one is kept as *name 2*.
-- **Restore point.** Every single move is recorded as it happens, so **Undo this cleanup** (on the result screen, on the Organize start screen, or the palette: *Undo the last vault cleanup*) puts every file back where it was — merges included — and brings back the emptied folders.
-- **Waits for Dropbox.** If Dropbox (or a virus scanner) is busy with a file, it waits a moment and tries again, up to 6 times.
+- **Restore points.** Every single move is recorded as it happens, for every cleanup. **Undo this cleanup** (on the result screen, under *Earlier cleanups* on the Organize start screen, or the palette: *Undo the last vault cleanup*) puts every file back where it was — merges included — and brings back the emptied folders. Several cleanups are undone one after another, newest first. Cleanups made with v56–v57 whose restore point was replaced are rebuilt from the log note (their files go back; tables and links changed for them stay as they are).
+- **Waits for Dropbox.** If Dropbox (or a virus scanner) is busy with a file or folder, it waits a moment and tries again, up to 6 times. If an emptied folder can't go to the Trash, the cleanup carries on and tells you, so you can delete the empty folder yourself.
 - **Stops at the first real problem.** It tells you what went wrong; everything before it stays done, and you can undo it. If some files are still busy during **Undo**, it says so — click **Undo this cleanup** again later and it moves back only the ones that are left.
 - **Links and tables follow.** Tables that look at a moved folder, and `[[folder/path]]` links in notes, are updated (and changed back by Undo). Pins, icons and open folders follow too.
 - **A log.** The note **Vault organizer log** in the vault root lists every cleanup and undo, newest first, with every file that moved.

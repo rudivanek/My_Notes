@@ -4,6 +4,13 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v58-2026-11-14
+**Organize vault: a restore point for every cleanup, and fewer stops.**
+- Every cleanup now keeps its own restore point. Before, a new cleanup replaced the previous one, so only the latest could be undone. The Organize start screen lists **Earlier cleanups** (newest first) with **Undo this one** on the newest that isn't undone yet.
+- Cleanups made with v56–v57 whose restore point was replaced are rebuilt from the **Vault organizer log** note (it lists every file that moved), so they can be undone too. Their files go back; tables and links changed for them stay as they are.
+- Waiting for Dropbox now also covers listing folders, making folders and emptying folders — not only moving files. A cleanup could stop with "the state had changed since it was read from disk" after all files of a folder were already moved, while the emptied folder went to the Trash.
+- If an emptied folder still can't go to the Trash, the cleanup no longer stops: it carries on and tells you (also in the log), so you can delete the empty folder yourself.
+
 ## v57-2026-11-14
 **Organize vault waits for Dropbox.**
 - A cleanup could stop with *"An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk"*: Dropbox was still syncing a file while it was being moved. Now each file is read in one go and, if it is busy, tried again up to 6 times with a short wait (the progress line says *Waiting for Dropbox…*).

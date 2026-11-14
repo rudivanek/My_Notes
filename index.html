@@ -123,6 +123,7 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .vorgbtns .uic,.orgbar .primary .uic,.vorgnote .uic{width:14px;height:14px;margin:0}
 .vorgmuted{color:var(--muted);font-size:12.5px}.vorgnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .vorgnote .ghost{display:inline-flex;align-items:center;gap:5px}
+.vorgruns{flex-direction:column;align-items:stretch;gap:4px}.vorgrun{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:3px 0}.vorgrun.next{color:var(--text)}
 .vorglist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:8px}
 .vorgrow{display:flex;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}
 .vorgrow.on{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 4%,var(--bg))}
@@ -801,7 +802,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v57-2026-11-14</span>
+      <span class="appver" id="appVer" title="My Notes version">v58-2026-11-14</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -10071,8 +10072,11 @@ async function vorgRender(){
   const pg = $('vorgPage'); if (!pg) return;
   const head = sub => `<div class="orghead">${UI('folder-cog')}<b>Organize vault</b><span class="orgsub">${sub || ''}</span><span class="sp"></span><button class="ghost" data-v="close" title="Back to your notes (Esc)">✕ Close</button></div>`;
   if (VORG.step === 'start'){
-    let last = null; try { last = S.root ? await idbGet(vorgKey()) : null; } catch(e){}
-    const lastHtml = last && !last.undone && last.steps && last.steps.length ? `<div class="vorgnote">${UI('history')} Last cleanup: ${esc(new Date(last.at).toLocaleString())} · ${last.moved} file${last.moved === 1 ? '' : 's'} moved${last.stopped ? ' (stopped early)' : ''}. <button class="ghost" data-v="undo">${UI('undo-2')} Undo that cleanup</button></div>` : '';
+    let runs = []; try { runs = S.root && !S.demo ? await vorgRuns() : []; } catch(e){}
+    const next = runs.find(r => !r.undone && r.steps && r.steps.some(x => x.k === 'file'));
+    const lastHtml = runs.length ? `<div class="vorgnote vorgruns"><div>${UI('history')} <b>Earlier cleanups</b> (newest first)</div>` + runs.slice(0, 6).map(r =>
+        `<div class="vorgrun ${r === next ? 'next' : ''}"><span>${esc(vorgLabel(r))} · ${r.moved} file${r.moved === 1 ? '' : 's'} moved${r.stopped ? ' · stopped early' : ''}${r.fromLog ? ' · from the log' : ''}</span>` +
+        (r.undone ? '<span class="vorgmuted">undone</span>' : r === next ? `<button class="ghost" data-v="undo">${UI('undo-2')} Undo this one</button>` : '<span class="vorgmuted">undo the newer one first</span>') + `</div>`).join('') + `</div>` : '';
     pg.innerHTML = head('AI suggests, you decide') + `<div class="vorgbody">
       <p class="vorgintro">The AI looks at your <b>folder names, how many notes they hold, when they were last edited and a few note titles</b> (not the note text) and suggests a tidier structure. <b>Nothing changes until you tick suggestions and click Apply.</b></p>
       <div class="vorgsafe">${UI('shield-check')}<div><b>Safe by design</b><br>Nothing is deleted — empty folders go to the Trash · files with the same name are kept as “name 2” · a restore point is saved before every change · it stops at the first problem · one button undoes the whole cleanup · every change is listed in the note “${VORG_LOG}”.</div></div>
@@ -10109,7 +10113,7 @@ async function vorgRender(){
     const r = VORG.result || {};
     pg.innerHTML = head(r.undo ? 'Undone' : r.stopped ? 'Stopped' : 'Done') + `<div class="vorgbody">
       <div class="vorgsafe ${r.stopped ? 'warn' : ''}">${UI(r.stopped ? 'triangle-alert' : 'circle-check')}<div>${r.html || ''}</div></div>
-      <div class="vorgbtns">${!r.undo && r.moved ? `<button class="ghost" data-v="undo">${UI('undo-2')} Undo this cleanup</button>` : ''}
+      <div class="vorgbtns">${!r.undo && r.moved ? `<button class="ghost" data-v="undo">${UI('undo-2')} Undo this cleanup</button>` : r.undo ? `<button class="ghost" data-v="start">${UI('history')} Earlier cleanups…</button>` : ''}
         ${S.notes.has(VORG_LOG + '.md') ? `<button class="ghost" data-v="log">${UI('file-text')} Open the log note</button>` : ''}
         <button class="primary" data-v="close">Close</button></div></div>`;
   }
@@ -10207,21 +10211,65 @@ async function vorgMoveFile(fromPath, toFolder, wantName){
   }
   throw new Error('“' + name + '” stayed busy (Dropbox still syncing?) — ' + (lastErr && lastErr.message || 'unknown error'));
 }
-async function vorgFilesUnder(folder){   // every file under a folder on disk, as vault paths (folders listed too, deepest last)
+// v58: any disk step (listing a folder, making one, emptying one) is retried too while Dropbox is busy
+async function vorgRetry(fn, what){
+  let last = null;
+  for (let a = 0; a < 6; a++){
+    if (a){ $('loadSub') && ($('loadSub').textContent = 'Waiting for Dropbox… ' + (what || '') + ' (try ' + (a + 1) + ' of 6)'); await vorgWait(700 * a); }
+    try { return await fn(); } catch(e){ last = e; if (!vorgBusyErr(e)) throw e; }
+  }
+  throw new Error((what ? what + ' — ' : '') + 'still busy (Dropbox syncing?): ' + (last && last.message || ''));
+}
+async function vorgFilesUnder(folder){ return vorgRetry(() => vorgFilesUnder0(folder), 'reading “' + folder + '”'); }
+async function vorgFilesUnder0(folder){   // every file under a folder on disk, as vault paths (folders listed too, deepest last)
   const files = [], dirs = [];
   const go = async (d, p) => { for await (const [name, h] of d.entries()){ const fp = p + '/' + name; if (h.kind === 'directory'){ dirs.push(fp); await go(h, fp); } else files.push(fp); } };
   await go(await vorgDirOf(folder), folder);
   return { files, dirs };
 }
-async function vorgEnsure(path, J){   // make a folder (and parents), remembering which ones we created
+async function vorgEnsure(path, J){ return vorgRetry(() => vorgEnsure0(path, J), 'making “' + path + '”'); }
+async function vorgEnsure0(path, J){   // make a folder (and parents), remembering which ones we created
   let cur = '', d = S.root;
   for (const seg of path.split('/')){
     cur = cur ? cur + '/' + seg : seg;
-    if (!await vorgExists(d, seg, true)) J.steps.push({ k:'mkdir', path:cur });
+    if (!await vorgExists(d, seg, true) && !J.steps.some(x => x.k === 'mkdir' && x.path === cur)) J.steps.push({ k:'mkdir', path:cur });
     d = await d.getDirectoryHandle(seg, { create:true });
   }
 }
-async function vorgSave(J){ try { await idbSet(vorgKey(), J); } catch(e){ console.warn('[MN] organizer restore point', e); } }
+// v58: a restore point for every cleanup (before, a new cleanup replaced the previous one). Undo goes newest first.
+const vorgRunsKey = () => 'vorg-runs:' + (S.root ? S.root.name : '');
+const vorgLabel = r => r.label || new Date(r.at).toLocaleString();
+async function vorgSave(J){
+  try {
+    let runs = []; try { runs = (await idbGet(vorgRunsKey())) || []; } catch(e){}
+    J.label = vorgLabel(J);
+    const i = runs.findIndex(r => r.at === J.at); if (i >= 0) runs[i] = J; else runs.push(J);
+    await idbSet(vorgRunsKey(), runs.slice(-30));
+  } catch(e){ console.warn('[MN] organizer restore point', e); }
+}
+// every cleanup this vault knows: the saved restore points, plus older ones that exist only in the log note
+// (their restore point was replaced by a later cleanup before v58) — the log lists every file that moved, so they can be undone too
+async function vorgRuns(){
+  let runs = []; try { runs = ((await idbGet(vorgRunsKey())) || []).slice(); } catch(e){}
+  try { const old = await idbGet(vorgKey()); if (old && old.at && !runs.some(r => r.at === old.at)) runs.push(old); } catch(e){}
+  const n = S.notes.get(VORG_LOG + '.md');
+  if (n && n.body && !n.locked){
+    const secs = n.body.split(/\n(?=## )/), undone = new Set(); let lastAt = Infinity;
+    for (const sec of secs){ const m = sec.match(/^## .+ — undid the cleanup from (.+)$/m); if (m) undone.add(m[1].trim()); }
+    for (const sec of secs){
+      const h = sec.match(/^## (.+?) — cleanup( \(stopped\))?/m); if (!h) continue;
+      const label = h[1].trim(), known = runs.find(r => vorgLabel(r) === label);
+      if (known){ lastAt = known.at; if (undone.has(label)) known.undone = true; continue; }
+      const steps = [];
+      for (const l of (sec.split('<details>')[1] || '').split('\n')){ const x = l.match(/^- `(.+)` → `(.+)`\s*$/); if (x) steps.push({ k:'file', from:x[1], to:x[2] }); }
+      if (!steps.length) continue;
+      const at = Date.parse(label) || (isFinite(lastAt) ? lastAt - 1000 : 1); lastAt = at;
+      runs.push({ at, label, fromLog:true, steps, moved:steps.length, done:[], stopped:h[2] ? 'stopped' : '', undone:undone.has(label) });
+    }
+  }
+  return runs.sort((a, b) => b.at - a.at);
+}
+async function vorgNextUndo(){ return (await vorgRuns()).find(r => !r.undone && r.steps && r.steps.some(x => x.k === 'file')) || null; }
 async function vorgApply(){
   if (S.demo) return toast('Open your own vault to apply changes — the demo can only show the plan', 6000);
   const todo = VORG.plan.filter(s => s.on && !s.err && s.action !== 'tip');
@@ -10251,14 +10299,17 @@ async function vorgApply(){
         }
         if (T) await vorgEnsure(T, J);
         // the emptied source folder (and its empty sub-folders) → Trash
-        const left = await vorgFilesUnder(s.from);
-        if (!left.files.length){
-          const pd = await vorgDirOf(parentOf(s.from)), name = s.from.split('/').pop();
-          const trash = await S.root.getDirectoryHandle('.trash', { create:true }), tname = await uniqueIn(trash, name, true);
-          await copyDir(await pd.getDirectoryHandle(name), await trash.getDirectoryHandle(tname, { create:true }));
-          await pd.removeEntry(name, { recursive:true }); await trashRecord(tname, s.from);
-          J.steps.push({ k:'rmdir', path:s.from, trash:tname });
-        }
+        try {
+          const left = await vorgFilesUnder(s.from);
+          if (!left.files.length) await vorgRetry(async () => {
+            const pd = await vorgDirOf(parentOf(s.from)), name = s.from.split('/').pop();
+            if (!await vorgExists(pd, name, true)) return;
+            const trash = await S.root.getDirectoryHandle('.trash', { create:true }), tname = await uniqueIn(trash, name, true);
+            await copyDir(await pd.getDirectoryHandle(name), await trash.getDirectoryHandle(tname, { create:true }));
+            await pd.removeEntry(name, { recursive:true }); await trashRecord(tname, s.from);
+            J.steps.push({ k:'rmdir', path:s.from, trash:tname });
+          }, 'emptying “' + s.from + '”');
+        } catch(e){ (J.notes = J.notes || []).push('The empty folder “' + s.from + '” could not go to the Trash (' + e.message + ') — you can delete it yourself.'); }
         J.steps.push({ k:'remap', from:s.from, to:T });
         J.done.push({ title:s.title, from:s.from, to:T, files:list.length });
         await vorgSave(J);
@@ -10286,13 +10337,13 @@ async function vorgApply(){
     `${J.done.length} change${J.done.length === 1 ? '' : 's'} · ${J.moved} file${J.moved === 1 ? '' : 's'} moved` +
     (fx[0] ? ` · ${fx[0]} table${fx[0] === 1 ? '' : 's'} updated` : '') + (fx[1] ? ` · links fixed in ${fx[1]} note${fx[1] === 1 ? '' : 's'}` : '') +
     (renamed.length ? `<br>${renamed.length} file${renamed.length === 1 ? ' was' : 's were'} kept as “name 2” because the name already existed — they are listed in the log note.` : '') +
-    `<br>Emptied folders are in the Trash.` };
+    `<br>Emptied folders are in the Trash.` + (J.notes || []).map(x => '<br>' + esc(x)).join('') };
   VORG.step = 'done'; renderAll(); vorgRender();
 }
 async function vorgUndo(){
-  let J = null; try { J = await idbGet(vorgKey()); } catch(e){}
-  if (!J || J.undone || !J.steps || !J.steps.length) return toast('There is no cleanup to undo');
-  if (!await confirmIt('Undo the cleanup from ' + new Date(J.at).toLocaleString() + '? Every moved file goes back to where it was.', 'Undo')) return;
+  let J = null; try { J = await vorgNextUndo(); } catch(e){}
+  if (!J) return toast('There is no cleanup to undo');
+  if (!await confirmIt('Undo the cleanup from ' + vorgLabel(J) + ' (' + J.moved + ' file' + (J.moved === 1 ? '' : 's') + ')? Every file it moved goes back to where it was.' + (J.fromLog ? ' (This one is rebuilt from the log note: files go back; tables and links that were changed for it stay as they are.)' : ''), 'Undo')) return;
   VORG.busy = true; await flushAll();
   let back = 0, miss = [], failed = [];
   loading(true, 'Undoing the cleanup…'); clearInterval(S.loadTick);
@@ -10344,9 +10395,10 @@ async function vorgLogAdd(text){
   } catch(e){ console.warn('[MN] organizer log', e); }
 }
 async function vorgLog(J, renamed){
-  const L = ['## ' + new Date(J.at).toLocaleString() + ' — cleanup' + (J.stopped ? ' (stopped)' : ''), ''];
+  const L = ['## ' + vorgLabel(J) + ' — cleanup' + (J.stopped ? ' (stopped)' : ''), ''];
   for (const d of J.done) L.push('- **' + d.title + '** — `' + d.from + '` → `' + (d.to || 'vault root') + '` (' + d.files + ' file' + (d.files === 1 ? '' : 's') + ')');
   if (J.stopped) L.push('', '⚠️ Stopped: ' + J.stopped);
+  for (const x of (J.notes || [])) L.push('', 'ℹ️ ' + x);
   if (renamed.length){ L.push('', 'Kept with a new name (the name already existed):'); for (const [a, b] of renamed) L.push('- `' + a + '` → `' + b + '`'); }
   L.push('', '<details><summary>Every file moved (' + J.moved + ')</summary>', '');
   for (const st of J.steps) if (st.k === 'file') L.push('- `' + st.from + '` → `' + st.to + '`');
@@ -10354,7 +10406,7 @@ async function vorgLog(J, renamed){
   await vorgLogAdd(L.join('\n'));
 }
 async function vorgLogUndo(J, back, miss, failed){
-  const L = ['## ' + new Date().toLocaleString() + ' — ' + (failed && failed.length ? 'partly undid' : 'undid') + ' the cleanup from ' + new Date(J.at).toLocaleString(), '', '- ' + back + ' file' + (back === 1 ? '' : 's') + ' moved back'];
+  const L = ['## ' + new Date().toLocaleString() + ' — ' + (failed && failed.length ? 'partly undid' : 'undid') + ' the cleanup from ' + vorgLabel(J), '', '- ' + back + ' file' + (back === 1 ? '' : 's') + ' moved back'];
   if (failed && failed.length){ L.push('- Still busy, not moved back yet (click Undo again later):'); for (const m of failed) L.push('  - `' + m + '`'); }
   if (miss.length){ L.push('- Not found any more:'); for (const m of miss) L.push('  - `' + m + '`'); }
   L.push('');
