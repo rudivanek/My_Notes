@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v60 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v61 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -87,6 +87,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
+| See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
 | Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
 | Protect a password or private note | **Lock** button next to the note title (or **⋯** → Lock note…) |
@@ -195,6 +196,14 @@ The version number at the top right of the sidebar tells you which version you'r
 - **Delete:** the trash button at the top, the note's right-click menu, or its tab's right-click menu. Deleted notes go to the [Trash](#16-trash), so you can get them back.
 - **Duplicate:** right-click the note → **Duplicate**.
 - **Empty "Untitled" notes clean themselves up.** If you create a note and leave without typing anything, it's removed. To clear out old blank ones: right-click **All notes** (or a folder) → **Remove empty "Untitled" notes…** You see the list first.
+
+### Created and last edited
+Under the note title: **Created …** and **Last edited …**.
+- **Last edited** comes from the file itself.
+- **Created** is stored in the note as a property — `created: 2026-11-15T12:06` (the same as Obsidian uses). You see and can change it under **Properties**.
+- **New notes** get it right away.
+- **Older notes** get it the first time you edit them — never just by opening. (Writing it into every note at once would make all of them look "edited today", which would spoil sorting by date, the date filters and Find notes.) Until then you see a best guess in *italics*: *Created ~3 Mar 2025* from the oldest saved version, or *Created: unknown (before Nov 2026)*. That guess is what gets saved at the first edit.
+- Notes that already say when they were made — a property like `created`, `Created time` (Notion), `date created`, `erstellt`, `creado` — keep it; nothing is added.
 
 ### Saving
 Saving is automatic. If a note was changed somewhere else (on your other PC, or in another editor), My Notes loads the newest version and never silently overwrites it. If you also had unsaved edits, they're kept in a separate note called *"… (my version)"*.

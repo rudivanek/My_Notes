@@ -4,6 +4,13 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v61-2026-11-15
+**Created and last edited under the title.** A small grey line under the note title: *Created 3 Mar 2026, 10:42 · Last edited 15 Nov 2026, 11:58*.
+- *Created* is saved in the note as `created: 2026-11-15T12:06` (like Obsidian). New notes get it at once.
+- Existing notes get it the **first time you edit them** — never just by opening, and never all at once (that would make every note look "edited today" and spoil sorting by date, the date filters and Find notes). Until then a guess is shown in italics: from the oldest saved version, or *unknown (before Nov 2026)*.
+- Notes that already have a created-like property (`created`, Notion's `Created time`, `date created`, `erstellt`, `creado` …) keep it.
+- Undo in Find notes still puts notes back exactly (it doesn't add the date).
+
 ## v60-2026-11-15
 **Find notes — a search you talk to.** Click **Find** at the bottom left (or **Ctrl+Shift+F**, or the palette) and type what you want in your own words: *all notes which have elena & must do*, *notes edited in October, newest first*, *all notes in ELENA with date and short summary*.
 - The AI turns **only your request** (plus your folder and tag names) into a precise search; the app then searches **every** note itself — complete, free and fast. A line *Understood* shows how it was read.

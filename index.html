@@ -390,6 +390,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .page{max-width:760px;margin:0 auto;padding:28px 32px 80px}
 .title{width:100%;border:0;outline:none;background:none;font-size:30px;font-weight:700;letter-spacing:-.01em;padding:0;margin-bottom:12px}
 .meta{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.ndates{font-size:12px;color:var(--muted);margin:-4px 0 10px;min-height:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ndates .sep{opacity:.6}.ndates .guess{font-style:italic}
 .meta label{font-size:12px;color:var(--muted);margin-right:6px}
 .imp{display:inline-flex;gap:4px;vertical-align:middle}
 .imp button{display:flex;align-items:center;gap:5px;font-size:12.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
@@ -831,7 +832,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v60-2026-11-15</span>
+      <span class="appver" id="appVer" title="My Notes version">v61-2026-11-15</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -3679,7 +3680,7 @@ async function writeNote(n){
   if (!n.handle && S.walkP && !n.external){ await waitCheck(); adoptHandle(n); }
   if (n.locked) return writeLockedNote(n);
   if ((S.demo && !n.external) || !n.handle) return;
-  const text = serialize(n);
+  let text = serialize(n);
   // Safety: never overwrite a change made in Obsidian (or anywhere else) since we last read/saved this file
   try {
     const f = await n.handle.getFile();
@@ -3689,6 +3690,8 @@ async function writeNote(n){
     }
   } catch(e){}
   if (text === n._saved) return;
+  // v61: the note is being changed anyway — give it a fixed “created” date if it has none (never rewrites notes just for this)
+  if (!n.external && !n._noCreated && noteCreatedProp(n) == null){ try { setProp(n, 'created', createdStamp(await noteCreatedGuess(n))); text = serialize(n); } catch(e){ console.warn('[MN] created date', e); } }
   await histMaybe(n);
   const w = await n.handle.createWritable(); await w.write(text); await w.close();
   n._saved = text;
@@ -3735,12 +3738,53 @@ async function externalChange(n, disk, mtime, mine){
   renderSidebar();
   if (cur() === n) renderEditor();
 }
+/* ---------- v61: Created / Last edited under the title ----------
+   Chrome can't read a file's creation date, so "created" is a property in the note (created: 2026-11-15T12:06, like Obsidian).
+   New notes get it at once; other notes get it the first time they are edited anyway (never a rewrite just for this —
+   that would make every note look "edited today"). Until then the app shows its best guess: an existing created-like
+   property, else the oldest saved version (version history), else "unknown". */
+const CREATED_KEYS = ['created', 'created_at', 'createdat', 'date created', 'created time', 'creation date', 'created on', 'erstellt', 'creado', 'fecha de creación'];
+function noteCreatedProp(n){   // ms, or null when the note has no created-like property
+  if (!n || n.locked) return n && n.locked ? 0 : null;
+  const pr = props(n);
+  for (const k of Object.keys(pr)){ if (!CREATED_KEYS.includes(k.toLowerCase().trim())) continue;
+    const v = Array.isArray(pr[k]) ? pr[k][0] : pr[k], t = Date.parse(String(v).replace(/^(\d{4}-\d{2}-\d{2}) (\d)/, '$1T$2'));
+    if (isFinite(t)) return t; }
+  return null;
+}
+const createdStamp = t => { const d = new Date(t || Date.now()), z = x => String(x).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()); };
+async function noteCreatedGuess(n){   // oldest saved version, or the last change before now — whichever is earlier
+  if (n._cGuess != null) return n._cGuess;
+  let t = n.mtime || Date.now();
+  try { const l = await histList(n.path); const old = l[l.length - 1];
+    if (old){ const m = old.name.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d)-(\d\d)-(\d\d)/); if (m){ const h = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime(); if (h < t) t = h; } } } catch(e){}
+  n._cGuess = t; n._cFromHist = true; return t;
+}
+const fmtWhen = t => { try { return new Date(t).toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); } catch(e){ return new Date(t).toLocaleString(); } };
+async function updateNoteDates(n){
+  n = n || cur(); const el = $('ndates'); if (!n || !el || el.dataset.p !== n.path) return;
+  const ed = n.mtime ? `<span title="Last time the file was saved">Last edited ${esc(fmtWhen(n.mtime))}</span>` : '';
+  if (n.external){ el.innerHTML = ed; return; }
+  let cr = '';
+  const fixed = noteCreatedProp(n);
+  if (n.locked) cr = '';
+  else if (fixed) cr = `<span title="Saved in the note (property “created”)">Created ${esc(fmtWhen(fixed))}</span>`;
+  else if (!S.demo){
+    const l = await histList(n.path).catch(() => []), old = l[l.length - 1];
+    let h = null; if (old){ const m = old.name.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d)-(\d\d)-(\d\d)/); if (m) h = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime(); }
+    if (el.dataset.p !== n.path) return;
+    cr = h && (!n.mtime || h <= n.mtime)
+      ? `<span class="guess" title="Estimated from the oldest saved version. Saved into the note the next time you edit it.">Created ~${esc(fmtWhen(h))}</span>`
+      : `<span class="guess" title="This note doesn't say when it was made, and there is no older saved version. The date is saved into the note the next time you edit it.">Created: unknown (before ${esc(new Date(n.mtime || Date.now()).toLocaleDateString(undefined, { month:'short', year:'numeric' }))})</span>`;
+  }
+  el.innerHTML = [cr, ed].filter(Boolean).join('<span class="sep">·</span>');
+}
 const pending = new Map();
 function queueSave(n, now){
   clearTimeout(pending.get(n.path)); setStatus('Editing…');
   const run = async () => {
     pending.delete(n.path);
-    try { await writeNote(n); setStatus(S.demo ? 'Saved in demo (not on disk)' : 'Saved'); }
+    try { await writeNote(n); setStatus(S.demo ? 'Saved in demo (not on disk)' : 'Saved'); if (cur() === n) updateNoteDates(n); }
     catch(e){ setStatus('Save failed: ' + e.message); }
   };
   if (now) return run();
@@ -3757,6 +3801,7 @@ async function createNote(name, text, folder){
   if (!S.demo) handle = await dir.getFileHandle(name + '.md', { create:true });
   const n = addNote(path, text || '', handle, dir);
   n._saved = '';
+  if (noteCreatedProp(n) == null) setProp(n, 'created', createdStamp(Date.now()));   // v61: new notes know when they were made
   if (handle){ try { n.mtime = (await handle.getFile()).lastModified; } catch(e){} }
   await writeNote(n);
   if (UNTITLED_RE.test(n.name)) freshAdd(n.path);
@@ -8773,8 +8818,10 @@ function renderEditor(){
   }
   noteRecent(n);
   n._sbKey = cachedBodyTags(n).join('\u0001');
+  setTimeout(() => updateNoteDates(n), 0);
   box.innerHTML = `<div class="page">
     <div class="titlerow">${iconHtml(n.path, null, 'big').replace('<span class="ico', '<span title="Change icon" data-chicon="1" class="ico')}<input class="title" id="title" value="${esc(n.name)}" spellcheck="false">${isMap(n) ? mapSwitch(n) : ''}<span class="nacts" id="nacts"></span></div>
+    <div class="ndates" id="ndates" data-p="${esc(n.path)}"></div>
     ${dailyNav(n)}
     <div class="meta">
       <div><label>Importance</label><span class="imp" id="imp">
@@ -10770,7 +10817,7 @@ async function fnUndo(){
     const n = S.notes.get(x.to); if (!n){ miss.push(x.to); continue; }
     try {
       if (x.from !== x.to){ const f = parentOf(x.from); await fnEnsureFolder(f); await moveNote(n, f); }
-      Object.assign(n, parse(x.before)); await writeNote(n); back++;
+      Object.assign(n, parse(x.before)); n._noCreated = true; try { await writeNote(n); } finally { delete n._noCreated; } back++;
     } catch(e){ miss.push(x.to + ' (' + e.message + ')'); }
   }
   run.undone = !miss.length; await idbSet(fnKey(), list).catch(() => {});
