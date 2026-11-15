@@ -133,6 +133,27 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .vorgmv{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}.vorgfrom{display:inline-flex;align-items:center;gap:4px;font-weight:500}.vorgfrom .uic{width:13px;height:13px}
 .vorgarr{color:var(--muted)}.vorgto{width:220px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;font-size:12.5px}
 .vorgerr{color:#c2410c;font-size:12.5px;margin-top:4px}
+#fnPage{position:absolute;inset:0;z-index:41;display:none;flex-direction:column;background:var(--bg);padding:18px 26px 12px;gap:8px}
+.fnbody{overflow:auto}.fnbar{display:flex;gap:8px;align-items:stretch}
+#fnQ{flex:1;resize:none;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:14px;line-height:1.4;min-height:40px}
+#fnQ:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+.fnbar .primary{display:inline-flex;align-items:center;gap:5px;padding:0 14px}.fnbar .primary .uic{width:15px;height:15px;margin:0}
+.fnopts{display:flex;align-items:center;gap:14px;font-size:13px;flex-wrap:wrap}.fnopts .sp{flex:1}.fnsw{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.fnopts .ghost,.orghead .ghost{display:inline-flex;align-items:center;gap:5px}.fnopts .ghost .uic,.orghead .ghost .uic,.orgbar .ghost .uic{width:14px;height:14px;margin:0}
+.fnex{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px 18px;margin:6px 0 4px;max-height:44vh;overflow:auto;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:color-mix(in srgb,var(--muted) 4%,var(--bg))}
+.fnex.big{max-height:none}.fnbody .fnex{margin-bottom:14px}
+.fnexh{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;margin-bottom:4px}.fnexh .uic{width:14px;height:14px;margin:0;color:var(--accent)}
+.fnexb{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:6px;padding:4px 7px;font:inherit;font-size:13px;color:var(--text);cursor:pointer}
+.fnexb:hover{border-color:var(--line);background:var(--bg)}.fnexb span{display:block;font-size:11.5px;color:var(--muted)}
+.fnund{font-size:13px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 6%,var(--bg));display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.fnund .uic{width:14px;height:14px;margin:0;color:var(--accent);align-self:center}
+.fnsim{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}.fnsim .uic{width:13px;height:13px;margin:0}
+.fnlist{flex:1;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.fntab{width:100%;border-collapse:collapse;font-size:13px}.fntab th{position:sticky;top:0;background:var(--bg);text-align:left;font-weight:600;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+.fntab th.srt{cursor:pointer}.fntab th.srt:hover{color:var(--accent)}.fntab td{padding:6px 10px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);vertical-align:top}
+.fntab tr:hover td{background:color-mix(in srgb,var(--accent) 4%,var(--bg))}.fntab tr.off td{opacity:.55}
+.fntab a{color:var(--text);cursor:pointer;text-decoration:none;font-weight:500}.fntab a:hover{color:var(--accent);text-decoration:underline}
+.fnd{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}.fnn{white-space:nowrap}.fnn .dot{margin-right:6px}.fnm{color:var(--muted);font-size:12.5px;max-width:380px}.fns{max-width:420px}
+.fntag{font-size:12px;color:var(--muted)}.fnmore{margin:8px 10px}
 .orghint{color:var(--muted);font-size:11.5px}
 .orgghost{position:fixed;top:-100px;left:-100px;padding:4px 10px;background:var(--accent);color:#fff;border-radius:6px;font-size:12.5px;font-weight:600}
 .stgrid{display:grid;grid-template-columns:minmax(90px,max-content) 1fr;gap:6px 10px;align-items:center;margin-top:10px}
@@ -810,7 +831,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v59-2026-11-14</span>
+      <span class="appver" id="appVer" title="My Notes version">v60-2026-11-15</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -837,6 +858,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button id="manBtn" title="Read the My Notes manual">Manual</button>
       <button id="trashBtn" title="Trash — restore deleted notes or delete them permanently">Trash</button>
       <button id="tidyBtn" title="Go through notes that are missing tags or importance, with AI suggestions">✨ Tidy up</button>
+      <button id="fnBtn" title="Find notes — ask in your own words; refine or change the results with words (Ctrl+Shift+F)">Find</button>
       <button id="vorgBtn" title="Organize vault — AI suggests a tidier folder structure; you tick what to do; one button undoes it">Organize</button>
       <input type="file" id="fileIn" accept=".md,text/markdown" multiple hidden>
     </div>
@@ -7433,13 +7455,14 @@ $('aiBtn').title = 'AI suggestions: tags, importance, folder, summary (right-cli
   const set = (id, name, label) => { const b = $(id); if (b) b.innerHTML = UI(name) + (label ? ' ' + label : ''); };
   set('clipBtn', 'globe'); set('newMapBtn', 'waypoints'); set('todayBtn', 'calendar'); set('newFolderBtn', 'folder-plus'); set('orgBtn', 'folder-tree'); set('expandAll', 'chevrons-up-down'); set('collapseAll', 'chevrons-down-up');
   set('searchClear', 'x'); set('menuBtn', 'menu', 'Notes'); set('qsBtn', 'search'); set('sideBtn', 'panel-left'); set('aiBtn', 'sparkles'); set('sendTblBtn', 'table'); set('askNotesBtn', 'message-circle-question-mark'); set('pinBtn', 'pin');
-  set('pdfBtn', 'file-down'); set('printBtn', 'printer'); set('delBtn', 'trash-2'); set('tidyBtn', 'wand-sparkles', 'Tidy up'); set('vorgBtn', 'folder-cog', 'Organize'); set('trashBtn', 'trash-2'); set('lockBtn', 'lock-open'); set('histBtn', 'history'); set('cpBtn', 'command'); set('newTableBtn', 'table'); set('graphBtn', 'share-2');
+  set('pdfBtn', 'file-down'); set('printBtn', 'printer'); set('delBtn', 'trash-2'); set('tidyBtn', 'wand-sparkles', 'Tidy up'); set('fnBtn', 'text-search', 'Find'); set('vorgBtn', 'folder-cog', 'Organize'); set('trashBtn', 'trash-2'); set('lockBtn', 'lock-open'); set('histBtn', 'history'); set('cpBtn', 'command'); set('newTableBtn', 'table'); set('graphBtn', 'share-2');
   $('qsBtn').removeAttribute('style'); $('pdfBtn').removeAttribute('style');
 })();
 $('aiBtn').onclick = () => { const n = cur(); if (!n) return; if (S.ai && S.ai.path === n.path){ S.ai = null; renderEditor(); } else aiOpen(n); };
 $('tidyBtn').onclick = () => { if (!S.root && !S.demo) return toast('Open your vault first'); aiTidy(null); };
 $('vorgBtn').onclick = () => vorgOpen();
-['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (vorgIsOpen() && !VORG.busy && e.target.closest('.item[data-p], .tab, [data-p]')) vorgClose(); }, true));
+$('fnBtn').onclick = () => fnOpen();
+['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); } }, true));
 $('scroll').addEventListener('click', async e => {
   if (e.target.closest('[data-aihint]')){ e.preventDefault(); return aiOpen(cur()); }
   const box = e.target.closest('#aip'); if (!box) return;
@@ -10462,6 +10485,402 @@ async function vorgLogUndo(J, back, miss, failed){
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && vorgIsOpen() && !VORG.busy && !document.querySelector('#askBg[style*="grid"]')) vorgClose(); });
 
+/* ---------- v60: Find notes — a search you talk to ----------
+   1. You type what you want in your own words. The AI turns ONLY your words (plus folder and tag names) into a precise search.
+   2. The app searches every note itself (free, fast, complete) and shows a table.
+   3. Refine with words ("only from October") or change the found notes with words ("add tag #elena") —
+      changes are shown note by note first, nothing happens before Apply, one button undoes them, a log note lists them.
+   Without an AI key the search still works: words joined by & / and / + must all appear. */
+const FN = { spec:null, rows:[], q:'', similar:false, busy:false, view:'start', change:null, sum:new Map(), usage:null, sortBy:null, show:300, history:[] };
+const FN_LOG = 'Find notes log';
+const fnKey = () => 'fn-undo:' + (S.root ? S.root.name : 'demo');
+const FN_EXAMPLES = [
+  ['Find', 'search', [
+    ['all notes which have elena & must do', 'both words must be in the note'],
+    ['notes with copyzap or pimpmycopy, but not in ARCHIVE', 'either word · leave a folder out'],
+    ['notes tagged #ai in PROJECTS', 'tag + folder'],
+    ['high importance notes about pricing', 'importance + a word'],
+    ['notes whose title has invoice', 'only the title']]],
+  ['Dates & order', 'calendar', [
+    ['all notes ascending by date', 'oldest first'],
+    ['notes edited in October, newest first', 'a month'],
+    ['notes not touched for 6 months', 'old notes'],
+    ['the 20 most recent notes in INBOX', 'a number + a folder']]],
+  ['Columns & summaries', 'table', [
+    ['all notes in ELENA with date and short summary', 'summaries cost a little AI — you see the price first'],
+    ['notes about CopyZap, show tags and importance', 'extra columns']]],
+  ['Refine the results (after a search)', 'list-filter', [
+    ['only from October', ''], ['without ARCHIVE', ''], ['newest first', ''], ['add a summary column', '']]],
+  ['Change the found notes (after a search)', 'pencil', [
+    ['add tag #elena', ''], ['remove tag #todo', ''], ['move them to ARCHIVE', ''], ['set importance high', ''],
+    ["replace 'must do' with 'done'", ''], ["add the line 'Reviewed 2026-11' at the end", ''], ['set property status to done', '']]]
+];
+const FN_COLS = { date:'Edited', name:'Note', folder:'Folder', match:'Where it matched', tags:'Tags', importance:'Importance', summary:'Summary' };
+function fnOpen(q){
+  if (!S.root && !S.demo) return toast('Open your vault first');
+  hideCtx && hideCtx(); orgClose && orgClose(); vorgIsOpen() && vorgClose();
+  let pg = $('fnPage');
+  if (!pg){ pg = document.createElement('div'); pg.id = 'fnPage'; document.querySelector('main.main').appendChild(pg);
+    pg.addEventListener('click', fnClick); pg.addEventListener('keydown', fnKeys); pg.addEventListener('change', fnChange); }
+  pg.style.display = 'flex'; if (q != null){ FN.q = q; }
+  fnRender(); setTimeout(() => { const i = $('fnQ'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 30);
+}
+function fnClose(){ const pg = $('fnPage'); if (pg) pg.style.display = 'none'; }
+const fnIsOpen = () => { const pg = $('fnPage'); return !!(pg && pg.style.display === 'flex'); };
+const fnDay = t => t ? new Date(t).toISOString().slice(0, 10) : '—';
+// what the search does, in plain words
+function fnExplain(sp){
+  if (!sp) return '';
+  const q = a => a.map(t => '“' + (Array.isArray(t) ? t[0] : t) + '”'), P = [];
+  if (sp.all && sp.all.length) P.push('has ' + q(sp.all).join(' and '));
+  if (sp.any && sp.any.length) P.push('has ' + q(sp.any).join(' or '));
+  if (sp.none && sp.none.length) P.push('without ' + q(sp.none).join(', '));
+  if (sp.title_only) P.push('(title only)');
+  if (sp.folders && sp.folders.length) P.push('in ' + sp.folders.join(', '));
+  if (sp.not_folders && sp.not_folders.length) P.push('not in ' + sp.not_folders.join(', '));
+  if (sp.tags_all && sp.tags_all.length) P.push('tagged ' + sp.tags_all.map(t => '#' + t).join(' + '));
+  if (sp.tags_any && sp.tags_any.length) P.push('tagged ' + sp.tags_any.map(t => '#' + t).join(' or '));
+  if (sp.tags_none && sp.tags_none.length) P.push('not tagged ' + sp.tags_none.map(t => '#' + t).join(', '));
+  if (sp.importance && sp.importance.length) P.push('importance ' + sp.importance.join(' or '));
+  if (sp.edited_after) P.push('edited from ' + sp.edited_after);
+  if (sp.edited_before) P.push('edited before ' + sp.edited_before);
+  if (!P.length) P.push('all notes');
+  const by = { edited:'date', name:'name', folder:'folder', opened:'last opened' }[(sp.sort || {}).by] || 'date';
+  P.push('· ' + by + ((sp.sort || {}).dir === 'asc' ? (by === 'date' ? ', oldest first' : ', A→Z') : (by === 'date' ? ', newest first' : ', Z→A')));
+  if (sp.limit) P.push('· first ' + sp.limit);
+  if (sp.summaries) P.push('· with summaries');
+  return P.join(' ');
+}
+// simple understanding without AI: "a & b", "a and b", "a, b" = all of them
+function fnLocalSpec(q){
+  const t = q.replace(/^\s*(show me |find |all )?(all )?(notes?|files?)\s*(which|that|with|having|have|has|containing|contain)?\s*(have|has|contain|containing)?\s*:?\s*/i, '');
+  const all = t.split(/\s*(?:&|\+|,|\band\b|\by\b|\bund\b)\s*/i).map(x => x.replace(/^["'“]|["'”]$/g, '').trim()).filter(Boolean);
+  return { all, sort:{ by:'edited', dir:'desc' }, columns:['date', 'name', 'folder', 'match'], local:true };
+}
+const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request turned into a search of their notes, a change to the found notes, or both.', schema:{ type:'object', properties:{
+  intent:{ type:'string', enum:['find', 'refine', 'change'], description:'find = new search · refine = adjust the current search · change = do something to the notes found now' },
+  search:{ type:'object', description:'The complete search after this request (for refine: the current search with the change applied).', properties:{
+    all:{ type:'array', items:{ type:'string' }, description:'words or phrases that must ALL appear' },
+    any:{ type:'array', items:{ type:'string' }, description:'at least one of these must appear' },
+    none:{ type:'array', items:{ type:'string' }, description:'none of these may appear' },
+    title_only:{ type:'boolean' }, folders:{ type:'array', items:{ type:'string' } }, not_folders:{ type:'array', items:{ type:'string' } },
+    tags_all:{ type:'array', items:{ type:'string' } }, tags_any:{ type:'array', items:{ type:'string' } }, tags_none:{ type:'array', items:{ type:'string' } },
+    importance:{ type:'array', items:{ type:'string', enum:['high', 'medium', 'low', 'none'] } },
+    edited_after:{ type:'string', description:'YYYY-MM-DD' }, edited_before:{ type:'string', description:'YYYY-MM-DD (exclusive)' },
+    sort:{ type:'object', properties:{ by:{ type:'string', enum:['edited', 'name', 'folder', 'opened'] }, dir:{ type:'string', enum:['asc', 'desc'] } } },
+    limit:{ type:'integer' }, summaries:{ type:'boolean' },
+    columns:{ type:'array', items:{ type:'string', enum:['date', 'name', 'folder', 'match', 'tags', 'importance', 'summary'] } } } },
+  similar_words:{ type:'array', description:'Only when similar words are allowed: for each word/phrase in all/any/none, other ways to say it (synonyms, English / Spanish / German translations, common spellings).', items:{ type:'object', properties:{ word:{ type:'string' }, also:{ type:'array', items:{ type:'string' } } }, required:['word', 'also'] } },
+  change:{ type:'object', description:'Only for intent change.', properties:{
+    action:{ type:'string', enum:['add_tag', 'remove_tag', 'move', 'set_importance', 'replace_text', 'append_text', 'set_property', 'pin', 'unpin', 'not_possible'] },
+    tag:{ type:'string' }, folder:{ type:'string' }, importance:{ type:'string', enum:['high', 'medium', 'low', 'none'] },
+    find:{ type:'string' }, replace:{ type:'string' }, text:{ type:'string' }, property:{ type:'string' }, value:{ type:'string' }, why_not:{ type:'string' } } },
+  explain:{ type:'string', description:'One short plain-English line: what you understood.' } }, required:['intent', 'search', 'explain'] } };
+async function fnAsk(q){
+  q = (q || '').trim(); if (!q) return;
+  FN.q = q;
+  const hasResults = !!FN.spec;
+  if (!aiKey()){   // no AI: plain search
+    if (hasResults && /^(add|remove|move|set|replace|append|pin|unpin)\b/i.test(q)) return toast('Changing notes with words needs AI — set it up in AI settings (robot icon, bottom left)', 7000);
+    FN.spec = fnLocalSpec(q); FN.similarMap = null; FN.lastQ = q; FN.explain = 'Without AI: ' + fnExplain(FN.spec); return fnSearch();
+  }
+  const folders = allFolders().filter(f => !f.split('/').some(x => x.startsWith('.'))).slice(0, 500);
+  const tags = [...new Set([...S.notes.values()].flatMap(n => n.external ? [] : allTags(n)))].slice(0, 400);
+  const prompt = `Today is ${fnDay(Date.now())}. The user searches their own notes vault (Markdown notes; each note has a title, folder, tags, importance high/medium/low, an edit date and text).
+Folders: ${folders.join(' | ') || '(none)'}
+Tags: ${tags.join(' ') || '(none)'}
+${hasResults ? 'Current search: ' + JSON.stringify(fnSpecOut(FN.spec)) + '\nNotes found now: ' + FN.rows.length + '\n' : 'There are no results yet.\n'}
+Similar words: ${FN.similar ? 'ALLOWED — fill similar_words for every search word (synonyms, translations to English, Spanish and German).' : 'NOT allowed — match the exact words only, leave similar_words empty.'}
+
+The user says: "${q}"
+
+Rules:
+- Decide the intent. With results present, a follow-up like "only from October", "without ARCHIVE", "newest first", "add summaries" is "refine" (return the whole adjusted search). An instruction to modify notes ("add tag…", "move them to…", "set importance…", "replace X with Y", "add the line…", "set property…", "pin them") is "change" — keep the search as it is. Anything else is a new "find".
+- Words joined by "&", "and", "+" or listed with commas go to "all". "or" → "any". "not", "without", "except" → "none" or not_folders / tags_none.
+- Use folder and tag names exactly as listed (match case-insensitively; tags without #). Sub-folders are included automatically.
+- Dates: "in October" = the most recent October (edited_after first day, edited_before first day of the next month). "not touched for 6 months" = edited_before 6 months ago. "ascending/oldest first" = sort edited asc. Default sort: edited desc.
+- "with summary"/"short summary"/"what they are about" → summaries true and add "summary" to columns. Default columns: date, name, folder, match. Add tags/importance columns when asked.
+- Deleting notes is never possible here: use change.action "not_possible" with why_not (suggest moving them to an archive folder instead). Same for anything else you can't do with the listed actions.
+- explain: one short line, e.g. "Notes that contain “elena” and “must do”, oldest first".
+Answer by calling notes_request.`;
+  FN.busy = true; fnRender();
+  let res;
+  try { res = await aiCall({ tier:'small', max:1500, messages:[{ role:'user', content:prompt }], tool:FN_SPEC_TOOL, force:true }); }
+  catch(err){ FN.busy = false; fnRender(); if (err.code === 'BADKEY' || err.code === 'NOKEY') aiAskKey(err.message).catch(() => {}); return toast(err.message, 7000); }
+  FN.busy = false;
+  FN.usage = usageAdd(FN.usage, res.usage || AI_USAGE.last);
+  let o = res.input; if (!o){ const t = res.text || '', a = t.indexOf('{'), z = t.lastIndexOf('}'); try { o = JSON.parse(t.slice(a, z + 1)); } catch(e){} }
+  if (!o || !o.search){ FN.spec = fnLocalSpec(q); FN.explain = 'The AI didn’t answer clearly — plain search: ' + fnExplain(FN.spec); return fnSearch(); }
+  if (o.intent === 'change' && hasResults && o.change){
+    if (o.change.action === 'not_possible') return fnRender(), toast(o.change.why_not || 'That can’t be done here', 8000);
+    return fnPlanChange(o.change, o.explain);
+  }
+  const sp = o.search; sp.columns = (sp.columns && sp.columns.length ? sp.columns : ['date', 'name', 'folder', 'match']).filter(c => FN_COLS[c]);
+  if (sp.summaries && !sp.columns.includes('summary')) sp.columns.push('summary');
+  if (!sp.columns.includes('name')) sp.columns.unshift('name');
+  FN.similarMap = FN.similar ? new Map((o.similar_words || []).map(x => [fold(String(x.word || '')), (x.also || []).map(String).filter(Boolean)])) : null;
+  if (o.intent !== 'refine' || !FN.lastQ) FN.lastQ = q;
+  FN.spec = sp; FN.explain = o.explain || fnExplain(sp); FN.change = null; FN.sortBy = null; FN.show = 300;
+  fnSearch();
+  if (sp.summaries) setTimeout(() => fnSummaries(), 50);
+}
+const fnSpecOut = sp => { const o = {}; for (const [k, v] of Object.entries(sp || {})) if (k !== 'local' && v != null && !(Array.isArray(v) && !v.length)) o[k] = v; return o; };
+// ----- the search itself (no AI) -----
+function fnSearch(){
+  const sp = FN.spec || {}, now = Date.now();
+  const variants = w => { const k = fold(String(w)); const al = (FN.similarMap && FN.similarMap.get(k)) || []; return [k, ...al.map(fold)].filter(Boolean); };
+  const groups = a => (a || []).map(w => ({ w, v: variants(w) }));
+  const all = groups(sp.all), any = groups(sp.any), none = groups(sp.none);
+  const inF = (n, list) => list.some(f => { const l = fold(f).replace(/\/+$/, ''); const nf = fold(n.folder); return nf === l || nf.startsWith(l + '/') || nf.split('/').includes(l); });
+  const tagIn = (n, t) => allTags(n).some(x => fold(x) === fold(String(t).replace(/^#/, '')) || fold(x).startsWith(fold(String(t).replace(/^#/, '')) + '/'));
+  const after = sp.edited_after ? Date.parse(sp.edited_after) : null, before = sp.edited_before ? Date.parse(sp.edited_before) : null;
+  const rows = [];
+  for (const n of S.notes.values()){
+    if (n.external) continue;
+    if (sp.folders && sp.folders.length && !inF(n, sp.folders)) continue;
+    if (sp.not_folders && sp.not_folders.length && inF(n, sp.not_folders)) continue;
+    if (sp.tags_all && sp.tags_all.length && !sp.tags_all.every(t => tagIn(n, t))) continue;
+    if (sp.tags_any && sp.tags_any.length && !sp.tags_any.some(t => tagIn(n, t))) continue;
+    if (sp.tags_none && sp.tags_none.length && sp.tags_none.some(t => tagIn(n, t))) continue;
+    if (sp.importance && sp.importance.length && !sp.importance.includes(n.importance || 'none')) continue;
+    if (after && (n.mtime || 0) < after) continue;
+    if (before && (n.mtime || 0) >= before) continue;
+    const title = fold(n.name), text = sp.title_only ? title : title + '\n' + (n.locked ? '' : fold(n.body || '')) + '\n' + allTags(n).map(fold).join(' ') + '\n' + normProps(n);
+    const hit = g => g.v.find(v => text.includes(v));
+    if (all.length && !all.every(hit)) continue;
+    if (any.length && !any.some(hit)) continue;
+    if (none.length && none.some(hit)) continue;
+    // "where it matched": the first matching word in the text, with a little around it
+    let match = '';
+    const first = [...all, ...any].map(hit).find(Boolean);
+    if (first && !n.locked){ const b = n.body || '', i = fold(b).indexOf(first); if (i >= 0){ const a = Math.max(0, i - 40); match = (a ? '…' : '') + b.slice(a, i + first.length + 60).replace(/\s+/g, ' ').trim() + '…'; } else if (title.includes(first)) match = 'in the title'; }
+    rows.push({ n, match });
+  }
+  const s = FN.sortBy || sp.sort || { by:'edited', dir:'desc' }, dir = s.dir === 'asc' ? 1 : -1;
+  const key = { edited: r => r.n.mtime || 0, name: r => r.n.name, folder: r => r.n.folder + '/' + r.n.name, opened: r => openedAt(r.n.path) || 0 }[s.by] || (r => r.n.mtime || 0);
+  rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'string' ? NCOLL.compare(x, y) : x - y) * dir; });
+  FN.rows = sp.limit ? rows.slice(0, sp.limit) : rows; FN.view = 'results';
+  fnRender();
+}
+function openedAt(p){ try { return (JSON.parse(localStorage.getItem('qn-opened') || '{}') || {})[p] || 0; } catch(e){ return 0; } }
+// ----- summaries (AI, only on request; remembered per note version on this PC) -----
+const fnSumKey = n => 'fnsum:' + n.path + ':' + (n.mtime || 0);
+function fnSumEstimate(rows){
+  const need = rows.filter(r => !r.n.locked && !FN.sum.has(fnSumKey(r.n)) && (r.n.body || '').trim());
+  const chars = need.reduce((a, r) => a + Math.min((r.n.body || '').length, 1600) + 80, 0);
+  const pr = aiPrice(aiModel('small')) || { in:1, out:5 };
+  const tin = chars / 3.6 + Math.ceil(need.length / 25) * 400, tout = need.length * 35;
+  return { n:need.length, usd:(tin * pr.in + tout * pr.out) / 1e6 };
+}
+async function fnSummaries(){
+  if (!aiKey()){ await aiAskKey('Summaries need AI'); if (!aiKey()) return; }
+  const cached = await idbGet('fnsum').catch(() => null); if (cached) for (const [k, v] of Object.entries(cached)) FN.sum.set(k, v);
+  const est = fnSumEstimate(FN.rows);
+  if (!FN.spec.columns.includes('summary')) FN.spec.columns.push('summary');
+  if (!est.n){ fnRender(); return; }
+  if (!await confirmIt('Write a short summary for ' + est.n + ' note' + (est.n === 1 ? '' : 's') + '? About ' + (est.usd < 0.01 ? 'less than $0.01' : '$' + est.usd.toFixed(2)) + ' with ' + AIN() + '. Summaries are remembered on this PC, so the same notes cost nothing next time.', 'Summarize')) { fnRender(); return; }
+  const need = FN.rows.filter(r => !r.n.locked && !FN.sum.has(fnSumKey(r.n)) && (r.n.body || '').trim());
+  FN.busy = true; FN.sumDone = 0; FN.sumAll = need.length; fnRender();
+  try {
+    for (let i = 0; i < need.length; i += 25){
+      const part = need.slice(i, i + 25);
+      const notes = part.map((r, j) => `<note id="${j}" title="${esc(r.n.name)}">\n${(r.n.body || '').slice(0, 1600)}\n</note>`).join('\n');
+      const res = await aiCall({ tier:'small', max:2500, messages:[{ role:'user', content:'Write a one-sentence summary (max 20 words) of each note: what it is about. Use the language of the note.\n\n' + notes + '\n\nAnswer by calling summaries.' }],
+        tool:{ name:'summaries', description:'One short summary per note id.', schema:{ type:'object', properties:{ items:{ type:'array', items:{ type:'object', properties:{ id:{ type:'integer' }, summary:{ type:'string' } }, required:['id', 'summary'] } } }, required:['items'] } }, force:true });
+      FN.usage = usageAdd(FN.usage, res.usage || AI_USAGE.last);
+      for (const it of ((res.input || {}).items || [])){ const r = part[it.id]; if (r) FN.sum.set(fnSumKey(r.n), String(it.summary || '').trim()); }
+      FN.sumDone = Math.min(need.length, i + 25); fnRender();
+    }
+    const keep = {}; for (const [k, v] of FN.sum) keep[k] = v;
+    const ks = Object.keys(keep); if (ks.length > 5000) for (const k of ks.slice(0, ks.length - 5000)) delete keep[k];
+    await idbSet('fnsum', keep).catch(() => {});
+  } catch(err){ toast(err.message, 7000); }
+  finally { FN.busy = false; fnRender(); }
+}
+// ----- changes with words -----
+function fnPlanChange(c, explain){
+  const items = [];
+  const tag = String(c.tag || '').replace(/^#/, '').trim(), imp = c.importance === 'none' ? '' : (c.importance || '');
+  for (const { n } of FN.rows){
+    let what = '', ok = true;
+    if (n.locked){ items.push({ n, on:false, what:'Locked note — skipped', ok:false }); continue; }
+    switch (c.action){
+      case 'add_tag': if (!tag) ok = false; else if (n.tags.some(t => fold(t) === fold(tag))) { what = 'already has #' + tag; ok = false; } else what = 'add #' + tag; break;
+      case 'remove_tag': { const has = n.tags.some(t => fold(t) === fold(tag)), inBody = new RegExp('(^|\\s)#' + tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w/-])', 'i').test(n.body || '');
+        if (!has && !inBody){ what = 'doesn’t have #' + tag; ok = false; } else what = 'remove #' + tag + (inBody ? ' (also in the text)' : ''); break; }
+      case 'move': { const f = vorgClean(c.folder || ''); if (n.folder === f){ what = 'already there'; ok = false; } else what = 'move to ' + (f || 'vault root'); break; }
+      case 'set_importance': if ((n.importance || '') === imp){ what = 'already ' + (imp || 'none'); ok = false; } else what = 'importance ' + (n.importance || 'none') + ' → ' + (imp || 'none'); break;
+      case 'replace_text': { const f = c.find || ''; if (!f){ ok = false; break; } const cnt = (n.body || '').split(f).length - 1, ci = cnt ? cnt : (fold(n.body || '').split(fold(f)).length - 1);
+        if (!ci){ what = '“' + f + '” not found'; ok = false; } else what = 'replace ' + ci + '× “' + f + '” → “' + (c.replace || '') + '”'; break; }
+      case 'append_text': what = 'add at the end: “' + String(c.text || '').slice(0, 60) + '”'; if (!c.text) ok = false; break;
+      case 'set_property': what = (c.property || '?') + ': ' + (props(n)[c.property] != null ? props(n)[c.property] + ' → ' : '') + (c.value || ''); if (!c.property) ok = false; break;
+      case 'pin': if (n.pinned){ what = 'already pinned'; ok = false; } else what = 'pin'; break;
+      case 'unpin': if (!n.pinned){ what = 'not pinned'; ok = false; } else what = 'unpin'; break;
+      default: ok = false; what = 'unknown change';
+    }
+    items.push({ n, on:ok, ok, what });
+  }
+  FN.change = { c, explain: explain || '', items }; FN.view = 'change'; fnRender();
+}
+async function fnApplyChange(){
+  const ch = FN.change; if (!ch) return;
+  const todo = ch.items.filter(x => x.on && x.ok); if (!todo.length) return toast('Nothing ticked');
+  if (!await confirmIt('Change ' + todo.length + ' note' + (todo.length === 1 ? '' : 's') + '? “Undo” puts them back exactly as they are now.', 'Apply')) return;
+  await flushAll();
+  const c = ch.c, tag = String(c.tag || '').replace(/^#/, '').trim(), imp = c.importance === 'none' ? '' : (c.importance || '');
+  const run = { at:Date.now(), label:new Date().toLocaleString(), what:ch.explain || c.action, items:[], undone:false };
+  FN.busy = true; fnRender(); let done = 0, failed = [];
+  try {
+    for (const it of todo){
+      const n = it.n, before = serialize(n), path0 = n.path;
+      try {
+        switch (c.action){
+          case 'add_tag': n.tags = [...n.tags, tag]; break;
+          case 'remove_tag': n.tags = n.tags.filter(t => fold(t) !== fold(tag)); n.body = (n.body || '').replace(new RegExp('(^|\\s)#' + tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w/-])', 'gi'), '$1').replace(/[ \t]+$/gm, ''); break;
+          case 'set_importance': n.importance = imp; break;
+          case 'replace_text': { const f = c.find, r = c.replace || ''; if ((n.body || '').includes(f)) n.body = n.body.split(f).join(r); else n.body = n.body.replace(new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), r); break; }
+          case 'append_text': n.body = (n.body || '').replace(/\s*$/, '') + '\n\n' + c.text + '\n'; break;
+          case 'set_property': setProp(n, c.property, c.value || ''); break;
+          case 'pin': n.pinned = true; break;
+          case 'unpin': n.pinned = false; break;
+        }
+        if (c.action === 'move'){ const f = vorgClean(c.folder || ''); await fnEnsureFolder(f); await moveNote(n, f); }
+        else await writeNote(n);
+        run.items.push({ from:path0, to:n.path, before });
+        done++;
+      } catch(e){ failed.push(n.name + ': ' + e.message); }
+    }
+  } finally { FN.busy = false; }
+  if (run.items.length){ let list = []; try { list = (await idbGet(fnKey())) || []; } catch(e){} list.push(run); await idbSet(fnKey(), list.slice(-20)).catch(() => {}); }
+  await fnLog('## ' + run.label + ' — ' + run.what + '\n\n' + run.items.map(x => '- [[' + x.to.replace(/\.md$/, '') + ']]' + (x.from !== x.to ? ' (from `' + x.from + '`)' : '')).join('\n') + (failed.length ? '\n\n⚠️ Not changed:\n' + failed.map(x => '- ' + x).join('\n') : '') + '\n');
+  renderAll();
+  toast('Changed ' + done + ' note' + (done === 1 ? '' : 's') + (failed.length ? ' · ' + failed.length + ' failed (see “' + FN_LOG + '”)' : '') + ' — Undo is at the top of Find notes', 7000);
+  FN.change = null; fnSearch();
+}
+async function fnEnsureFolder(f){   // make a folder (and its parents) the app knows about, so moveNote finds it
+  if (!f) return; let cur = '';
+  for (const seg of f.split('/')){ const p = cur; cur = cur ? cur + '/' + seg : seg; if (!S.folders.has(cur) || (!S.demo && !S.dirs.get(cur))){ if (S.folders.has(cur) && !S.demo){ S.dirs.set(cur, await (S.dirs.get(p) || S.root).getDirectoryHandle(seg, { create:true })); } else await createFolder(seg, p); } }
+}
+async function fnUndo(){
+  let list = []; try { list = (await idbGet(fnKey())) || []; } catch(e){}
+  const run = [...list].reverse().find(r => !r.undone); if (!run) return toast('Nothing to undo');
+  if (!await confirmIt('Undo “' + run.what + '” from ' + run.label + ' (' + run.items.length + ' note' + (run.items.length === 1 ? '' : 's') + ')? Each note goes back to exactly how it was.', 'Undo')) return;
+  await flushAll(); let back = 0, miss = [];
+  for (const x of [...run.items].reverse()){
+    const n = S.notes.get(x.to); if (!n){ miss.push(x.to); continue; }
+    try {
+      if (x.from !== x.to){ const f = parentOf(x.from); await fnEnsureFolder(f); await moveNote(n, f); }
+      Object.assign(n, parse(x.before)); await writeNote(n); back++;
+    } catch(e){ miss.push(x.to + ' (' + e.message + ')'); }
+  }
+  run.undone = !miss.length; await idbSet(fnKey(), list).catch(() => {});
+  await fnLog('## ' + new Date().toLocaleString() + ' — undid “' + run.what + '” from ' + run.label + '\n\n- ' + back + ' note' + (back === 1 ? '' : 's') + ' back as they were' + (miss.length ? '\n- Not found any more: ' + miss.join(', ') : '') + '\n');
+  renderAll(); toast('Undone: ' + back + ' note' + (back === 1 ? '' : 's') + ' back as they were', 6000);
+  if (FN.spec) fnSearch(); else fnRender();
+}
+async function fnLog(text){
+  try {
+    let n = S.notes.get(FN_LOG + '.md');
+    if (!n) n = await createNote(FN_LOG, '# ' + FN_LOG + '\n\nChanges made with “Find notes”, newest first. Undo the last one from Find notes.\n', '');
+    if (n.locked) return;
+    const b = n.body || '', i = b.indexOf('\n## ');
+    n.body = i >= 0 ? b.slice(0, i) + '\n' + text + b.slice(i) : b.replace(/\s*$/, '') + '\n\n' + text;
+    await writeNote(n);
+  } catch(e){ console.warn('[MN] find log', e); }
+}
+async function fnSaveNote(){
+  const cols = (FN.spec.columns || []).filter(c => FN_COLS[c]), cell = s => String(s == null ? '' : s).replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+  const val = (r, c) => c === 'date' ? fnDay(r.n.mtime) : c === 'name' ? '[[' + (findByName && findByName(r.n.name) === r.n ? r.n.name : r.n.path.replace(/\.md$/, '')) + '|' + r.n.name + ']]'
+    : c === 'folder' ? r.n.folder : c === 'match' ? r.match : c === 'tags' ? allTags(r.n).map(t => '#' + t).join(' ') : c === 'importance' ? (r.n.importance || '') : c === 'summary' ? (FN.sum.get(fnSumKey(r.n)) || '') : '';
+  const L = ['# Find: ' + FN.q, '', '*' + FN.rows.length + ' note' + (FN.rows.length === 1 ? '' : 's') + ' · ' + fnExplain(FN.spec) + ' · ' + new Date().toLocaleString() + '*', '',
+    '| ' + cols.map(c => FN_COLS[c]).join(' | ') + ' |', '|' + cols.map(() => ' --- ').join('|') + '|', ...FN.rows.map(r => '| ' + cols.map(c => cell(val(r, c))).join(' | ') + ' |'), ''];
+  const n = await createNote('Find – ' + FN.q.slice(0, 60).replace(/[\\/:*?"<>|#^\[\]]/g, ''), L.join('\n'), '');
+  fnClose(); S.current = n.path; if (!S.tabs.includes(n.path)) S.tabs.push(n.path); renderAll(); toast('Saved as a note');
+}
+// ----- screen -----
+async function fnRender(){
+  const pg = $('fnPage'); if (!pg) return;
+  const ex = (!FN.spec || FN.showEx) ? `<div class="fnex ${FN.spec ? '' : 'big'}">${FN_EXAMPLES.map(([h, ic, list]) => `<div class="fnexg"><div class="fnexh">${UI(ic)} ${esc(h)}</div>${list.map(([t, why]) => `<button class="fnexb" data-ex="${esc(t)}" title="${esc(why || 'Click to use')}">${esc(t)}${why ? `<span>${esc(why)}</span>` : ''}</button>`).join('')}</div>`).join('')}</div>` : '';
+  let undoRun = null; try { const l = (await idbGet(fnKey())) || []; undoRun = [...l].reverse().find(r => !r.undone); } catch(e){}
+  const head = `<div class="orghead">${UI('text-search')}<b>Find notes</b><span class="orgsub">ask in your own words${FN.usage ? ' · ' + esc(usageLine(FN.usage).replace(/\*/g, '')) : ''}</span><span class="sp"></span>
+    ${undoRun ? `<button class="ghost" data-fn="undo" title="Put the notes back as they were before: ${esc(undoRun.what)}">${UI('undo-2')} Undo last change (${undoRun.items.length})</button>` : ''}
+    <button class="ghost" data-fn="close" title="Back to your notes (Esc)">✕ Close</button></div>
+    <div class="fnbar"><textarea id="fnQ" rows="1" placeholder="${FN.spec ? 'Refine (“only from October”) or change (“add tag #elena”)… — or ask something new' : 'e.g. all notes which have elena & must do'}">${esc(FN.spec ? '' : FN.q)}</textarea>
+      <button class="primary" data-fn="go" ${FN.busy ? 'disabled' : ''}>${FN.busy ? '…' : UI('arrow-right')}${FN.busy ? '' : (FN.spec ? ' Go' : ' Search')}</button></div>
+    <div class="fnopts"><label class="fnsw" title="Exact: only these words. Similar: the AI adds other ways to say them — synonyms and English / Spanish / German."><input type="radio" name="fnsim" value="0" ${FN.similar ? '' : 'checked'}> Exact words</label>
+      <label class="fnsw"><input type="radio" name="fnsim" value="1" ${FN.similar ? 'checked' : ''}> Similar words too <span class="vorgmuted">(EN · ES · DE)</span></label>
+      <span class="sp"></span>${FN.spec ? `<button class="ghost" data-fn="ex">${UI('lightbulb')} ${FN.showEx ? 'Hide examples' : 'Examples'}</button><button class="ghost" data-fn="new">${UI('rotate-ccw')} New search</button>` : ''}
+      ${aiKey() ? '' : `<span class="vorgmuted">No AI set up — plain search (words joined by &amp; must all appear)</span>`}</div>`;
+  if (!FN.spec){
+    pg.innerHTML = head + `<div class="fnbody"><p class="vorgintro">Ask for notes the way you would ask a person. The AI only reads <b>your request</b> (plus your folder and tag names) — <b>never your notes</b>, unless you ask for summaries. The searching is done by the app: every note, free and fast.<br>Then <b>refine</b> the list with words, or <b>change</b> the notes you found with words — you see every change first, and one button undoes it.</p>
+      <div class="vorglbl">Examples — click one to try it</div>${ex}</div>`;
+    return;
+  }
+  const sp = FN.spec, cols = (sp.columns || []).filter(c => FN_COLS[c]), s = FN.sortBy || sp.sort || { by:'edited', dir:'desc' };
+  const colSort = { date:'edited', name:'name', folder:'folder' };
+  const sim = FN.similarMap && FN.similarMap.size ? `<div class="fnsim">${UI('languages')} Also matched: ${[...FN.similarMap].filter(([, a]) => a.length).map(([w, a]) => '<b>' + esc(w) + '</b> = ' + esc(a.join(', '))).join(' · ')}</div>` : '';
+  if (FN.view === 'change' && FN.change){
+    const ch = FN.change, on = ch.items.filter(x => x.on && x.ok).length;
+    pg.innerHTML = head + `<div class="fnund">${UI('pencil')} <b>Change:</b> ${esc(ch.explain || ch.c.action)} <span class="vorgmuted">— nothing is changed until you click Apply</span></div>
+      <div class="orgbar"><span class="orgseln">${on} of ${ch.items.length} notes will change</span><span class="sp"></span>
+        <button class="ghost" data-fn="call">Tick all</button><button class="ghost" data-fn="cnone">Untick all</button><button class="ghost" data-fn="cback">${UI('arrow-left')} Back to the list</button>
+        <button class="primary" data-fn="apply" ${on ? '' : 'disabled'}>${UI('check')} Apply to ${on}</button></div>
+      <div class="fnlist"><table class="fntab"><thead><tr><th></th><th>Note</th><th>Folder</th><th>What changes</th></tr></thead><tbody>${ch.items.map((x, i) =>
+        `<tr class="${x.ok ? '' : 'off'}"><td><input type="checkbox" data-ci="${i}" ${x.on && x.ok ? 'checked' : ''} ${x.ok ? '' : 'disabled'}></td><td><a data-open="${esc(x.n.path)}">${esc(x.n.name)}</a></td><td class="vorgmuted">${esc(x.n.folder)}</td><td>${esc(x.what)}</td></tr>`).join('')}</tbody></table></div>`;
+    return;
+  }
+  const est = cols.includes('summary') ? null : fnSumEstimate(FN.rows);
+  const val = (r, c) => {
+    if (c === 'date') return `<td class="fnd">${fnDay(r.n.mtime)}</td>`;
+    if (c === 'name') return `<td class="fnn">${noteDot(r.n)}<a data-open="${esc(r.n.path)}" title="${esc(r.n.path)}">${esc(r.n.name)}</a></td>`;
+    if (c === 'folder') return `<td class="vorgmuted">${esc(r.n.folder || '—')}</td>`;
+    if (c === 'match') return `<td class="fnm">${esc(r.match)}</td>`;
+    if (c === 'tags') return `<td>${allTags(r.n).map(t => '<span class="fntag">#' + esc(t) + '</span>').join(' ')}</td>`;
+    if (c === 'importance') return `<td>${esc(r.n.importance || '')}</td>`;
+    if (c === 'summary'){ const v = FN.sum.get(fnSumKey(r.n)); return `<td class="fns">${v ? esc(v) : r.n.locked ? '<span class="vorgmuted">locked</span>' : FN.busy ? '<span class="vorgmuted">…</span>' : ''}</td>`; }
+    return '<td></td>';
+  };
+  const shown = FN.rows.slice(0, FN.show);
+  pg.innerHTML = head + ex + `<div class="fnund">${UI('sparkles')} <b>Understood:</b> ${esc(FN.explain || fnExplain(sp))}${sp.local ? '' : ` <span class="vorgmuted">· ${esc(fnExplain(sp))}</span>`}</div>${sim}
+    <div class="orgbar"><span class="orgseln">${FN.rows.length} note${FN.rows.length === 1 ? '' : 's'}${FN.busy && FN.sumAll ? ' · summarizing ' + FN.sumDone + ' / ' + FN.sumAll : ''}</span><span class="sp"></span>
+      ${est && est.n ? `<button class="ghost" data-fn="sum" title="AI writes one sentence per note — you see the price first">${UI('sparkles')} Add summaries (~${est.usd < 0.01 ? '<$0.01' : '$' + est.usd.toFixed(2)})</button>` : ''}
+      <button class="ghost" data-fn="save" ${FN.rows.length ? '' : 'disabled'}>${UI('file-plus')} Save as note</button></div>
+    <div class="fnlist">${FN.rows.length ? `<table class="fntab"><thead><tr>${cols.map(c => `<th ${colSort[c] ? `data-sort="${colSort[c]}" class="srt"` : ''}>${esc(FN_COLS[c])}${colSort[c] && s.by === colSort[c] ? (s.dir === 'asc' ? ' ↑' : ' ↓') : ''}</th>`).join('')}</tr></thead>
+      <tbody>${shown.map(r => `<tr>${cols.map(c => val(r, c)).join('')}</tr>`).join('')}</tbody></table>${FN.rows.length > FN.show ? `<button class="ghost fnmore" data-fn="more">Show ${Math.min(300, FN.rows.length - FN.show)} more of ${FN.rows.length - FN.show}</button>` : ''}`
+      : `<div class="vorgmuted" style="padding:18px">No notes match. Try fewer words, <b>Similar words too</b>, or remove a folder or date.</div>`}</div>`;
+}
+function fnKeys(e){ if (e.target.id === 'fnQ' && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); fnAsk(e.target.value); } }
+function fnChange(e){
+  const t = e.target;
+  if (t.name === 'fnsim'){ FN.similar = t.value === '1'; if (FN.spec && FN.lastQ && (FN.spec.all || []).concat(FN.spec.any || [], FN.spec.none || []).length && aiKey()){ FN.spec = null; fnAsk(FN.lastQ); } }
+  if (t.dataset.ci != null && FN.change){ FN.change.items[+t.dataset.ci].on = t.checked; fnRender(); }
+}
+function fnClick(e){
+  const op = e.target.closest('[data-open]');
+  if (op){ const p = op.dataset.open; fnClose(); S.current = p; if (!S.tabs.includes(p)) S.tabs.push(p); return renderAll(); }
+  const ex = e.target.closest('[data-ex]');
+  if (ex){ const q = $('fnQ'); q.value = ex.dataset.ex; q.focus(); return; }
+  const th = e.target.closest('th[data-sort]');
+  if (th){ const by = th.dataset.sort, cur = FN.sortBy || FN.spec.sort || {}; FN.sortBy = { by, dir: cur.by === by && cur.dir === 'asc' ? 'desc' : 'asc' }; return fnSearch(); }
+  const b = e.target.closest('[data-fn]'); if (!b || (FN.busy && b.dataset.fn !== 'close')) return;
+  const v = b.dataset.fn;
+  if (v === 'close') return fnClose();
+  if (v === 'go') return fnAsk($('fnQ').value);
+  if (v === 'new'){ FN.spec = null; FN.rows = []; FN.q = ''; FN.change = null; FN.usage = null; FN.similarMap = null; FN.showEx = false; return fnRender(); }
+  if (v === 'ex'){ FN.showEx = !FN.showEx; return fnRender(); }
+  if (v === 'sum') return fnSummaries();
+  if (v === 'save') return fnSaveNote();
+  if (v === 'more'){ FN.show += 300; return fnRender(); }
+  if (v === 'undo') return fnUndo();
+  if (v === 'apply') return fnApplyChange();
+  if (v === 'cback'){ FN.change = null; FN.view = 'results'; return fnRender(); }
+  if (v === 'call' || v === 'cnone'){ FN.change.items.forEach(x => { if (x.ok) x.on = v === 'call'; }); return fnRender(); }
+}
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f' && !e.altKey){ e.preventDefault(); fnIsOpen() ? fnClose() : fnOpen(); }
+  else if (e.key === 'Escape' && fnIsOpen() && !FN.busy && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]')) fnClose();
+});
+
 /* ---------- command palette: every action, found by typing ---------- */
 function cmdList(){
   const n = cur(), note = !!(n && !n.external), b = S.bases.get(S.current), inMap = !!(n && S.map && S.map.path === n.path && $('mapvp'));
@@ -10504,6 +10923,8 @@ function cmdList(){
     ['AI', 'Suggest tags and importance (AI)', '', note && !n.locked, () => aiOpen(n)],
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
+    ['Find', 'Find notes: ask in your own words…', 'Ctrl+Shift+F', true, () => fnOpen()],
+    ['Find', 'Undo the last change made with Find notes…', '', !!S.root || S.demo, () => fnUndo()],
     ['View', localStorage.getItem('qn-tagshid') === '1' ? 'Show the tags in the sidebar' : 'Hide the tags in the sidebar', '', true, () => $('tagToggle').click()],
     ['View', 'Show all folders again (leave “Show only this folder”)', '', !!localStorage.getItem('qn-focusf') && allFolders().includes(localStorage.getItem('qn-focusf')), () => focusFolder('')],
     ['Vault', 'Undo the last vault cleanup (Organize vault)…', '', !!S.root && !S.demo, () => vorgUndo()],

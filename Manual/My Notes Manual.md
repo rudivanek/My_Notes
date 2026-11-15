@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v59 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v60 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -86,6 +86,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | See only one folder in the sidebar | right-click it → **Show only this folder** |
 | Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
+| Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
 | Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
 | Protect a password or private note | **Lock** button next to the note title (or **⋯** → Lock note…) |
@@ -319,6 +320,33 @@ While you type `folder:`, `tag:`, `is:` or `edited:`, a pick list appears at the
 **Keyboard in the search box:** ↓/↑ move through results, **Enter** opens, **Ctrl+Enter** opens but stays in the search (handy for looking at several results), **Esc** clears the search and returns to your note.
 
 **Saved searches:** click **☆** in the search box to save the current search with a name. Saved searches appear at the top of the note list; one click runs them. Right-click one to run, rename, edit, move up or remove it.
+
+### Find notes (ask in your own words)
+Click **Find** at the bottom left (next to Organize), press **Ctrl+Shift+F**, or the command palette: *Find notes*. Type what you want the way you'd ask a person and press **Enter**:
+
+- *all notes which have elena & must do* — both must be in the note (`&`, *and*, `+` or commas = all of them)
+- *notes with copyzap or pimpmycopy, but not in ARCHIVE* — *or* = either one; *not / without* leaves things out
+- *notes tagged #ai in PROJECTS* · *high importance notes about pricing* · *notes whose title has invoice*
+- *all notes ascending by date* · *notes edited in October, newest first* · *notes not touched for 6 months* · *the 20 most recent notes in INBOX*
+- *all notes in ELENA with date and short summary* · *notes about CopyZap, show tags and importance*
+
+The start screen shows these and more as **examples — click one** to put it in the box.
+
+**Exact words / Similar words too.** *Exact* finds only the words you typed. *Similar words too* lets the AI add other ways to say them — synonyms and English, Spanish and German (*must do* → *pendiente*, *to do*…). The line *Also matched* shows which words were added.
+
+**What you get:** a table of **all** matching notes (not just the best few) with the edit date, the note, its folder and where it matched — plus tags, importance or a summary when you ask. The line **Understood** says how your request was read. Click a column title (Edited, Note, Folder) to sort; click a note to open it. **Save as note** keeps the table as a note with links.
+
+**Summaries** are written by AI only when you ask (*… with short summary* or the **Add summaries** button). You see the price first — usually a cent or less for a few dozen notes. They are remembered on this PC, so the same notes cost nothing the next time.
+
+**Refine with words.** After a search, type into the same box: *only from October*, *without ARCHIVE*, *newest first*, *add a summary column*. The list updates. **New search** starts over.
+
+**Change the found notes with words:** *add tag #elena* · *remove tag #todo* · *move them to ARCHIVE* · *set importance high* · *replace 'must do' with 'done'* · *add the line 'Reviewed 2026-11' at the end* · *set property status to done* · *pin them*.
+- You first see **every note and exactly what will change** — untick any you want to leave alone. Nothing changes until **Apply**.
+- **Undo last change** (at the top of Find notes, or the palette) puts each note back exactly as it was — moved notes go back to their folder.
+- Every change is listed in the note **Find notes log**.
+- Locked notes are never changed. Deleting is not possible here — move notes to an archive folder instead.
+
+**Privacy and cost.** For searching, the AI sees only **your request** and your folder and tag names — never the text of your notes. The search itself runs in the app over every note, free and fast. Only summaries send note text (the first ~1,600 characters of each). Without AI set up, Find notes still works as a plain search: words joined by `&` or *and* must all appear.
 
 ### Jump to a note (Ctrl+O)
 The fastest way to open a note when you roughly know its name. It searches names only (tables too), forgives typos, understands initials, puts recently opened notes first, and also understands `folder:` and `tag:`. If nothing fits, **Enter** creates a note with that name.

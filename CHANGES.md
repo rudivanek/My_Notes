@@ -4,6 +4,16 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v60-2026-11-15
+**Find notes — a search you talk to.** Click **Find** at the bottom left (or **Ctrl+Shift+F**, or the palette) and type what you want in your own words: *all notes which have elena & must do*, *notes edited in October, newest first*, *all notes in ELENA with date and short summary*.
+- The AI turns **only your request** (plus your folder and tag names) into a precise search; the app then searches **every** note itself — complete, free and fast. A line *Understood* shows how it was read.
+- **Exact words** or **Similar words too** (synonyms + English / Spanish / German) — you choose.
+- Results as a table: date, note, folder, where it matched; tags, importance and summaries on request. Click column titles to sort. **Save as note** keeps the table.
+- **Summaries** only when asked, with the price shown first; remembered on this PC.
+- **Refine with words** (*only from October*, *without ARCHIVE*, *newest first*) and **change the found notes with words** (*add tag #elena*, *move them to ARCHIVE*, *set importance high*, *replace 'must do' with 'done'*, *add the line …*, *set property …*, *pin them*). Every change is shown note by note first, nothing happens before **Apply**, **Undo last change** puts the notes back exactly, and the note **Find notes log** lists every change.
+- Clickable **examples** for every kind of request on the start screen (and behind **Examples** later).
+- Works without AI too, as a plain search (words joined by & must all appear).
+
 ## v59-2026-11-14
 **Folders in search results open like a tree.**
 - Search finds a folder (e.g. *Projects*) → click it to see its sub-folders; click a sub-folder to see its notes and deeper folders. The folder's own notes sit behind one row (*“N notes directly in PROJECTS”*), so the sub-folders come first. Folders stay open while you search; clicking a note opens it as before.
