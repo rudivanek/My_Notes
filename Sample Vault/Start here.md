@@ -10,7 +10,7 @@ This is a **sample vault**: a small, made-up set of notes for **Northwind Bakery
 
 ## Try these first
 1. Open [[Website relaunch plan]]. Set its **importance**, add a **tag**, look at its **properties** (status, client, due).
-2. Type `[[` anywhere and pick a note to link it. The linked note shows this one under **Backlinks**.
+2. Type `[[` anywhere and pick a note to link it. The linked note then shows **← 1 linked from** under its title.
 3. Press **Ctrl+K** and search for `northwind`, or `folder:Clients`, or `status:Doing`.
 4. Press **Ctrl+O** to jump to a note by name, and **Ctrl+Shift+A** to see every command.
 5. Open the **Tasks** table (in *Projects*): edit cells, add a row with **Ctrl+Enter**, filter, sort.

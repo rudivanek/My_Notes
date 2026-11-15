@@ -4,6 +4,11 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v62-2026-11-15
+**Links moved up under the title.** The big *Linked from* / *Links to* block at the bottom of the note is gone. Instead, the grey line under the title now ends with two small counters: *Created … · Last edited … · ← 2 linked from · → 3 links to*.
+- Click a counter to see the list of notes; click a name to open it. Notes that don't exist yet are marked *new*.
+- A counter only shows when there is something to show.
+
 ## v61-2026-11-15
 **Created and last edited under the title.** A small grey line under the note title: *Created 3 Mar 2026, 10:42 · Last edited 15 Nov 2026, 11:58*.
 - *Created* is saved in the note as `created: 2026-11-15T12:06` (like Obsidian). New notes get it at once.

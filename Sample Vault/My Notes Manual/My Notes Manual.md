@@ -227,7 +227,7 @@ Copied text with formatting (from Claude, a web page, Google Docs…) is turned 
 - Type **`[[`** and pick a note from the list, e.g. `[[Website relaunch plan]]`. Or press **Ctrl+Shift+K**.
 - Or **drag a note** from the sidebar into the text.
 - Click a link to open that note. A link to a note that doesn't exist yet is shown faded; clicking it creates the note.
-- Under each note, **Linked from** lists the notes that link to it, and **Links to** lists the notes it links to.
+- On the small grey line under the note title, **← 2 linked from** counts the notes that link to this one and **→ 3 links to** the notes it links to. Click one to see the list, then click a name to open that note. If there are none, the counter is hidden.
 - Right-click a note → **Copy link** puts `[[Note name]]` on the clipboard.
 
 ---

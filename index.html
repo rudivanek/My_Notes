@@ -390,7 +390,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .page{max-width:760px;margin:0 auto;padding:28px 32px 80px}
 .title{width:100%;border:0;outline:none;background:none;font-size:30px;font-weight:700;letter-spacing:-.01em;padding:0;margin-bottom:12px}
 .meta{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--line)}
-.ndates{font-size:12px;color:var(--muted);margin:-4px 0 10px;min-height:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ndates .sep{opacity:.6}.ndates .guess{font-style:italic}
+.ndates{font-size:12px;color:var(--muted);margin:-4px 0 10px;min-height:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ndates .sep{opacity:.6}.ndates .guess{font-style:italic}.ndates .nlinks{display:inline-flex;gap:6px;align-items:center}.ndates .nlinks:empty{display:none}#ndd:not(:empty)+.nlinks::before{content:'·';opacity:.6}.ndates .nlk{font:inherit;color:var(--accent);background:none;border:0;padding:1px 4px;margin:0 -4px;border-radius:5px;cursor:pointer}.ndates .nlk:hover,.ndates .nlk.open{background:var(--hover,rgba(127,127,127,.12))}
 .meta label{font-size:12px;color:var(--muted);margin-right:6px}
 .imp{display:inline-flex;gap:4px;vertical-align:middle}
 .imp button{display:flex;align-items:center;gap:5px;font-size:12.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
@@ -461,9 +461,6 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .preview blockquote{margin:0;padding-left:14px;border-left:3px solid var(--line);color:var(--muted)}
 .preview img{max-width:100%}
 .hint{font-size:12px;color:var(--muted);margin-top:18px}
-.backlinks{margin-top:36px;padding-top:14px;border-top:1px solid var(--line)}
-.backlinks h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-.backlinks a{display:inline-block;margin:0 10px 6px 0;color:var(--accent);cursor:pointer;font-size:14px}
 .welcome{max-width:520px;margin:12vh auto;padding:0 24px;text-align:center;color:var(--muted)}
 .welcome h2{color:var(--text);margin-bottom:6px}
 /* popups */
@@ -832,7 +829,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v61-2026-11-15</span>
+      <span class="appver" id="appVer" title="My Notes version">v62-2026-11-15</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -3764,7 +3761,8 @@ const fmtWhen = t => { try { return new Date(t).toLocaleString(undefined, { day:
 async function updateNoteDates(n){
   n = n || cur(); const el = $('ndates'); if (!n || !el || el.dataset.p !== n.path) return;
   const ed = n.mtime ? `<span title="Last time the file was saved">Last edited ${esc(fmtWhen(n.mtime))}</span>` : '';
-  if (n.external){ el.innerHTML = ed; return; }
+  const out = $('ndd') || el;
+  if (n.external){ out.innerHTML = ed; return; }
   let cr = '';
   const fixed = noteCreatedProp(n);
   if (n.locked) cr = '';
@@ -3777,7 +3775,7 @@ async function updateNoteDates(n){
       ? `<span class="guess" title="Estimated from the oldest saved version. Saved into the note the next time you edit it.">Created ~${esc(fmtWhen(h))}</span>`
       : `<span class="guess" title="This note doesn't say when it was made, and there is no older saved version. The date is saved into the note the next time you edit it.">Created: unknown (before ${esc(new Date(n.mtime || Date.now()).toLocaleDateString(undefined, { month:'short', year:'numeric' }))})</span>`;
   }
-  el.innerHTML = [cr, ed].filter(Boolean).join('<span class="sep">·</span>');
+  out.innerHTML = [cr, ed].filter(Boolean).join('<span class="sep">·</span>');
 }
 const pending = new Map();
 function queueSave(n, now){
@@ -8821,7 +8819,7 @@ function renderEditor(){
   setTimeout(() => updateNoteDates(n), 0);
   box.innerHTML = `<div class="page">
     <div class="titlerow">${iconHtml(n.path, null, 'big').replace('<span class="ico', '<span title="Change icon" data-chicon="1" class="ico')}<input class="title" id="title" value="${esc(n.name)}" spellcheck="false">${isMap(n) ? mapSwitch(n) : ''}<span class="nacts" id="nacts"></span></div>
-    <div class="ndates" id="ndates" data-p="${esc(n.path)}"></div>
+    <div class="ndates" id="ndates" data-p="${esc(n.path)}"><span id="ndd"></span><span class="nlinks" id="bl"></span></div>
     ${dailyNav(n)}
     <div class="meta">
       <div><label>Importance</label><span class="imp" id="imp">
@@ -8863,7 +8861,6 @@ function renderEditor(){
          <div id="ed"></div>
          <div class="hint">Type <b>[[</b> to link a note, or drag a note from the sidebar into the text. Click a link to open it.</div>`
       : ''}
-    <div class="backlinks" id="bl"></div>
   </div>`;
   if (S.triage && S.triage.cur === n.path) $('scroll').querySelector('.page').insertAdjacentHTML('afterbegin', triageBar(n));
   aiRender();
@@ -8878,11 +8875,23 @@ function renderBacklinks(n){
   const re = new RegExp('\\[\\[' + reEsc(n.name) + '(?=[\\]|#])', 'i');
   const from = [...S.notes.values()].filter(o => o !== n && re.test(o.body));
   const outs = [...new Set([...n.body.matchAll(/(!?)\[\[([^\]\n]+)\]\]/g)].filter(m => !(m[1] && /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(m[2].split('|')[0].trim()))).map(m => m[2].split('|')[0].split('#')[0].trim()))];
+  S.lk = { path: n.path, from: from.map(o => o.name), to: outs };
   let h = '';
-  if (from.length) h += `<h4>Linked from</h4>` + from.map(o => `<a data-go="${esc(o.name)}">${esc(o.name)}</a>`).join('');
-  if (outs.length) h += `<h4 style="margin-top:14px">Links to</h4>` + outs.map(o => `<a data-go="${esc(o)}" style="${findByName(o) ? '' : 'opacity:.55'}">${esc(o)}${findByName(o) ? '' : ' (new)'}</a>`).join('');
+  if (from.length) h += `<button class="nlk" data-lk="from" title="Notes that link to this note — click to see them">← ${from.length} linked from</button>`;
+  if (outs.length) h += `<button class="nlk" data-lk="to" title="Notes this note links to — click to see them">→ ${outs.length} links to</button>`;
   $('bl').innerHTML = h;
-  $('bl').style.display = h ? '' : 'none';
+}
+function showLinksMenu(btn){
+  const lk = S.lk, n = cur(); if (!lk || !n || lk.path !== n.path) return;
+  const from = btn.dataset.lk === 'from', l = from ? lk.from : lk.to;
+  const items = [{ head: from ? 'Linked from' : 'Links to' }].concat(l.map(name => {
+    const ex = !!findByName(name);
+    return { icon: from ? '←' : '→', label: name, hint: ex ? '' : 'new', run: () => goTo(name) };
+  }));
+  const r = btn.getBoundingClientRect();
+  btn.classList.add('open'); showCtx(r.left, r.bottom + 4, items);
+  const off = () => { btn.classList.remove('open'); document.removeEventListener('mousedown', off, true); };
+  setTimeout(() => document.addEventListener('mousedown', off, true), 0);
 }
 function renderAll(){ renderSidebar(); renderEditor(); }
 
@@ -8977,6 +8986,7 @@ function wireEditor(n){
   S.shownPath = n.path;
   $('scroll').onclick = e => {
     if (e.target.closest('[data-chicon]')) return changeIcon(n.path, n.name);
+    const lkb = e.target.closest('[data-lk]'); if (lkb) return showLinksMenu(lkb);
     const a = e.target.closest('[data-go]'); if (a) goTo(a.dataset.go);
   };
 }
