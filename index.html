@@ -407,6 +407,22 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 .fmt button{min-width:32px;height:30px;padding:0 8px;border-radius:7px;font-size:13.5px;color:var(--muted)}
 .fmt button:hover{background:var(--hover);color:var(--text)}
 .fmt .sep{width:1px;background:var(--line);margin:5px 4px}
+.colpop{position:fixed;z-index:85;display:none;background:var(--bg);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:8px;font-size:12px}
+.colpop .cphead{color:var(--muted);margin:0 2px 6px;font-weight:600}
+.colpop .cpgrid{display:grid;grid-template-columns:repeat(4,30px);gap:5px}
+.colpop .cpsw{width:30px;height:30px;border-radius:7px;border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:15px}
+.colpop .cpsw:hover{outline:2px solid var(--accent);outline-offset:1px}
+.colpop .cpsw.on{outline:2px solid var(--text);outline-offset:1px}
+.colpop .cpnone{display:flex;align-items:center;gap:6px;width:100%;margin-top:7px;padding:5px 6px;border-radius:7px;color:var(--muted)}
+.colpop .cpnone:hover{background:var(--hover);color:var(--text)}
+.colpop .cpnone .uic{width:14px;height:14px}
+.colpop.menu{width:280px}.colpop.menu .cpgrid{grid-template-columns:repeat(8,26px);gap:4px}.colpop.menu .cpsw{width:26px;height:26px;font-size:13px}
+.colpop.menu .cphead{margin:8px 2px 5px}.colpop.menu .cpnone{margin-top:3px;padding:4px 6px}
+.colpop .cprow{display:flex;flex-wrap:wrap;gap:1px;margin-bottom:2px}
+.colpop .cpic{width:30px;height:28px;border-radius:6px;color:var(--muted);display:grid;place-items:center}.colpop .cpic:hover{background:var(--hover);color:var(--text)}
+.colpop .cpic .uic{width:15px;height:15px;stroke-width:1.5}
+.colpop .cpsep{height:1px;background:var(--line);margin:7px 0 3px}
+.colpop .cphint{color:var(--muted);font-size:10.5px;margin:5px 4px 0}
 #ed .cm-editor{background:none;font-size:16.5px}
 #ed .cm-editor.cm-focused{outline:none}
 #ed .cm-scroller{font-family:inherit;line-height:1.75;overflow:visible}
@@ -829,7 +845,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v62-2026-11-15</span>
+      <span class="appver" id="appVer" title="My Notes version">v63-2026-11-15</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -886,6 +902,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
 </div>
 <div class="toast" id="toast"></div>
 <div class="ctx" id="ctx"></div>
+<div class="colpop" id="colPop"></div>
 <div class="offer" id="offer"></div>
 <div class="modal-bg" id="icoBg"><div class="modal icomodal">
   <p id="icoTitle" style="font-weight:600;margin-bottom:10px"></p>
@@ -1050,7 +1067,7 @@ ${a.mark.snippet}`),`${a.reason} ${e}`):a.reason}var Ra=class a4 extends Error{r
 `).trim(),e||null}var AF=a=>a.replace(/^lucide-/,"").split("-").map(t=>t?t[0].toUpperCase()+t.slice(1):"").join("");function Att(a,t){let e=vo[AF(String(a))];return e?'<svg class="'+(t||"lic")+'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+e.map(([r,o])=>"<"+r+" "+Object.entries(o).map(([s,i])=>s+'="'+i+'"').join(" ")+"/>").join("")+"</svg>":null}function Qtt(){return bF.filter(a=>vo[AF(a)])}function Ltt(a){return g4(a,{schema:e4})}var Wf=class extends Ht{eq(){return!0}toDOM(){let t=document.createElement("span");return t.className="cm-bullet",t.textContent="\u2022",t}},Yf=class extends Ht{constructor(t,e){super(),this.checked=t,this.pos=e}eq(t){return t.checked===this.checked&&t.pos===this.pos}toDOM(t){let e=document.createElement("input");return e.type="checkbox",e.className="cm-task",e.checked=this.checked,e.addEventListener("mousedown",r=>r.preventDefault()),e.addEventListener("click",r=>{r.preventDefault(),t.dispatch({changes:{from:this.pos+1,to:this.pos+2,insert:this.checked?" ":"x"}})}),e}ignoreEvent(){return!0}},Uf=/\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i,ui=class extends Ht{constructor(t,e,r){super(),this.target=t,this.width=e,this.opts=r}eq(t){return t.target===this.target&&t.width===this.width}toDOM(){let t=document.createElement("span");t.className="cm-imgwrap";let e=document.createElement("img");return e.className="cm-img",e.alt=this.target,this.width&&(e.style.width=this.width+"px"),t.appendChild(e),Promise.resolve(this.opts.imageURL(this.target)).then(r=>{r?e.src=r:(t.textContent="Image not found: "+this.target,t.classList.add("cm-imgmissing"))}).catch(()=>{}),t}ignoreEvent(){return!1}};function jf(a){a=a.trim(),a.startsWith("|")&&(a=a.slice(1)),a.endsWith("|")&&!a.endsWith("\\|")&&(a=a.slice(0,-1));let t=[],e="";for(let r=0;r<a.length;r++)a[r]==="\\"&&a[r+1]==="|"?(e+="|",r++):a[r]==="|"?(t.push(e.trim()),e=""):e+=a[r];return t.push(e.trim()),t}function QF(a){let t=a.split(`
 `).filter(o=>o.trim()),e=jf(t[0]||""),r=jf(t[1]||"").map(o=>/^:-+:$/.test(o)?"center":/^-+:$/.test(o)?"right":/^:-+$/.test(o)?"left":"");return{rows:[e,...t.slice(2).map(jf)],aligns:r}}function LF(a,t){let e=Math.max(1,...a.map(i=>i.length));for(a=a.map(i=>{for(i=i.map(l=>l.replace(/\s*\n\s*/g," ").replace(/\|/g,"\\|").trim());i.length<e;)i.push("");return i.slice(0,e)}),t=t.slice(0,e);t.length<e;)t.push("");let r=[...Array(e)].map((i,l)=>Math.max(3,...a.map(n=>n[l].length))),o=i=>"| "+i.map((l,n)=>l.padEnd(r[n])).join(" | ")+" |",s="| "+t.map((i,l)=>{let n="-".repeat(r[l]);return i==="center"?":"+n.slice(2)+":":i==="right"?n.slice(1)+":":i==="left"?":"+n.slice(1):n}).join(" | ")+" |";return[o(a[0]),s,...a.slice(1).map(o)].join(`
 `)}var Gf=class extends Ht{constructor(t){super(),this.text=t}eq(t){return t.text===this.text}ignoreEvent(){return!0}toDOM(t){let e=this,r=QF(this.text),o=document.createElement("div");o.className="cm-table-wrap";let s=!1,i=!1,l=[0,0],n=document.createElement("table");n.className="cm-table";let d=document.createElement("div");d.className="cm-table-tools";let h=()=>{r.rows=[...n.rows].map(x=>[...x.cells].map(v=>v.textContent))},f=(x,v)=>n.rows[x]?.cells[v],p=(x,v)=>{let M=f(x,v);if(!M)return;M.focus();let S=window.getSelection(),y=document.createRange();y.selectNodeContents(M),y.collapse(!1),S.removeAllRanges(),S.addRange(y)},c=()=>{i=!0,n.innerHTML="";let x=Math.max(...r.rows.map(v=>v.length));r.rows.forEach((v,M)=>{let S=n.insertRow();for(let y=0;y<x;y++){let w=document.createElement(M===0?"th":"td");w.contentEditable="plaintext-only",w.contentEditable!=="plaintext-only"&&(w.contentEditable="true"),w.textContent=v[y]||"",r.aligns[y]&&(w.style.textAlign=r.aligns[y]),w.addEventListener("focus",()=>{l=[M,y]}),w.addEventListener("input",()=>{s=!0}),S.appendChild(w)}}),i=!1},m=()=>{if(!s||i||!n.rows.length)return;h(),s=!1;let x=LF(r.rows,r.aligns),v;try{v=t.posAtDOM(o)}catch{return}t.state.sliceDoc(v,v+e.text.length)===e.text&&x!==e.text&&t.dispatch({changes:{from:v,to:v+e.text.length,insert:x}})},u=x=>{h(),x(),s=!0,c()},g=(x,v,M)=>{let S=document.createElement("button");S.type="button",S.textContent=x,S.title=v,S.addEventListener("mousedown",y=>{y.preventDefault(),M()}),d.appendChild(S)};g("+ Row","Add a row below",()=>{let[x,v]=l;u(()=>r.rows.splice(x+1,0,[])),p(x+1,v)}),g("+ Column","Add a column to the right",()=>{let[x,v]=l;u(()=>{r.rows.forEach(M=>{for(;M.length<=v;)M.push("");M.splice(v+1,0,"")}),r.aligns.splice(v+1,0,"")}),p(x,v+1)}),g("\u2212 Row","Delete this row",()=>{let[x,v]=l;x===0||r.rows.length<2||(u(()=>r.rows.splice(x,1)),p(Math.min(x,r.rows.length-1),v))}),g("\u2212 Column","Delete this column",()=>{let[x,v]=l;Math.max(...r.rows.map(M=>M.length))<2||(u(()=>{r.rows.forEach(M=>M.splice(v,1)),r.aligns.splice(v,1)}),p(x,Math.max(0,v-1)))}),g("Markdown","Edit the table as text",()=>{m(),setTimeout(()=>{let v=t.state.selection.main.head;try{v=t.posAtDOM(o)}catch{}t.focus(),t.dispatch({selection:{anchor:Math.min(v+2,t.state.doc.length)}})},0)});for(let x of["keydown","keypress","paste","cut","copy","drop","beforeinput","input","compositionstart","compositionend"])o.addEventListener(x,v=>{x==="keydown"&&(v.ctrlKey||v.metaKey)&&/^[op]$/i.test(v.key)||v.stopPropagation()});return o.addEventListener("keydown",x=>{let v=x.target.closest("td,th");if(!v)return;let[M,S]=l,y=n.rows.length,w=n.rows[0].cells.length;if((x.ctrlKey||x.metaKey)&&x.key.toLowerCase()==="a"){x.preventDefault();let C=window.getSelection(),H=document.createRange();H.selectNodeContents(v),C.removeAllRanges(),C.addRange(H);return}x.key==="Tab"?(x.preventDefault(),x.shiftKey?S>0?p(M,S-1):M>0&&p(M-1,w-1):S<w-1?p(M,S+1):(M<y-1||u(()=>r.rows.push([])),p(M+1,0))):x.key==="Enter"?(x.preventDefault(),M<y-1||u(()=>r.rows.push([])),p(M+1,S)):x.key==="Escape"?(x.preventDefault(),v.blur(),t.focus()):x.key==="ArrowUp"&&M>0?(x.preventDefault(),p(M-1,S)):x.key==="ArrowDown"&&M<y-1&&(x.preventDefault(),p(M+1,S))}),o.addEventListener("focusout",()=>setTimeout(()=>{o.contains(document.activeElement)||m()},0)),c(),o.appendChild(n),o.appendChild(d),o}};function kF(a){let t=bu(a,a.doc.length,200)||F(a),e=[],r=a.selection.main;return t.iterate({enter:o=>{if(o.name!=="Table")return;let s=a.doc.lineAt(o.from).from,i=a.doc.lineAt(Math.max(o.from,o.to-(a.sliceDoc(o.to-1,o.to)===`
-`?1:0))).to;return r.to>s&&r.from<i||e.push(B.replace({widget:new Gf(a.doc.sliceString(s,i)),block:!0}).range(s,i)),!1}}),window.qnAiBlocks&&window.qnAiBlocks(a,e),B.set(e,!0)}var $tt=Ot.define({create:a=>kF(a),update:(a,t)=>t.docChanged||t.selection?kF(t.state):a.map(t.changes),provide:a=>Q.decorations.from(a)}),yo=B.replace({}),qe=(a,t)=>B.mark(t?{class:a,attributes:t}:{class:a});window.qnCM={B:B,Ht:Ht};function Ttt(a,t){let{state:e}=a,r=[],o=[],s=(h,f)=>a.hasFocus&&e.selection.ranges.some(p=>p.from<=f&&p.to>=h),i=(h,f)=>{f>h&&(r.push(yo.range(h,f)),o.push(yo.range(h,f)))},l=(h,f)=>{f>h&&r.push(yo.range(h,f))},n=(h,f)=>r.push(B.line({class:f}).range(e.doc.lineAt(h).from)),d=h=>e.doc.sliceString(h,h+1)===" "?h+1:h;for(let{from:h,to:f}of a.visibleRanges){F(e).iterate({from:h,to:f,enter:u=>{let g=u.name,x=u.node,v;if(v=g.match(/^ATXHeading(\d)$/)){n(u.from,"cm-h cm-h"+v[1]);let M=x.getChildren("HeaderMark");M[0]&&i(M[0].from,d(M[0].to)),M[1]&&l(M[1].from-(e.doc.sliceString(M[1].from-1,M[1].from)===" "?1:0),M[1].to)}else if(g==="StrongEmphasis"||g==="Emphasis"||g==="Strikethrough"||g==="InlineCode"){let M={StrongEmphasis:"cm-strong",Emphasis:"cm-em",Strikethrough:"cm-strike",InlineCode:"cm-icode"}[g];if(r.push(qe(M).range(u.from,u.to)),!s(u.from,u.to)){let S={StrongEmphasis:"EmphasisMark",Emphasis:"EmphasisMark",Strikethrough:"StrikethroughMark",InlineCode:"CodeMark"}[g];for(let y of x.getChildren(S))l(y.from,y.to)}}else if(g==="URL"&&!["Link","Image"].includes(x.parent?.name)){let M=e.doc.sliceString(u.from,u.to);/^www\./i.test(M)&&(M="https://"+M);let S=!s(u.from,u.to);if(r.push(qe("cm-mdlink cm-bareurl",S?{"data-url":M,"data-open":"1"}:{"data-url":M}).range(u.from,u.to)),x.parent?.name==="Autolink"&&S)for(let y of x.parent.getChildren("LinkMark"))l(y.from,y.to)}else if(g==="Link"){if(e.doc.sliceString(u.from-1,u.from)==="["&&e.doc.sliceString(u.to,u.to+1)==="]")return!1;let M=x.getChildren("LinkMark"),S=x.getChild("URL");if(M.length>=2){let y=!s(u.from,u.to),w=S?{"data-url":e.doc.sliceString(S.from,S.to)}:null;w&&y&&(w["data-open"]="1"),M[0].to<M[1].from&&r.push(qe("cm-mdlink",w).range(M[0].to,M[1].from)),y&&(l(M[0].from,M[0].to),l(M[1].from,u.to))}return!1}else if(g==="ListMark"&&x.parent?.parent?.name==="BulletList"){let M=x.parent.getChild("Task")?.getChild("TaskMarker");if(M&&M.from<=d(u.to)){let S=/x/i.test(e.doc.sliceString(M.from,M.to)),y=d(M.to);if(r.push(B.replace({widget:new Yf(S,M.from)}).range(u.from,y)),o.push(yo.range(u.from,y)),S){let w=e.doc.lineAt(u.from);y<w.to&&r.push(qe("cm-done").range(y,w.to))}}else{let S=d(u.to);r.push(B.replace({widget:new Wf}).range(u.from,S)),o.push(yo.range(u.from,S))}}else if(g==="QuoteMark"){let K=window.qnQuoteClass?window.qnQuoteClass(e.doc,u.from):null;n(u.from,"cm-quote"+(K?" "+K.cls:""));i(u.from,d(u.to));if(K&&K.mark&&K.mark[1]>K.mark[0]&&!s(e.doc.lineAt(u.from).from,e.doc.lineAt(u.from).to))l(K.mark[0],K.mark[1])}else if(g==="FencedCode"){for(let M=u.from;M<=u.to;){let S=e.doc.lineAt(M);n(S.from,"cm-codeblock"),M=S.to+1}for(let M of x.getChildren("CodeMark"))r.push(qe("cm-fence").range(M.from,M.to));return!1}else g==="HorizontalRule"&&n(u.from,"cm-hr")}});window.qnAiDeco&&window.qnAiDeco(e,h,f,{line:(P,C,A)=>r.push(B.line(A?{class:C,attributes:A}:{class:C}).range(e.doc.lineAt(P).from)),hide:l,mark:(X,Y,C)=>{Y>X&&r.push(qe(C).range(X,Y))},sel:s});let p=e.doc.sliceString(h,f),c=(u,g,x,v)=>{s(u,g)?r.push(B.widget({widget:new ui(x,v,t),side:1}).range(g)):r.push(B.replace({widget:new ui(x,v,t)}).range(u,g))};for(let u of p.matchAll(/!\[\[([^\[\]\n]+)\]\]/g)){let[g,x]=u[1].split("|");Uf.test(g.trim())&&c(h+u.index,h+u.index+u[0].length,g.trim(),x&&parseInt(x,10)||0)}for(let u of p.matchAll(/!\[([^\]\n]*)\]\(([^)\n]+)\)/g)){let g=u[2].trim().replace(/^<|>$/g,"");if(!Uf.test(g.split(/[?#]/)[0])&&!/^https?:/.test(g))continue;let x=u[1].match(/\|(\d+)/);c(h+u.index,h+u.index+u[0].length,g,x?+x[1]:0)}for(let u of p.matchAll(/\[\[([^\[\]\n]+)\]\]/g)){let g=h+u.index,x=g+u[0].length;if(u.index>0&&p[u.index-1]==="!"&&Uf.test(u[1].split("|")[0].trim()))continue;let v=u[1].split("|")[0].split("#")[0].trim(),M="cm-wikilink"+(t.exists(v)?"":" cm-missing");if(s(g,x)){r.push(qe(M,{"data-note":v}).range(g,x));continue}let S=u[1].indexOf("|"),y=S>=0?g+2+S+1:g+2;l(g,y),y<x-2&&r.push(qe(M,{"data-note":v,"data-open":"1"}).range(y,x-2)),l(x-2,x)}let m=t.highlight&&t.highlight();if(m)for(let u of p.matchAll(m))u[0]&&r.push(qe("cm-hit").range(h+u.index,h+u.index+u[0].length));for(let u of p.matchAll(/(^|[ \t])(#[\p{L}\p{N}_\/-]*[\p{L}_\/-][\p{L}\p{N}_\/-]*)/gmu)){let g=h+u.index+u[1].length;r.push(qe("cm-tag").range(g,g+u[2].length))}}return{all:B.set(r,!0),atomic:B.set(o,!0)}}function Rtt(a){return It.fromClass(class{constructor(t){this.compute(t)}update(t){(t.transactions.length||t.viewportChanged||t.focusChanged||F(t.startState)!==F(t.state))&&this.compute(t.view)}compute(t){let e=Ttt(t,a);this.decorations=e.all,this.atomic=e.atomic}},{decorations:t=>t.decorations,provide:t=>Q.atomicRanges.of(e=>e.plugin(t)?.atomic||B.none)})}function Vtt(a){return t=>{let e=t.matchBefore(/\[\[[^\[\]\n|]*/);if(!e)return null;let r=e.text.slice(2).trim(),o=t.state.sliceDoc(t.pos,t.pos+2)==="]]"?"":"]]",s=(h,f)=>(p,c,m,u)=>{p.dispatch({changes:{from:m,to:u,insert:h+o},selection:{anchor:m+h.length+2}}),f&&a.create(h)},i=a.names(),l=r.toLowerCase(),d=i.filter(h=>h.toLowerCase().includes(l)).sort((h,f)=>(f.toLowerCase().startsWith(l)?1:0)-(h.toLowerCase().startsWith(l)?1:0)).slice(0,30).map(h=>({label:h,apply:s(h)}));return r&&!i.some(h=>h.toLowerCase()===l)&&d.push({label:r,detail:"\uFF0B new note",apply:s(r,!0)}),d.length?{from:e.from+2,options:d,filter:!1}:null}}var Htt=or.define([]);async function CF(a,t,e,r){let o="";for(let l of t)try{o+="![["+await r.saveImage(l)+`]]
+`?1:0))).to;return r.to>s&&r.from<i||e.push(B.replace({widget:new Gf(a.doc.sliceString(s,i)),block:!0}).range(s,i)),!1}}),window.qnAiBlocks&&window.qnAiBlocks(a,e),B.set(e,!0)}var $tt=Ot.define({create:a=>kF(a),update:(a,t)=>t.docChanged||t.selection?kF(t.state):a.map(t.changes),provide:a=>Q.decorations.from(a)}),yo=B.replace({}),qe=(a,t)=>B.mark(t?{class:a,attributes:t}:{class:a});window.qnCM={B:B,Ht:Ht};function Ttt(a,t){let{state:e}=a,r=[],o=[],s=(h,f)=>a.hasFocus&&e.selection.ranges.some(p=>p.from<=f&&p.to>=h),i=(h,f)=>{f>h&&(r.push(yo.range(h,f)),o.push(yo.range(h,f)))},l=(h,f)=>{f>h&&r.push(yo.range(h,f))},n=(h,f)=>r.push(B.line({class:f}).range(e.doc.lineAt(h).from)),d=h=>e.doc.sliceString(h,h+1)===" "?h+1:h;for(let{from:h,to:f}of a.visibleRanges){F(e).iterate({from:h,to:f,enter:u=>{let g=u.name,x=u.node,v;if(v=g.match(/^ATXHeading(\d)$/)){n(u.from,"cm-h cm-h"+v[1]);let M=x.getChildren("HeaderMark");M[0]&&i(M[0].from,d(M[0].to)),M[1]&&l(M[1].from-(e.doc.sliceString(M[1].from-1,M[1].from)===" "?1:0),M[1].to)}else if(g==="StrongEmphasis"||g==="Emphasis"||g==="Strikethrough"||g==="InlineCode"){let M={StrongEmphasis:"cm-strong",Emphasis:"cm-em",Strikethrough:"cm-strike",InlineCode:"cm-icode"}[g];if(r.push(qe(M).range(u.from,u.to)),!s(u.from,u.to)){let S={StrongEmphasis:"EmphasisMark",Emphasis:"EmphasisMark",Strikethrough:"StrikethroughMark",InlineCode:"CodeMark"}[g];for(let y of x.getChildren(S))l(y.from,y.to)}}else if(g==="URL"&&!["Link","Image"].includes(x.parent?.name)){let M=e.doc.sliceString(u.from,u.to);/^www\./i.test(M)&&(M="https://"+M);let S=!s(u.from,u.to);if(r.push(qe("cm-mdlink cm-bareurl",S?{"data-url":M,"data-open":"1"}:{"data-url":M}).range(u.from,u.to)),x.parent?.name==="Autolink"&&S)for(let y of x.parent.getChildren("LinkMark"))l(y.from,y.to)}else if(g==="Link"){if(e.doc.sliceString(u.from-1,u.from)==="["&&e.doc.sliceString(u.to,u.to+1)==="]")return!1;let M=x.getChildren("LinkMark"),S=x.getChild("URL");if(M.length>=2){let y=!s(u.from,u.to),w=S?{"data-url":e.doc.sliceString(S.from,S.to)}:null;w&&y&&(w["data-open"]="1"),M[0].to<M[1].from&&r.push(qe("cm-mdlink",w).range(M[0].to,M[1].from)),y&&(l(M[0].from,M[0].to),l(M[1].from,u.to))}return!1}else if(g==="ListMark"&&x.parent?.parent?.name==="BulletList"){let M=x.parent.getChild("Task")?.getChild("TaskMarker");if(M&&M.from<=d(u.to)){let S=/x/i.test(e.doc.sliceString(M.from,M.to)),y=d(M.to);if(r.push(B.replace({widget:new Yf(S,M.from)}).range(u.from,y)),o.push(yo.range(u.from,y)),S){let w=e.doc.lineAt(u.from);y<w.to&&r.push(qe("cm-done").range(y,w.to))}}else{let S=d(u.to);r.push(B.replace({widget:new Wf}).range(u.from,S)),o.push(yo.range(u.from,S))}}else if(g==="QuoteMark"){let K=window.qnQuoteClass?window.qnQuoteClass(e.doc,u.from):null;n(u.from,"cm-quote"+(K?" "+K.cls:""));i(u.from,d(u.to));if(K&&K.mark&&K.mark[1]>K.mark[0]&&!s(e.doc.lineAt(u.from).from,e.doc.lineAt(u.from).to))l(K.mark[0],K.mark[1])}else if(g==="FencedCode"){for(let M=u.from;M<=u.to;){let S=e.doc.lineAt(M);n(S.from,"cm-codeblock"),M=S.to+1}for(let M of x.getChildren("CodeMark"))r.push(qe("cm-fence").range(M.from,M.to));return!1}else g==="HorizontalRule"&&n(u.from,"cm-hr")}});window.qnAiDeco&&window.qnAiDeco(e,h,f,{line:(P,C,A)=>r.push(B.line(A?{class:C,attributes:A}:{class:C}).range(e.doc.lineAt(P).from)),hide:l,mark:(X,Y,C,A)=>{Y>X&&r.push(qe(C,A).range(X,Y))},sel:s});let p=e.doc.sliceString(h,f),c=(u,g,x,v)=>{s(u,g)?r.push(B.widget({widget:new ui(x,v,t),side:1}).range(g)):r.push(B.replace({widget:new ui(x,v,t)}).range(u,g))};for(let u of p.matchAll(/!\[\[([^\[\]\n]+)\]\]/g)){let[g,x]=u[1].split("|");Uf.test(g.trim())&&c(h+u.index,h+u.index+u[0].length,g.trim(),x&&parseInt(x,10)||0)}for(let u of p.matchAll(/!\[([^\]\n]*)\]\(([^)\n]+)\)/g)){let g=u[2].trim().replace(/^<|>$/g,"");if(!Uf.test(g.split(/[?#]/)[0])&&!/^https?:/.test(g))continue;let x=u[1].match(/\|(\d+)/);c(h+u.index,h+u.index+u[0].length,g,x?+x[1]:0)}for(let u of p.matchAll(/\[\[([^\[\]\n]+)\]\]/g)){let g=h+u.index,x=g+u[0].length;if(u.index>0&&p[u.index-1]==="!"&&Uf.test(u[1].split("|")[0].trim()))continue;let v=u[1].split("|")[0].split("#")[0].trim(),M="cm-wikilink"+(t.exists(v)?"":" cm-missing");if(s(g,x)){r.push(qe(M,{"data-note":v}).range(g,x));continue}let S=u[1].indexOf("|"),y=S>=0?g+2+S+1:g+2;l(g,y),y<x-2&&r.push(qe(M,{"data-note":v,"data-open":"1"}).range(y,x-2)),l(x-2,x)}let m=t.highlight&&t.highlight();if(m)for(let u of p.matchAll(m))u[0]&&r.push(qe("cm-hit").range(h+u.index,h+u.index+u[0].length));for(let u of p.matchAll(/(^|[ \t])(#[\p{L}\p{N}_\/-]*[\p{L}_\/-][\p{L}\p{N}_\/-]*)/gmu)){let g=h+u.index+u[1].length;r.push(qe("cm-tag").range(g,g+u[2].length))}}return{all:B.set(r,!0),atomic:B.set(o,!0)}}function Rtt(a){return It.fromClass(class{constructor(t){this.compute(t)}update(t){(t.transactions.length||t.viewportChanged||t.focusChanged||F(t.startState)!==F(t.state))&&this.compute(t.view)}compute(t){let e=Ttt(t,a);this.decorations=e.all,this.atomic=e.atomic}},{decorations:t=>t.decorations,provide:t=>Q.atomicRanges.of(e=>e.plugin(t)?.atomic||B.none)})}function Vtt(a){return t=>{let e=t.matchBefore(/\[\[[^\[\]\n|]*/);if(!e)return null;let r=e.text.slice(2).trim(),o=t.state.sliceDoc(t.pos,t.pos+2)==="]]"?"":"]]",s=(h,f)=>(p,c,m,u)=>{p.dispatch({changes:{from:m,to:u,insert:h+o},selection:{anchor:m+h.length+2}}),f&&a.create(h)},i=a.names(),l=r.toLowerCase(),d=i.filter(h=>h.toLowerCase().includes(l)).sort((h,f)=>(f.toLowerCase().startsWith(l)?1:0)-(h.toLowerCase().startsWith(l)?1:0)).slice(0,30).map(h=>({label:h,apply:s(h)}));return r&&!i.some(h=>h.toLowerCase()===l)&&d.push({label:r,detail:"\uFF0B new note",apply:s(r,!0)}),d.length?{from:e.from+2,options:d,filter:!1}:null}}var Htt=or.define([]);async function CF(a,t,e,r){let o="";for(let l of t)try{o+="![["+await r.saveImage(l)+`]]
 `}catch(n){r.error&&r.error(n)}if(!o)return;e=Math.min(e,a.state.doc.length);let s=a.state.doc.lineAt(e),i=e>s.from?`
 `:"";a.dispatch({changes:{from:e,insert:i+o},selection:{anchor:e+i.length+o.length},scrollIntoView:!0}),a.focus()}function Btt(a,t,e){let r=i=>()=>(e.format(i),!0),o=new Q({parent:a,state:J.create({doc:t,extensions:[ox(),tu(),Q.lineWrapping,_5({base:pr,pasteURLAsLink:!1}),Tu(Htt),Rtt(e),$tt,Nu({override:[Vtt(e)],icons:!1}),Ue.of([{key:"Mod-b",run:r("b")},{key:"Mod-i",run:r("i")},{key:"Mod-Shift-x",run:r("s")},{key:"Mod-Alt-1",run:r("h1")},{key:"Mod-Alt-2",run:r("h2")},{key:"Mod-Alt-3",run:r("h3")},{key:"Mod-Alt-0",run:r("p")},{key:"Mod-Shift-8",run:r("ul")},{key:"Mod-Shift-7",run:r("ol")},{key:"Mod-Shift-9",run:r("task")},{key:"Mod-Shift-.",run:r("quote")},{key:"Mod-e",run:r("code")},{key:"Mod-Alt-t",run:r("table")},{key:"Mod-k",run:r("link")},{key:"Mod-Shift-k",run:r("wiki")},...Bx,...nx,Ex]),Q.updateListener.of(i=>{i.docChanged&&e.onChange(i.state.doc.toString())}),Q.domEventHandlers({paste(i,l){let n=i.clipboardData;if(!n)return!1;let d=[...n.files||[]].filter(u=>u.type.startsWith("image/")),h=n.getData("text/html"),f=h&&!/<(?!img|\/?(meta|html|body|head|span|div|p|br|!--)\b)[a-z]/i.test(h.replace(/<!--[\s\S]*?-->/g,""));if(d.length&&(!h||f))return i.preventDefault(),CF(l,d,l.state.selection.main.from,e),!0;let p=(n.getData("text/plain")||"").trim(),c=l.state.selection.main;if(/^https?:\/\/\S+$/.test(p)&&!c.empty){let u=l.state.sliceDoc(c.from,c.to);if(!u.includes(`
 `)&&!/^https?:\/\//.test(u)){i.preventDefault();let g="["+u.replace(/[\[\]]/g,"")+"]("+p+")",x=c.from+g.length;return l.dispatch({changes:{from:c.from,to:c.to,insert:g},selection:{anchor:x},userEvent:"input.paste"}),setTimeout(()=>{(l.state.selection.main.head!==x||!l.state.selection.main.empty)&&l.dispatch({selection:{anchor:Math.min(x,l.state.doc.length)}})},0),!0}}if(/^https?:\/\/\S+$/.test(p)&&e.onUrlPaste){let u=l.state.selection.main.from;return setTimeout(()=>e.onUrlPaste(p,u),0),h?(i.preventDefault(),l.dispatch(l.state.replaceSelection(p),{userEvent:"input.paste"}),!0):!1}if(l.__plainPaste)return l.__plainPaste=!1,!1;let m=h?PF(h):null;return m==null?!1:(i.preventDefault(),l.dispatch(l.state.replaceSelection(m),{scrollIntoView:!0,userEvent:"input.paste"}),!0)},keydown(i,l){return(i.ctrlKey||i.metaKey)&&i.shiftKey&&i.key.toLowerCase()==="v"&&(l.__plainPaste=!0,setTimeout(()=>{l.__plainPaste=!1},800)),!1},drop(i,l){let n=[...i.dataTransfer?.files||[]].filter(h=>h.type.startsWith("image/"));if(!n.length)return!1;i.preventDefault();let d=l.posAtCoords({x:i.clientX,y:i.clientY})??l.state.selection.main.from;return CF(l,n,d,e),!0},mousedown(i){let l=i.target.closest?.("[data-open]");return!l||i.button!==0?!1:(i.preventDefault(),l.dataset.note?e.openNote(l.dataset.note):l.dataset.url&&window.open(l.dataset.url,"_blank","noopener"),!0)}}),Q.contentAttributes.of({spellcheck:"true","aria-label":"Note text"})]})});return{view:o,adapter:{cm:o,get value(){return o.state.doc.toString()},get selectionStart(){return o.state.selection.main.from},get selectionEnd(){return o.state.selection.main.to},complete(){o.focus(),Jr(o)}}}}return HF(Ett);})();
@@ -6615,6 +6632,7 @@ function aibScan(doc){
 }
 // decorations drawn by the editor (called for the visible part of the note)
 window.qnAiDeco = (state, from, to, d) => {
+  try { colorDeco(state, from, to, d); } catch(e){}
   const doc = state.doc, hidden = aibHidden(S.editorPath);
   // B markers: always hide the %%ai{%% %%}%% tokens unless the cursor is on them
   const txt = doc.sliceString(from, to);
@@ -8840,6 +8858,8 @@ function renderEditor(){
            <button data-a="b" title="Bold (Ctrl+B)">${UI('bold')}</button>
            <button data-a="i" title="Italic (Ctrl+I)">${UI('italic')}</button>
            <button data-a="s" title="Strikethrough (Ctrl+Shift+X)">${UI('strikethrough')}</button>
+           <button data-a="fc" class="fcbtn" title="Text color">${UI('baseline')}</button>
+           <button data-a="bg" class="fcbtn" title="Highlight (background color)">${UI('highlighter')}</button>
            <span class="sep"></span>
            <button data-a="h1" title="Heading 1 (Ctrl+Alt+1)">${UI('heading-1')}</button>
            <button data-a="h2" title="Heading 2 (Ctrl+Alt+2)">${UI('heading-2')}</button>
@@ -8971,6 +8991,7 @@ function wireEditor(n){
       e.preventDefault();
       if (b.dataset.help) return showShortcuts();
       if (b.dataset.aitoggle) return aibToggle();
+      if (b.dataset.a === 'fc' || b.dataset.a === 'bg') return showColorPop(b, b.dataset.a);
       format(S.editor.adapter, b.dataset.a);
     });
     setTimeout(aibBtn, 0);
@@ -9049,6 +9070,190 @@ function prefixLines(ta, prefix, re){
     });
   });
 }
+/* ---------- v63: text color + highlight (stored as <span style="color:…">, <mark style="background:…">, yellow = ==text==) ---------- */
+const FC_COLORS = [['Red','#e03e3e'],['Orange','#d9730d'],['Yellow','#c99a00'],['Green','#2f9e44'],['Blue','#1c7ed6'],['Purple','#9c36b5'],['Pink','#d6336c'],['Gray','#868e96']];
+const BG_COLORS = [['Yellow','#ffd43b'],['Orange','#ffa94d'],['Red','#ff8787'],['Pink','#f783ac'],['Purple','#b197fc'],['Blue','#74c0fc'],['Green','#69db7c'],['Gray','#ced4da']];
+const BG_DEFAULT = '#ffd43b';
+const safeColor = c => /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d\s.,%]+\))$/i.test(String(c || '').trim());
+const fcShow = c => 'color:color-mix(in srgb, ' + c + ' 82%, var(--text))';
+const bgShow = c => 'background:color-mix(in srgb, ' + c + ' 42%, var(--bg));border-radius:3px';
+const RE_FC_OPEN = /<span style=["']color:\s*([^"'<>;]+?)\s*;?\s*["']>/gi;
+const RE_BG_OPEN = /<mark(?: style=["']background(?:-color)?:\s*([^"'<>;]+?)\s*;?\s*["'])?>/gi;
+const RE_EQ = /==(?=[^\s=])(.+?)(?<=[^\s=])==/g;
+// color pairs on one line: { kind, a (open start), ao (open end), c (close start), ce (close end), color }
+function colorPairs(t){
+  const out = [];
+  for (const m of t.matchAll(RE_FC_OPEN)){ const ao = m.index + m[0].length, c = t.indexOf('</span>', ao); if (c >= 0 && safeColor(m[1])) out.push({ kind:'fc', a:m.index, ao, c, ce:c + 7, color:m[1].trim().toLowerCase() }); }
+  for (const m of t.matchAll(RE_BG_OPEN)){ const ao = m.index + m[0].length, c = t.indexOf('</mark>', ao); if (c >= 0 && (!m[1] || safeColor(m[1]))) out.push({ kind:'bg', a:m.index, ao, c, ce:c + 7, color:(m[1] || BG_DEFAULT).trim().toLowerCase() }); }
+  for (const m of t.matchAll(RE_EQ)) out.push({ kind:'bg', a:m.index, ao:m.index + 2, c:m.index + m[0].length - 2, ce:m.index + m[0].length, color:BG_DEFAULT, eq:true });
+  // drop pairs whose tags overlap another pair's tags (e.g. "==" inside a tag)
+  out.sort((x, y) => x.a - y.a);
+  const tags = [], ok = [];
+  for (const r of out){
+    const hit = tags.some(([a, b]) => (r.a < b && r.ao > a) || (r.c < b && r.ce > a));
+    if (hit) continue;
+    ok.push(r); tags.push([r.a, r.ao], [r.c, r.ce]);
+  }
+  return ok;
+}
+function colorDeco(state, from, to, d){
+  const doc = state.doc;
+  for (let i = doc.lineAt(from).number, e = doc.lineAt(to).number; i <= e; i++){
+    const L = doc.line(i); if (L.text.indexOf('<') < 0 && L.text.indexOf('==') < 0) continue;
+    for (const r of colorPairs(L.text)){
+      const a = L.from + r.a, ao = L.from + r.ao, c = L.from + r.c, ce = L.from + r.ce;
+      d.mark(ao, c, r.kind === 'fc' ? 'cm-fc' : 'cm-bg', { style: r.kind === 'fc' ? fcShow(r.color) : bgShow(r.color) });
+      if (!d.sel(a, ce)){ d.hide(a, ao); d.hide(c, ce); }
+    }
+  }
+}
+// rewrite one line: chars s..e (positions in the line text) get kind = color (null = remove)
+function colorLine(t, s, e, kind, color){
+  const pairs = colorPairs(t), toks = [];
+  for (const r of pairs){ toks.push({ a:r.a, b:r.ao, kind:r.kind, color:r.color }); toks.push({ a:r.c, b:r.ce, kind:r.kind, close:true }); }
+  toks.sort((x, y) => x.a - y.a);
+  const chars = [], cur = { fc:null, bg:null };
+  for (let i = 0, k = 0; i < t.length;){
+    if (k < toks.length && toks[k].a === i){ const tk = toks[k++]; cur[tk.kind] = tk.close ? null : tk.color; i = tk.b; continue; }
+    chars.push({ ch:t[i], pos:i, fc:cur.fc, bg:cur.bg }); i++;
+  }
+  let first = -1, last = -1;
+  chars.forEach((c, j) => { if (c.pos >= s && c.pos < e){ c[kind] = color; if (first < 0) first = j; last = j; } });
+  let out = '', ns = 0, ne = 0;
+  for (let i = 0; i < chars.length;){
+    let j = i; const c = chars[i];
+    while (j < chars.length && chars[j].fc === c.fc && chars[j].bg === c.bg) j++;
+    const txt = chars.slice(i, j).map(x => x.ch).join(''), blank = !txt.trim();
+    const eq = c.bg === BG_DEFAULT && !/^\s|\s$/.test(txt) && !txt.includes('==') && !c.fc;
+    const o1 = blank || !c.bg ? '' : eq ? '==' : '<mark style="background:' + c.bg + '">';
+    const o2 = blank || !c.fc ? '' : '<span style="color:' + c.fc + '">';
+    out += o1 + o2;
+    for (let k = i; k < j; k++){ if (k === first) ns = out.length; out += chars[k].ch; if (k === last) ne = out.length; }
+    out += (o2 ? '</span>' : '') + (o1 ? (eq ? '==' : '</mark>') : '');
+    i = j;
+  }
+  return { text: out, ns, ne, any: first >= 0 };
+}
+function applyColor(view, kind, color){
+  if (!view) return;
+  const st = view.state, doc = st.doc;
+  let { from, to } = st.selection.main;
+  if (from === to){   // no selection: the colored run under the cursor, else the word
+    const L = doc.lineAt(from), p = from - L.from, r = colorPairs(L.text).find(x => x.kind === kind && p >= x.ao && p <= x.c);
+    if (r){ from = L.from + r.ao; to = L.from + r.c; }
+    else { const w = st.wordAt(from); if (w){ from = w.from; to = w.to; } }
+  }
+  if (from === to){
+    if (!color) return;
+    const ins = kind === 'fc' ? '<span style="color:' + color + '">text</span>' : color === BG_DEFAULT ? '==text==' : '<mark style="background:' + color + '">text</mark>';
+    const at = ins.indexOf('text');
+    view.dispatch({ changes:{ from, insert:ins }, selection:{ anchor:from + at, head:from + at + 4 } }); view.focus(); return;
+  }
+  const changes = []; let off = 0, selA = null, selB = null;
+  for (let ln = doc.lineAt(from).number, lastLn = doc.lineAt(to).number; ln <= lastLn; ln++){
+    const L = doc.line(ln), t = L.text;
+    let s = Math.max(from, L.from) - L.from, e = Math.min(to, L.to) - L.from;
+    const pre = t.match(/^\s*(?:(?:#{1,6} |> ?|[-*+] \[[ xX]\] |[-*+] |\d+[.)] ))*/)[0].length;
+    if (s < pre) s = pre;
+    while (s < e && /\s/.test(t[s])) s++;
+    while (e > s && /\s/.test(t[e - 1])) e--;
+    if (s >= e || /^\s*(```|\|?\s*:?-{2,})/.test(t)) continue;
+    const r = colorLine(t, s, e, kind, color || null);
+    if (!r.any || r.text === t){ if (r.any){ if (selA == null) selA = L.from + off + r.ns; selB = L.from + off + r.ne; } continue; }
+    changes.push({ from:L.from, to:L.to, insert:r.text });
+    if (selA == null) selA = L.from + off + r.ns;
+    selB = L.from + off + r.ne;
+    off += r.text.length - t.length;
+  }
+  if (!changes.length && selA == null) return;
+  view.dispatch({ changes, selection: selA != null ? { anchor:selA, head:selB } : undefined, userEvent:'input.format' });
+  view.focus();
+}
+let COLPOP = null;
+function showColorPop(btn, kind){
+  const pop = $('colPop'); if (!pop || !S.editor) return;
+  if (COLPOP && COLPOP.btn === btn && pop.style.display === 'block'){ hideColorPop(); return; }
+  const v = S.editor.view, st = v.state, h = st.selection.main.from, L = st.doc.lineAt(h);
+  const curR = colorPairs(L.text).find(x => x.kind === kind && h - L.from >= x.ao && h - L.from <= x.c);
+  const curC = curR ? curR.color : null;
+  const list = kind === 'fc' ? FC_COLORS : BG_COLORS;
+  pop.innerHTML = `<div class="cphead">${kind === 'fc' ? 'Text color' : 'Highlight'}</div><div class="cpgrid">` +
+    colorSwatches(kind, curC).replace('<div class="cpgrid">', '') + `<button class="cpnone" data-col="">${UI('eraser')} ${kind === 'fc' ? 'No color' : 'No highlight'}</button>`;
+  pop.style.display = 'block';
+  const r = btn.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+  pop.style.left = Math.max(4, Math.min(r.left, innerWidth - pr.width - 6)) + 'px';
+  pop.style.top = (r.bottom + 4) + 'px';
+  COLPOP = { btn, kind };
+  btn.classList.add('open');
+}
+function colorSwatches(kind, curC){
+  const list = kind === 'fc' ? FC_COLORS : BG_COLORS;
+  return `<div class="cpgrid">` + list.map(([n, c]) => `<button class="cpsw${curC === c ? ' on' : ''}" data-kind="${kind}" data-col="${c}" title="${n}" style="${kind === 'fc' ? fcShow(c) : bgShow(c)}">${kind === 'fc' ? 'A' : ''}</button>`).join('') + `</div>`;
+}
+// v63: right-click on selected text → all formatting in one menu (Shift+right-click = the browser's own menu)
+function showFmtMenu(x, y){
+  const pop = $('colPop'), v = S.editor && S.editor.view; if (!pop || !v) return;
+  const st = v.state, h = st.selection.main.from, L = st.doc.lineAt(h), p = h - L.from, pr = colorPairs(L.text);
+  const fcC = (pr.find(r => r.kind === 'fc' && p >= r.ao && p <= r.c) || {}).color, bgC = (pr.find(r => r.kind === 'bg' && p >= r.ao && p <= r.c) || {}).color;
+  const btn = (a, icon, t) => `<button class="cpic" data-fmt="${a}" title="${t}">${UI(icon)}</button>`;
+  const n = cur();
+  pop.innerHTML = `<div class="cprow">${btn('b','bold','Bold (Ctrl+B)')}${btn('i','italic','Italic (Ctrl+I)')}${btn('s','strikethrough','Strikethrough (Ctrl+Shift+X)')}${btn('code','code','Code (Ctrl+E)')}${btn('link','link','Web link (Ctrl+K)')}${btn('wiki','brackets','Link a note (Ctrl+Shift+K)')}</div>
+    <div class="cprow">${btn('h1','heading-1','Heading 1 (Ctrl+Alt+1)')}${btn('h2','heading-2','Heading 2 (Ctrl+Alt+2)')}${btn('h3','heading-3','Heading 3 (Ctrl+Alt+3)')}${btn('p','pilcrow','Normal text (Ctrl+Alt+0)')}${btn('ul','list','Bullet list (Ctrl+Shift+8)')}${btn('ol','list-ordered','Numbered list (Ctrl+Shift+7)')}${btn('task','square-check','Checkbox (Ctrl+Shift+9)')}${btn('quote','quote','Quote (Ctrl+Shift+.)')}</div>
+    <div class="cphead">Text color</div>${colorSwatches('fc', fcC)}<button class="cpnone" data-kind="fc" data-col="">${UI('eraser')} No color</button>
+    <div class="cphead">Highlight</div>${colorSwatches('bg', bgC)}<button class="cpnone" data-kind="bg" data-col="">${UI('eraser')} No highlight</button>
+    <div class="cpsep"></div>
+    <button class="cpnone" data-act="cut">${UI('scissors')} Cut</button><button class="cpnone" data-act="copy">${UI('copy')} Copy</button>${n && !n.locked ? `<button class="cpnone" data-act="ai">${UI('sparkles')} Ask AI about this…</button>` : ''}
+    <div class="cphint">Shift+right-click: browser menu (spelling, paste)</div>`;
+  pop.classList.add('menu'); pop.style.display = 'block';
+  const r = pop.getBoundingClientRect();
+  pop.style.left = Math.max(4, Math.min(x, innerWidth - r.width - 6)) + 'px';
+  pop.style.top = Math.max(4, Math.min(y, innerHeight - r.height - 6)) + 'px';
+  COLPOP = { btn:null, kind:null, menu:true };
+}
+async function fmtMenuAct(a){
+  const v = S.editor && S.editor.view; if (!v) return;
+  const r = v.state.selection.main, txt = v.state.sliceDoc(r.from, r.to);
+  if (a === 'ai') return selAiOpen();
+  try { await navigator.clipboard.writeText(txt); } catch(e){ toast('Could not use the clipboard: ' + e.message); return; }
+  if (a === 'cut') v.dispatch({ changes:{ from:r.from, to:r.to }, userEvent:'delete.cut' });
+  v.focus();
+}
+document.addEventListener('contextmenu', e => {
+  if (e.shiftKey || !S.editor || !e.target.closest('#ed .cm-content')) return;
+  const v = S.editor.view, r = v.state.selection.main; if (r.empty) return;
+  const pos = v.posAtCoords({ x:e.clientX, y:e.clientY });
+  if (pos == null || pos < r.from - 1 || pos > r.to + 1) return;   // right-click outside the selection: normal browser menu
+  e.preventDefault(); e.stopPropagation();
+  hideColorPop(); selAiHideBtn && selAiHideBtn();
+  showFmtMenu(e.clientX, e.clientY);
+}, true);
+function hideColorPop(){ const pop = $('colPop'); if (pop){ pop.style.display = 'none'; pop.classList.remove('menu'); } if (COLPOP && COLPOP.btn) COLPOP.btn.classList.remove('open'); COLPOP = null; }
+$('colPop').addEventListener('mousedown', e => {
+  e.preventDefault();   // keep the selection in the note
+  if (!COLPOP || !S.editor) return;
+  const f = e.target.closest('[data-fmt]'), act = e.target.closest('[data-act]'), b = e.target.closest('[data-col]');
+  if (f){ hideColorPop(); format(S.editor.adapter, f.dataset.fmt); S.editor.view.focus(); return; }
+  if (act){ hideColorPop(); return fmtMenuAct(act.dataset.act); }
+  if (!b) return;
+  const kind = b.dataset.kind || COLPOP.kind; hideColorPop();
+  applyColor(S.editor.view, kind, b.dataset.col || null);
+});
+document.addEventListener('mousedown', e => { if (COLPOP && !e.target.closest('#colPop') && !e.target.closest('.fcbtn')) hideColorPop(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && COLPOP) hideColorPop(); });
+$('scroll').addEventListener('scroll', () => { if (COLPOP) hideColorPop(); }, { passive:true });
+// print / PDF: keep the colors (white paper → highlight mixed with white)
+function printBg(c){
+  const m = /^#([0-9a-f]{6})$/i.exec(c); if (!m) return c;
+  const n = parseInt(m[1], 16), mix = x => Math.round(x * 0.5 + 255 * 0.5);
+  return '#' + [mix(n >> 16), mix((n >> 8) & 255), mix(n & 255)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function colorPrint(s, put){
+  if (s.indexOf('<') < 0) return s;
+  s = s.replace(RE_FC_OPEN, (m, c) => safeColor(c) ? put('<span style="color:' + c.trim() + '">') : m).replace(/<\/span>/g, () => put('</span>'));
+  s = s.replace(RE_BG_OPEN, (m, c) => !c ? put('<mark>') : safeColor(c) ? put('<mark style="background-color:' + printBg(c.trim()) + '">') : m).replace(/<\/mark>/g, () => put('</mark>'));
+  return s;
+}
+
 function format(ta, a){
   switch (a){
     case 'b': return wrap(ta, '**', 'bold text');
@@ -11579,6 +11784,7 @@ function mdInline(s, imgs){
   const keep = [];
   const put = h => '\u0000' + (keep.push(h) - 1) + '\u0000';
   s = s.replace(/`([^`]+)`/g, (m, c) => put('<code>' + esc(c) + '</code>'));
+  s = colorPrint(s, put);
   s = s.replace(/!\[\[([^\[\]]+)\]\]/g, (m, t) => { const tg = t.split('|')[0]; const w = (t.split('|')[1] || '').match(/^\d+/); if (!/\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(tg.trim())) return put('<em>' + esc(tg) + '</em>'); imgs.push(tg); return put(`<img data-src="${esc(tg)}"${w ? ` style="width:${w[0]}px"` : ''} alt="">`); });
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g, (m, a, u) => { imgs.push(u); return put(`<img data-src="${esc(u)}" alt="${esc(a)}">`); });
   s = s.replace(/\[\[([^\[\]]+)\]\]/g, (m, t) => { const [p, a] = t.split('|'); return put('<span class="wl">' + esc(a || p.split('#')[0].split('/').pop() || p) + '</span>'); });

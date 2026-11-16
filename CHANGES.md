@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v63-2026-11-15
+**Text color and highlight.** Two new buttons in the formatting bar, after strikethrough: **A** = text color, **marker** = highlight (background). Select text, pick one of 8 colors, or *No color* / *No highlight*.
+- **Right-click on selected text** opens all formatting in one menu: bold, italic, strikethrough, code, links, headings, lists, checkbox, quote, text colors, highlights, Cut, Copy and *Ask AI about this…*. **Shift+right-click** still gives the browser's menu (spelling, paste).
+- Colors adapt to light and dark mode and are kept in print and PDF.
+- Stored in the note as `<span style="color:…">` and `<mark style="background:…">`; plain yellow highlight is `==text==`. The tags hide while the cursor is elsewhere.
+
 ## v62-2026-11-15
 **Links moved up under the title.** The big *Linked from* / *Links to* block at the bottom of the note is gone. Instead, the grey line under the title now ends with two small counters: *Created … · Last edited … · ← 2 linked from · → 3 links to*.
 - Click a counter to see the list of notes; click a name to open it. Notes that don't exist yet are marked *new*.

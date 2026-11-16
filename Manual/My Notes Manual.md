@@ -87,6 +87,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
+| Color text or highlight it | Select it → **A** or the marker in the formatting bar, or right-click the selection → [Text color and highlight](#text-color-and-highlight) |
 | See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
 | Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
@@ -209,7 +210,7 @@ Under the note title: **Created …** and **Last edited …**.
 Saving is automatic. If a note was changed somewhere else (on your other PC, or in another editor), My Notes loads the newest version and never silently overwrites it. If you also had unsaved edits, they're kept in a separate note called *"… (my version)"*.
 
 ### Formatting
-The formatting bar above the text has bold, italic, strikethrough, headings, normal text, bullet and numbered lists, checkboxes, quote, code, table, web link and note link. The text is Markdown underneath, so you can also type it directly (`**bold**`, `# Heading`, `- list`, `- [ ] task`).
+The formatting bar above the text has bold, italic, strikethrough, text color, highlight, headings, normal text, bullet and numbered lists, checkboxes, quote, code, table, web link and note link. The text is Markdown underneath, so you can also type it directly (`**bold**`, `# Heading`, `- list`, `- [ ] task`).
 
 | Shortcut | Does |
 | --- | --- |
@@ -224,6 +225,13 @@ The formatting bar above the text has bold, italic, strikethrough, headings, nor
 | Ctrl+Shift+V | Paste as plain text |
 
 Copied text with formatting (from Claude, a web page, Google Docs…) is turned into Markdown when you paste it: headings, bold, lists, links and **tables** come out as normal Markdown. The first row of a pasted table becomes its header row.
+
+### Text color and highlight
+Two buttons in the formatting bar, right after strikethrough: **A** (text color) and the **marker** (highlight / background color). Select some text, click a button and pick one of 8 colors — or **No color** / **No highlight** to take it off. With nothing selected, the word under the cursor (or the colored part you're in) gets the color.
+
+**Right-click on selected text** opens one menu with all the formatting: bold, italic, strikethrough, code, links, headings, lists, checkbox, quote, the text colors and highlights, plus Cut, Copy and *Ask AI about this…*. Hold **Shift** while right-clicking to get the browser's own menu (spelling suggestions, paste).
+
+Colors adapt to light and dark mode, and they're kept when you print or save as PDF. In the file they are stored as a little HTML: `<span style="color:#e03e3e">text</span>` for text color and `<mark style="background:#74c0fc">text</mark>` for a highlight; plain yellow highlight is the short Markdown form `==text==`. Click into colored text to see (and edit) these tags; they hide again when the cursor leaves.
 
 ### Linking notes
 - Type **`[[`** and pick a note from the list, e.g. `[[Website relaunch plan]]`. Or press **Ctrl+Shift+K**.
