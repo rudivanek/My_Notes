@@ -4,6 +4,17 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v64-2026-11-18
+**⭐ Key, ⏳ Temp and Archive — keep important notes in front and scratch notes out of the way.**
+- **Keep label** for every note: ⭐ Key (important, used often), none (normal) or ⏳ Temp (scratch). Set it with the new **Keep** buttons next to Importance, by right-click, or with Find notes. Saved in the note as `keep: key / temp / normal`.
+- **Folder labels:** right-click a folder → Mark as Key / Temp; every note inside follows (also new ones). A note's own label wins. Folder labels sync with the other settings.
+- **⭐ Key section** at the top of the sidebar with your Key folders and notes. Temp notes look faded.
+- **Sidebar filter:** ⭐ Key · All · No temp · Archive (hide/show the archive folder).
+- **Archive / Restore** (right-click a note or folder): moves it into ARCHIVE keeping its path, and back. Never automatic.
+- **Cleanup** button **⏳ N** (bottom left): temp notes older than 14 days (Keep / Make normal / Archive / Delete, or all at once) and Key notes unused for 3 months (Stay key / Make normal). **Undo last**.
+- **Ctrl+Alt+T** — new ⏳ Temp note in INBOX.
+- **Find notes** understands the labels (*key notes about CopyZap*, *temp notes older than a month*) and can *mark them as key / temp*, *archive them*, *restore them*.
+
 ## v63-2026-11-15
 **Text color and highlight.** Two new buttons in the formatting bar, after strikethrough: **A** = text color, **marker** = highlight (background). Select text, pick one of 8 colors, or *No color* / *No highlight*.
 - **Right-click on selected text** opens all formatting in one menu: bold, italic, strikethrough, code, links, headings, lists, checkbox, quote, text colors, highlights, Cut, Copy and *Ask AI about this…*. **Shift+right-click** still gives the browser's menu (spelling, paste).

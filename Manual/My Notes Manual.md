@@ -89,6 +89,10 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
 | Color text or highlight it | Select it → **A** or the marker in the formatting bar, or right-click the selection → [Text color and highlight](#text-color-and-highlight) |
 | See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
+| Mark a note or folder as important or temporary | **Keep** buttons in the note, or right-click → **Mark as Key / Temp** → [Key, Temp and Archive](#key-temp-and-archive) |
+| Archive a note or folder (and get it back) | right-click → **Archive** / **Restore** |
+| Clean up old temp notes | **⏳** at the bottom left |
+| Make a quick scratch note | **Ctrl+Alt+T** |
 | Let AI suggest a tidier folder structure (and undo it) | **Organize** at the bottom left → [Organize vault](#organize-vault-ai-suggests-you-decide) |
 | Keep a note at the top | **Pin** button next to the note title (or **⋯** → Pin) |
 | Protect a password or private note | **Lock** button next to the note title (or **⋯** → Lock note…) |
@@ -267,6 +271,28 @@ When the sidebar feels too narrow for a big cleanup, click **org** above the not
 - **Undo:** every move and rename happens right away; the bar at the bottom says what happened and offers **Undo** (also **Ctrl+Z**). Deletions are undone from the Trash instead.
 - **Filter names…** at the top shows only matching notes and folders (with the folders they're in).
 - **Keyboard:** ↑/↓ move, → / ← open or close a folder, Space ticks, Enter opens a note (and leaves the page), **Esc** clears the selection, then closes the page.
+
+### Key, Temp and Archive
+Some notes matter every day, some are scratch. Give them a **Keep** label:
+- **⭐ Key** — important, used often. Key notes and Key folders are listed under **⭐ Key** at the top of the sidebar.
+- **— (none)** — a normal note. Most notes stay like this.
+- **⏳ Temp** — copy-paste, scratch, one-time notes. They look faded in the sidebar.
+
+**Where to set it:** the **Keep** buttons next to Importance in every note · right-click a note → **Mark as Key / Mark as Temp** · **Find notes** (*mark them as key*).
+
+**Folders can carry a label too** — right-click a folder → **Mark as Key** or **Mark as Temp**. Every note inside follows it, including new ones that arrive later (handy for folders your Claude projects write into). The closest labeled folder wins, and a note's own label wins over its folder (choosing **—** inside a labeled folder saves `keep: normal`). In the note the Keep buttons say *from folder …* when the label comes from the folder. A note's own label is saved as the property `keep: key / temp / normal`; folder labels are kept in the app's settings and sync to your other PCs.
+
+**Sidebar filter** (under High / Med / Low): **⭐ Key** shows only key notes · **All** · **No temp** leaves temp notes out · **Archive** hides or shows the archive folder (crossed out = hidden).
+
+**New temp note:** **Ctrl+Alt+T** — an empty note already marked ⏳ Temp, in your INBOX folder (or the vault root if there is none). (Ctrl+Alt+N still makes a normal note.)
+
+**Archive:** right-click a note or folder → **Archive**. It moves into your archive folder (**ARCHIVE**, or an existing folder called Archive/Archiv/Archivo) **keeping its path** — e.g. `PROJECTS/ELENA/old idea` becomes `ARCHIVE/PROJECTS/ELENA/old idea`. Nothing is deleted: you can still open, search and edit it. Right-click → **Restore** puts it back where it was. Nothing is ever archived by itself.
+
+**Cleanup** — the **⏳** button at the bottom left shows how many notes wait for a look (e.g. **⏳ 12**). It lists:
+- **Temp notes older than 14 days** — per note: **Keep** (hide from the list for 30 days) · **Make normal** · **Archive** · **Delete** (to the Trash); or **Archive all / Keep all**.
+- **Still key?** — Key notes and Key folders you haven't opened or changed for 3 months: **Stay key** or **Make normal**.
+
+Each button does one thing at once; **Undo last** takes back the latest archive or label change.
 
 ### Organize vault (AI suggests, you decide)
 When the whole vault needs a cleanup — several inboxes, duplicate folders, old projects lying around — click **Organize** at the bottom left of the sidebar (next to **Tidy up**), or the command palette: *Organize vault*.

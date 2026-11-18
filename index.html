@@ -154,6 +154,19 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .fntab a{color:var(--text);cursor:pointer;text-decoration:none;font-weight:500}.fntab a:hover{color:var(--accent);text-decoration:underline}
 .fnd{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}.fnn{white-space:nowrap}.fnn .dot{margin-right:6px}.fnm{color:var(--muted);font-size:12.5px;max-width:380px}.fns{max-width:420px}
 .fntag{font-size:12px;color:var(--muted)}.fnmore{margin:8px 10px}
+.segk button{font-size:12px;white-space:nowrap}.segk .karch{display:inline-flex;align-items:center;gap:3px}.segk .karch .uic{width:13px;height:13px;margin:0}.segk .karch.hid span{text-decoration:line-through}
+.item.ktemp .nm{opacity:.5}.item.ktemp .ico,.item.ktemp .dot{opacity:.45}
+.kmark{font-size:10px;margin-left:4px;opacity:.85;flex:none}
+.key-sect{color:var(--text)}
+.keepseg button{font-size:12px}.keephint{font-size:11.5px;color:var(--muted);margin-left:6px;font-style:italic}
+#kcBtn{display:inline-flex;align-items:center;gap:3px}#kcBtn .uic{width:14px;height:14px;margin:0}#kcBtn .kcn{font-size:11.5px;font-weight:600}#kcBtn.has{color:var(--accent)}
+#kcPage{position:absolute;inset:0;z-index:41;display:none;flex-direction:column;background:var(--bg);padding:18px 26px 12px;gap:10px}
+.kclist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.kcsect{display:flex;align-items:center;gap:8px;font-weight:600;margin:12px 0 4px}.kcsect .uic{width:14px;height:14px;margin:0 4px 0 0}.kcsect .sp{flex:1}
+.kcrow{display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(100px,1fr) 110px auto;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:7px;font-size:13px}
+.kcrow a{cursor:pointer;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kcrow a:hover{color:var(--accent);text-decoration:underline}
+.kcrow .uic{width:13px;height:13px;margin:0}.kcbtns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.kcbtns .ghost{padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+.kcbtns .kcdel:hover{color:#c2410c}.kcage{white-space:nowrap}.kcnone{padding:6px 10px}
 .orghint{color:var(--muted);font-size:11.5px}
 .orgghost{position:fixed;top:-100px;left:-100px;padding:4px 10px;background:var(--accent);color:#fff;border-radius:6px;font-size:12.5px;font-weight:600}
 .stgrid{display:grid;grid-template-columns:minmax(90px,max-content) 1fr;gap:6px 10px;align-items:center;margin-top:10px}
@@ -845,7 +858,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v63-2026-11-15</span>
+      <span class="appver" id="appVer" title="My Notes version">v64-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -854,6 +867,9 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
         <button data-v="high">High</button>
         <button data-v="medium">Med</button>
         <button data-v="low">Low</button>
+      </div>
+      <div class="seg segk" id="keepFilter" title="⭐ Key = important notes · Hide temp = leave out scratch notes · Archive = show or hide the archive folder">
+        <button data-k="key" title="Only ⭐ Key notes">⭐ Key</button><button data-k="" class="on" title="All notes">All</button><button data-k="notemp" title="Leave out ⏳ Temp notes">No temp</button><button data-k="arch" class="karch" title="Hide / show the archive folder"></button>
       </div>
       <div class="seg segd" id="dateFilter" title="Show only notes edited in this time">
         <button data-d="" class="on">Any time</button><button data-d="today">Today</button><button data-d="week">7 days</button><button data-d="month">30 days</button>
@@ -873,6 +889,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button id="trashBtn" title="Trash — restore deleted notes or delete them permanently">Trash</button>
       <button id="tidyBtn" title="Go through notes that are missing tags or importance, with AI suggestions">✨ Tidy up</button>
       <button id="fnBtn" title="Find notes — ask in your own words; refine or change the results with words (Ctrl+Shift+F)">Find</button>
+      <button id="kcBtn" title="Cleanup"><span class="kcn"></span></button>
       <button id="vorgBtn" title="Organize vault — AI suggests a tidier folder structure; you tick what to do; one button undoes it">Organize</button>
       <input type="file" id="fileIn" accept=".md,text/markdown" multiple hidden>
     </div>
@@ -7523,7 +7540,8 @@ $('aiBtn').onclick = () => { const n = cur(); if (!n) return; if (S.ai && S.ai.p
 $('tidyBtn').onclick = () => { if (!S.root && !S.demo) return toast('Open your vault first'); aiTidy(null); };
 $('vorgBtn').onclick = () => vorgOpen();
 $('fnBtn').onclick = () => fnOpen();
-['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); } }, true));
+$('kcBtn').onclick = () => kcOpen(); $('kcBtn').insertAdjacentHTML('afterbegin', UI('hourglass'));
+['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); if (kcIsOpen()) kcClose(); } }, true));
 $('scroll').addEventListener('click', async e => {
   if (e.target.closest('[data-aihint]')){ e.preventDefault(); return aiOpen(cur()); }
   const box = e.target.closest('#aip'); if (!box) return;
@@ -8517,8 +8535,8 @@ html,body{height:auto!important;overflow:visible!important;background:#fff!impor
 
 /* ---------- filtering & sorting ---------- */
 function visible(){
-  const q = S.q.toLowerCase();
-  return [...S.notes.values()].filter(n => !n.external && dateOk(n) &&
+  const q = S.q.toLowerCase(), fk = folderKeeps();
+  return [...S.notes.values()].filter(n => !n.external && dateOk(n) && keepOk(n, fk) &&
     (!S.imp || n.importance === S.imp) &&
     (!S.tag || allTags(n).includes(S.tag)) &&
     (!S.srch || searchNote(n, S.srch) !== null));
@@ -8707,13 +8725,17 @@ function renderSidebar(){
   }
   document.querySelectorAll('#impFilter button').forEach(b => b.classList.toggle('on', b.dataset.v === S.imp));
   document.querySelectorAll('#dateFilter button').forEach(b => b.classList.toggle('on', b.dataset.d === (S.dateF || '')));
+  document.querySelectorAll('#keepFilter button').forEach(b => b.classList.toggle('on', b.dataset.k === 'arch' ? S.hideArch : b.dataset.k === S.keepF));
+  { const ab = document.querySelector('#keepFilter .karch'); if (ab && !ab.dataset.i){ ab.dataset.i = 1; ab.innerHTML = UI('archive') + '<span>Archive</span>'; } if (ab){ ab.title = S.hideArch ? 'Archive hidden — click to show it' : 'Click to hide the archive folder'; ab.classList.toggle('hid', S.hideArch); } }
+  setTimeout(kcBadge, 0);
   $('searchClear').style.display = S.q ? 'block' : 'none';
   { const sv = $('searchSave'), on = !!(S.q && savedSearches().some(x => x.q === S.q.trim())); sv.style.display = S.q && S.q.trim() ? 'block' : 'none'; sv.textContent = on ? '★' : '☆'; sv.title = on ? 'Remove from saved searches' : 'Save this search'; sv.classList.toggle('on', on); }
   if (S.srch){ renderSearchResults(); return; }
   const list = sorted(visible()), inVault = [...S.notes.values()].filter(n => !n.external).length;
   $('count').textContent = list.length === inVault ? list.length + ' notes' : list.length + ' of ' + inVault;
   if (!S.demo) $('vaultInfo').textContent = inVault + ' notes · connected';
-  const filtering = !!(S.q || S.imp || S.tag || S.dateF);
+  const filtering = !!(S.q || S.imp || S.tag || S.dateF || S.keepF);
+  const fkm = folderKeeps(), arch = archiveRoot();
   const fs = folderSorts();
   const pinBtn = (kind, path, on, inPinned) => `<button class="rpin${on ? ' on' : ''}${inPinned ? ' hov' : ''}" data-pin="${kind}" data-pp="${esc(path)}" title="${on ? 'Unpin' : 'Pin to top of sidebar'}">${on ? UI('pin') : ''}</button>`;   // v23: the pin icon of unpinned rows is added on hover
   const item = (n, depth, pinRow, show) => {
@@ -8721,8 +8743,9 @@ function renderSidebar(){
     const tg = mode === 'opened' || mode === 'recent' || mode === 'oldest'
       ? `<span class="tg dt">${relDate(mode === 'opened' ? (openedOf(n.path) || n.mtime) : n.mtime)}</span>`
       : pinRow && n.folder ? `<span class="tg">${esc(n.folder.split('/').pop())}</span>` : `<span class="tg">${n.tags.slice(0, 2).map(t => '#' + esc(t)).join(' ')}</span>`;
-    return `<div class="item ${n.path === S.current ? 'sel' : ''}" draggable="true" data-p="${esc(n.path)}" style="padding-left:${8 + depth * 16}px">
-        ${noteDot(n)}${iconHtml(n.path, isMap(n) ? MAP_ICON : null)}<span class="nm"${nameColor(n.path)}>${esc(n.name)}</span>
+    const kp = keepOf(n, fkm), kraw = noteKeepRaw(n);
+    return `<div class="item ${n.path === S.current ? 'sel' : ''}${kp === 'temp' ? ' ktemp' : ''}" draggable="true" data-p="${esc(n.path)}" style="padding-left:${8 + depth * 16}px">
+        ${noteDot(n)}${iconHtml(n.path, isMap(n) ? MAP_ICON : null)}<span class="nm"${nameColor(n.path)}>${esc(n.name)}</span>${kraw === 'key' ? '<span class="kmark" title="⭐ Key">⭐</span>' : kraw === 'temp' ? '<span class="kmark" title="⏳ Temp">⏳</span>' : ''}
         ${tg}
         ${pinBtn('n', n.path, isPinnedAny('n', n.path), pinRow)}</div>`; };
   let html = savedSearchHtml();
@@ -8747,6 +8770,16 @@ function renderSidebar(){
     const rows = pinRows.map((h, i) => ({ h, k: keyOf(h), i }));
     rows.sort((a, b) => { const x = ord.indexOf(a.k), y = ord.indexOf(b.k); return (x < 0 ? 1e6 + a.i : x) - (y < 0 ? 1e6 + b.i : y); });
     html += `<div class="sect pinned-sect" title="Drag pinned items to change their order">${UI('pin')}Pinned</div>` + rows.map(r => r.h.replace('<div class="item', '<div data-pk="' + r.k + '" draggable="true" class="item pinrow')).join('');
+  }
+  if (!S.srch){   // v64: ⭐ Key — key folders and key notes, always one click away
+    const allF = allFolders(), kf = Object.keys(fkm).filter(f => fkm[f] === 'key' && allF.includes(f)).sort((a, b) => NCOLL.compare(a, b));
+    const kn = [...S.notes.values()].filter(n => !n.external && noteKeepRaw(n) === 'key' && !(S.hideArch && inArchive(n.folder))).sort((a, b) => NCOLL.compare(a.name, b.name));
+    if (kf.length || kn.length){
+      const cnt = f => { let c = 0; for (const n of S.notes.values()) if (!n.external && (n.folder === f || n.folder.startsWith(f + '/'))) c++; return c; };
+      html += `<div class="sect key-sect" title="Folders and notes marked ⭐ Key (right-click → Mark as Key)">⭐ Key</div>` +
+        kf.map(f => `<div class="item fpin" data-fpin="${esc(f)}" title="${esc(f)} — click to show it">${iconHtml(f, DEF_FOLDER, 'fic')}<span class="nm"${nameColor(f)}>${esc(f.split('/').pop())}</span><span class="tg">${cnt(f)}</span></div>`).join('') +
+        kn.map(n => item(n, 0, true)).join('');
+    }
   }
   if (!filtering && !S.srch && localStorage.getItem('qn-showrecent') !== '0'){
     const rec = [...S.notes.values()].filter(n => !n.external && openedOf(n.path)).sort((a, b) => openedOf(b.path) - openedOf(a.path)).slice(0, 7);
@@ -8781,11 +8814,12 @@ function renderSidebar(){
   const tree = (parent, depth, only) => {
     let h = '';
     for (const f of (only ? [only] : kids(parent))){
+      if (S.hideArch && (f === arch || f.startsWith(arch + '/')) && f !== only) continue;
       const c = countIn(f);
       if (filtering && !c) continue;
       const hasBase = fbase.has(f);
       const open = filtering || !S.collapsed.has(f);
-      h += `<div class="frow" draggable="true" data-f="${esc(f)}" style="padding-left:${4 + depth * 16}px"><span class="car">${UI(open ? 'chevron-down' : 'chevron-right')}</span>${iconHtml(f, DEF_FOLDER, 'fic')}<span class="fn"${nameColor(f)}>${esc(f.split('/').pop())}</span>${fs[f] ? `<span class="fsort" title="Notes here sorted by: ${esc(SORTS[fs[f]] || fs[f])}">${UI('arrow-up-down')}</span>` : ''}<span class="fc">${c || (hasBase ? '▦' : '')}</span>${pinBtn('f', f, isPinnedAny('f', f), false)}<button class="fadd" data-newin="${esc(f)}" title="New note in this folder">${UI('plus')}</button></div>`;
+      h += `<div class="frow" draggable="true" data-f="${esc(f)}" style="padding-left:${4 + depth * 16}px"><span class="car">${UI(open ? 'chevron-down' : 'chevron-right')}</span>${iconHtml(f, DEF_FOLDER, 'fic')}<span class="fn"${nameColor(f)}>${esc(f.split('/').pop())}</span>${fkm[f] === 'key' ? '<span class="kmark" title="⭐ Key folder — notes inside count as Key">⭐</span>' : fkm[f] === 'temp' ? '<span class="kmark" title="⏳ Temp folder — notes inside count as Temp">⏳</span>' : ''}${fs[f] ? `<span class="fsort" title="Notes here sorted by: ${esc(SORTS[fs[f]] || fs[f])}">${UI('arrow-up-down')}</span>` : ''}<span class="fc">${c || (hasBase ? '▦' : '')}</span>${pinBtn('f', f, isPinnedAny('f', f), false)}<button class="fadd" data-newin="${esc(f)}" title="New note in this folder">${UI('plus')}</button></div>`;
       if (open) h += tree(f, depth + 1);
     }
     if (only) return h;
@@ -8843,6 +8877,7 @@ function renderEditor(){
       <div><label>Importance</label><span class="imp" id="imp">
         ${['high','medium','low'].map(v => `<button data-v="${v}" class="${n.importance === v ? 'on' : ''}"><span class="dot ${v}"></span>${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}
       </span></div>
+      ${n.external ? '' : `<div><label>Keep</label><span class="imp keepseg" id="keepSeg">${[['key', '⭐ Key'], ['', '—'], ['temp', '⏳ Temp']].map(([v, l]) => `<button data-k="${v}" class="${keepOf(n) === v ? 'on' : ''}" title="${v === 'key' ? 'Important — shows under ⭐ Key at the top of the sidebar' : v === 'temp' ? 'Scratch — faded in the sidebar, offered for cleanup after ' + KEEP_TEMP_DAYS + ' days' : 'Normal note'}">${l}</button>`).join('')}</span>${(() => { const f = folderKeepOf(n.folder); return f && !noteKeepRaw(n) ? `<span class="keephint">from folder ${esc(f.from.split('/').pop())}</span>` : ''; })()}</div>`}
       <div><label>Folder</label><select class="fsel" id="folderSel">${folderOptions(n.folder)}</select></div>
       <div><label>Tags</label><span class="tags" id="tags">
         ${n.tags.map(t => `<span class="chip">#${esc(t)}<button data-t="${esc(t)}" title="Remove">×</button></span>`).join('')}
@@ -8926,6 +8961,14 @@ function wireEditor(n){
   });
   $('folderSel').addEventListener('change', e => moveNote(n, e.target.value).catch(err => toast('Move failed: ' + err.message)));
   wireProps(n);
+  if ($('keepSeg')) $('keepSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (n.locked) return toast('Unlock the note first');
+    setNoteKeep(n, b.dataset.k); queueSave(n, true);
+    document.querySelectorAll('#keepSeg button').forEach(x => x.classList.toggle('on', x.dataset.k === keepOf(n)));
+    const h = $('keepSeg').parentElement.querySelector('.keephint'); if (h) h.remove();
+    renderSidebar();
+  });
   $('imp').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     n.importance = n.importance === b.dataset.v ? '' : b.dataset.v;
@@ -9527,7 +9570,7 @@ function remapSettingPaths(oldP, newP){
     return x; };
   const deep = v => Array.isArray(v) ? v.map(deep) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [mp(k), deep(x)])) : mp(v);
   const vault = S.root ? S.root.name : '';
-  for (const k of ['qn-foldersort', 'qn-pinorder', 'qn-attach', 'qn-savedsearch'].map(x => x + ':' + vault).concat(['qn-recent', 'qn-clip-folder'])){
+  for (const k of ['qn-foldersort', 'qn-folderkeep', 'qn-pinorder', 'qn-attach', 'qn-savedsearch'].map(x => x + ':' + vault).concat(['qn-recent', 'qn-clip-folder'])){
     let raw; try { raw = localStorage.getItem(k); } catch(e){ continue; } if (raw == null) continue;
     let val, isJson = true; try { val = JSON.parse(raw); } catch(e){ isJson = false; val = raw; }
     const nv = deep(val), out = isJson ? JSON.stringify(nv) : nv; if (out !== raw) try { localStorage.setItem(k, out); } catch(e){}
@@ -9667,6 +9710,9 @@ function noteMenuAll(n){
     { icon:'✎', label:'Rename…', hint:'', run: guard(async () => { const v = await askName('Rename note', n.name, 'Rename'); if (v && await renameNote(n, v)) renderAll(); }) },
     { icon:'📌', label: isPinnedAny('n', n.path) ? 'Unpin' : 'Pin', run: () => togglePin('n', n.path) },
     { imp: n },
+    ...(!n.external && !n.locked ? [keepOf(n) === 'key' ? { icon:'—', label:'Remove ⭐ Key', run: async () => { setNoteKeep(n, ''); await writeNote(n); renderAll(); } } : { icon:'⭐', label:'Mark as Key', run: async () => { setNoteKeep(n, 'key'); await writeNote(n); renderAll(); } },
+      keepOf(n) === 'temp' ? { icon:'—', label:'Remove ⏳ Temp', run: async () => { setNoteKeep(n, ''); await writeNote(n); renderAll(); } } : { icon:'⏳', label:'Mark as Temp', run: async () => { setNoteKeep(n, 'temp'); await writeNote(n); renderAll(); } }] : []),
+    ...(!n.external ? [inArchive(n.folder) ? { icon:'↩', label:'Restore', hint:'to ' + (n.folder === archiveRoot() ? 'vault root' : n.folder.slice(archiveRoot().length + 1)), run: guard(() => restoreNote(n)) } : { icon:'📦', label:'Archive', hint:'→ ' + archiveRoot(), run: guard(() => archiveNote(n)) }] : []),
     { icon:'🎨', label:'Change icon…', run: () => changeIcon(n.path, n.name) },
     { icon:'📁', label:'Move to folder…', run: guard(async () => { const v = await ask('Move “' + n.name + '” to', `<select name="folder">${folderOptions(n.folder)}</select>`, 'Move'); if (v) await moveNote(n, v.folder); }) },
     { icon:'⧉', label:'Duplicate', run: guard(async () => { const c = await createNote(n.name + ' copy', serialize(n), n.folder); openPath(c.path); }) },
@@ -9705,6 +9751,9 @@ function folderMenu(f){
   return [
     { head: f },
     localStorage.getItem('qn-focusf') === f ? { icon:'⤢', label:'Show all folders again', run: () => focusFolder('') } : { icon:'⌖', label:'Show only this folder', hint:'in the sidebar', run: () => focusFolder(f) },
+    folderKeeps()[f] === 'key' ? { icon:'—', label:'Remove ⭐ Key', run: () => { setFolderKeep(f, ''); renderAll(); } } : { icon:'⭐', label:'Mark as Key', hint:'notes inside follow', run: () => { setFolderKeep(f, 'key'); renderAll(); } },
+    folderKeeps()[f] === 'temp' ? { icon:'—', label:'Remove ⏳ Temp', run: () => { setFolderKeep(f, ''); renderAll(); } } : { icon:'⏳', label:'Mark as Temp', hint:'notes inside follow', run: () => { setFolderKeep(f, 'temp'); renderAll(); } },
+    ...(inArchive(f) ? (f !== archiveRoot() ? [{ icon:'↩', label:'Restore', hint:'to ' + f.slice(archiveRoot().length + 1), run: guard(() => restoreFolder(f)) }] : []) : [{ icon:'📦', label:'Archive', hint:'→ ' + archiveRoot(), run: guard(() => archiveFolder(f)) }]),
     { icon:'＋', label:'New note here', run: guard(async () => { const n = await createNote('Untitled', '', f); S.collapsed.delete(f); saveCollapsed(); openPath(n.path); const t = $('title'); if (t){ t.focus(); t.select(); } }) },
     { icon:'📁', label:'New folder inside…', run: guard(async () => { const v = await askName('New folder inside “' + f.split('/').pop() + '”', '', 'Create'); if (v){ const fp = await createFolder(v, f); if (fp){ renderSidebar(); toast('Folder created'); } } }) },
     { icon:'✎', label:'Rename folder…', run: guard(async () => { const v = await askName('Rename folder', f.split('/').pop(), 'Rename'); if (v) await renameFolder(f, v); }) },
@@ -10762,6 +10811,8 @@ const FN_EXAMPLES = [
     ['notes with copyzap or pimpmycopy, but not in ARCHIVE', 'either word · leave a folder out'],
     ['notes tagged #ai in PROJECTS', 'tag + folder'],
     ['high importance notes about pricing', 'importance + a word'],
+    ['key notes about CopyZap', '⭐ Key label + a word'],
+    ['temp notes older than a month', '⏳ Temp label + a date'],
     ['notes whose title has invoice', 'only the title']]],
   ['Dates & order', 'calendar', [
     ['all notes ascending by date', 'oldest first'],
@@ -10774,7 +10825,8 @@ const FN_EXAMPLES = [
   ['Refine the results (after a search)', 'list-filter', [
     ['only from October', ''], ['without ARCHIVE', ''], ['newest first', ''], ['add a summary column', '']]],
   ['Change the found notes (after a search)', 'pencil', [
-    ['add tag #elena', ''], ['remove tag #todo', ''], ['move them to ARCHIVE', ''], ['set importance high', ''],
+    ['mark them as key', ''], ['mark them as temp', ''], ['archive them', ''], ['restore them', ''],
+    ['add tag #elena', ''], ['remove tag #todo', ''], ['move them to INBOX', ''], ['set importance high', ''],
     ["replace 'must do' with 'done'", ''], ["add the line 'Reviewed 2026-11' at the end", ''], ['set property status to done', '']]]
 ];
 const FN_COLS = { date:'Edited', name:'Note', folder:'Folder', match:'Where it matched', tags:'Tags', importance:'Importance', summary:'Summary' };
@@ -10804,6 +10856,7 @@ function fnExplain(sp){
   if (sp.tags_any && sp.tags_any.length) P.push('tagged ' + sp.tags_any.map(t => '#' + t).join(' or '));
   if (sp.tags_none && sp.tags_none.length) P.push('not tagged ' + sp.tags_none.map(t => '#' + t).join(', '));
   if (sp.importance && sp.importance.length) P.push('importance ' + sp.importance.join(' or '));
+  if (sp.labels && sp.labels.length) P.push('label ' + sp.labels.map(l => ({ key:'⭐ Key', temp:'⏳ Temp', none:'normal' })[l] || l).join(' or '));
   if (sp.edited_after) P.push('edited from ' + sp.edited_after);
   if (sp.edited_before) P.push('edited before ' + sp.edited_before);
   if (!P.length) P.push('all notes');
@@ -10828,13 +10881,15 @@ const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request tu
     title_only:{ type:'boolean' }, folders:{ type:'array', items:{ type:'string' } }, not_folders:{ type:'array', items:{ type:'string' } },
     tags_all:{ type:'array', items:{ type:'string' } }, tags_any:{ type:'array', items:{ type:'string' } }, tags_none:{ type:'array', items:{ type:'string' } },
     importance:{ type:'array', items:{ type:'string', enum:['high', 'medium', 'low', 'none'] } },
+    labels:{ type:'array', items:{ type:'string', enum:['key', 'temp', 'none'] }, description:'the note\'s Keep label: key (⭐ important), temp (⏳ scratch), none (normal)' },
     edited_after:{ type:'string', description:'YYYY-MM-DD' }, edited_before:{ type:'string', description:'YYYY-MM-DD (exclusive)' },
     sort:{ type:'object', properties:{ by:{ type:'string', enum:['edited', 'name', 'folder', 'opened'] }, dir:{ type:'string', enum:['asc', 'desc'] } } },
     limit:{ type:'integer' }, summaries:{ type:'boolean' },
     columns:{ type:'array', items:{ type:'string', enum:['date', 'name', 'folder', 'match', 'tags', 'importance', 'summary'] } } } },
   similar_words:{ type:'array', description:'Only when similar words are allowed: for each word/phrase in all/any/none, other ways to say it (synonyms, English / Spanish / German translations, common spellings).', items:{ type:'object', properties:{ word:{ type:'string' }, also:{ type:'array', items:{ type:'string' } } }, required:['word', 'also'] } },
   change:{ type:'object', description:'Only for intent change.', properties:{
-    action:{ type:'string', enum:['add_tag', 'remove_tag', 'move', 'set_importance', 'replace_text', 'append_text', 'set_property', 'pin', 'unpin', 'not_possible'] },
+    action:{ type:'string', enum:['add_tag', 'remove_tag', 'move', 'set_importance', 'set_label', 'archive', 'restore', 'replace_text', 'append_text', 'set_property', 'pin', 'unpin', 'not_possible'] },
+    label:{ type:'string', enum:['key', 'temp', 'none'] },
     tag:{ type:'string' }, folder:{ type:'string' }, importance:{ type:'string', enum:['high', 'medium', 'low', 'none'] },
     find:{ type:'string' }, replace:{ type:'string' }, text:{ type:'string' }, property:{ type:'string' }, value:{ type:'string' }, why_not:{ type:'string' } } },
   explain:{ type:'string', description:'One short plain-English line: what you understood.' } }, required:['intent', 'search', 'explain'] } };
@@ -10862,6 +10917,7 @@ Rules:
 - Use folder and tag names exactly as listed (match case-insensitively; tags without #). Sub-folders are included automatically.
 - Dates: "in October" = the most recent October (edited_after first day, edited_before first day of the next month). "not touched for 6 months" = edited_before 6 months ago. "ascending/oldest first" = sort edited asc. Default sort: edited desc.
 - "with summary"/"short summary"/"what they are about" → summaries true and add "summary" to columns. Default columns: date, name, folder, match. Add tags/importance columns when asked.
+- Every note has a Keep label: "key" (⭐ important), "temp" (⏳ scratch) or none. "key notes …" → labels ["key"]; "temp notes" → labels ["temp"]. To label notes use change.action "set_label" with label; "archive them" → action "archive" (moves them into the archive folder, keeping their path); "restore them" → "restore".
 - Deleting notes is never possible here: use change.action "not_possible" with why_not (suggest moving them to an archive folder instead). Same for anything else you can't do with the listed actions.
 - explain: one short line, e.g. "Notes that contain “elena” and “must do”, oldest first".
 Answer by calling notes_request.`;
@@ -10905,6 +10961,7 @@ function fnSearch(){
     if (sp.tags_any && sp.tags_any.length && !sp.tags_any.some(t => tagIn(n, t))) continue;
     if (sp.tags_none && sp.tags_none.length && sp.tags_none.some(t => tagIn(n, t))) continue;
     if (sp.importance && sp.importance.length && !sp.importance.includes(n.importance || 'none')) continue;
+    if (sp.labels && sp.labels.length && !sp.labels.includes(keepOf(n) || 'none')) continue;
     if (after && (n.mtime || 0) < after) continue;
     if (before && (n.mtime || 0) >= before) continue;
     const title = fold(n.name), text = sp.title_only ? title : title + '\n' + (n.locked ? '' : fold(n.body || '')) + '\n' + allTags(n).map(fold).join(' ') + '\n' + normProps(n);
@@ -10976,6 +11033,9 @@ function fnPlanChange(c, explain){
         if (!ci){ what = '“' + f + '” not found'; ok = false; } else what = 'replace ' + ci + '× “' + f + '” → “' + (c.replace || '') + '”'; break; }
       case 'append_text': what = 'add at the end: “' + String(c.text || '').slice(0, 60) + '”'; if (!c.text) ok = false; break;
       case 'set_property': what = (c.property || '?') + ': ' + (props(n)[c.property] != null ? props(n)[c.property] + ' → ' : '') + (c.value || ''); if (!c.property) ok = false; break;
+      case 'set_label': { const want = c.label === 'none' ? '' : (c.label || ''); if (keepOf(n) === want){ what = 'already ' + (KEEP_LABEL[want] || want); ok = false; } else what = (KEEP_LABEL[keepOf(n)] || 'normal') + ' → ' + (KEEP_LABEL[want] || 'normal'); break; }
+      case 'archive': if (inArchive(n.folder)){ what = 'already in the archive'; ok = false; } else what = 'archive → ' + archiveRoot() + (n.folder ? '/' + n.folder : ''); break;
+      case 'restore': if (!inArchive(n.folder)){ what = 'not in the archive'; ok = false; } else what = 'restore → ' + (n.folder === archiveRoot() ? 'vault root' : n.folder.slice(archiveRoot().length + 1)); break;
       case 'pin': if (n.pinned){ what = 'already pinned'; ok = false; } else what = 'pin'; break;
       case 'unpin': if (!n.pinned){ what = 'not pinned'; ok = false; } else what = 'unpin'; break;
       default: ok = false; what = 'unknown change';
@@ -11005,8 +11065,10 @@ async function fnApplyChange(){
           case 'set_property': setProp(n, c.property, c.value || ''); break;
           case 'pin': n.pinned = true; break;
           case 'unpin': n.pinned = false; break;
+          case 'set_label': setNoteKeep(n, c.label === 'none' ? '' : c.label); break;
         }
-        if (c.action === 'move'){ const f = vorgClean(c.folder || ''); await fnEnsureFolder(f); await moveNote(n, f); }
+        if (c.action === 'archive' || c.action === 'restore'){ const a = archiveRoot(), f = c.action === 'archive' ? a + (n.folder ? '/' + n.folder : '') : (n.folder === a ? '' : n.folder.slice(a.length + 1)); await fnEnsureFolder(f); await moveNote(n, f); }
+        else if (c.action === 'move'){ const f = vorgClean(c.folder || ''); await fnEnsureFolder(f); await moveNote(n, f); }
         else await writeNote(n);
         run.items.push({ from:path0, to:n.path, before });
         done++;
@@ -11143,6 +11205,168 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Escape' && fnIsOpen() && !FN.busy && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]')) fnClose();
 });
 
+/* ---------- v64: Key / Temp labels, archive & restore, cleanup list ----------
+   Every note can be ⭐ Key (important, used often), normal (no label) or ⏳ Temp (scratch, can go later).
+   Folders can carry a label too (stored in the synced settings); notes inside follow it unless they say otherwise
+   (a note's own `keep:` property — key / temp / normal — wins). Nothing is ever archived or deleted by itself:
+   the cleanup list only reminds you (temp notes older than 14 days, Key notes unused for 3 months). */
+const KEEP_PROP = 'keep', KEEP_TEMP_DAYS = 14, KEEP_KEY_DAYS = 90;
+const KEEP_LABEL = { key:'⭐ Key', temp:'⏳ Temp', '':'normal' };
+function folderKeeps(){ if (!S.root || S.demo) return S.demoFolderKeep || {}; try { return JSON.parse(localStorage.getItem('qn-folderkeep:' + S.root.name) || '{}') || {}; } catch(e){ return {}; } }
+function setFolderKeep(f, v){
+  const m = folderKeeps(); if (v) m[f] = v; else delete m[f];
+  if (!S.root || S.demo) S.demoFolderKeep = m; else try { localStorage.setItem('qn-folderkeep:' + S.root.name, JSON.stringify(m)); } catch(e){}
+}
+function folderKeepOf(f, m){ m = m || folderKeeps(); for (let x = f; x; x = parentOf(x)) if (m[x]) return { v:m[x], from:x }; return null; }
+function noteKeepRaw(n){ if (!n || n.locked) return ''; const v = String(props(n)[KEEP_PROP] || '').toLowerCase().trim(); return ['key', 'temp', 'normal'].includes(v) ? v : ''; }
+function keepOf(n, m){ if (!n || n.external) return ''; const r = noteKeepRaw(n); if (r) return r === 'normal' ? '' : r; const f = folderKeepOf(n.folder, m); return f ? f.v : ''; }
+// set a note's label: the folder's label is used when it matches; "normal" inside a labeled folder is written as keep: normal
+function setNoteKeep(n, v){
+  if (!n || n.locked || n.external) return false;
+  const f = folderKeepOf(n.folder), want = v || '';
+  if ((f ? f.v : '') === want) removeProp(n, KEEP_PROP);
+  else setProp(n, KEEP_PROP, want || 'normal');
+  return true;
+}
+/* ----- archive ----- */
+function archiveRoot(){ const top = allFolders().filter(f => !f.includes('/')); return top.find(f => /^(archive|archiv|archivo|archives)$/i.test(f)) || 'ARCHIVE'; }
+const inArchive = p => { const a = archiveRoot(); return p === a || p.startsWith(a + '/'); };
+async function archiveNote(n){
+  if (inArchive(n.folder)) return toast('Already in the archive');
+  const to = archiveRoot() + (n.folder ? '/' + n.folder : '');
+  await fnEnsureFolder(to); await moveNote(n, to);
+  toast('Archived to ' + to + ' — right-click → Restore puts it back', 6000);
+}
+async function restoreNote(n){
+  const a = archiveRoot(); if (!inArchive(n.folder)) return;
+  const to = n.folder === a ? '' : n.folder.slice(a.length + 1);
+  await fnEnsureFolder(to); await moveNote(n, to); toast('Restored to ' + (to || 'the vault root'));
+}
+async function archiveFolder(f){
+  const a = archiveRoot(); if (inArchive(f)) return toast('Already in the archive');
+  const parent = a + (parentOf(f) ? '/' + parentOf(f) : '');
+  if (!await confirmIt('Archive the folder “' + f + '”? It moves to ' + parent + '/' + f.split('/').pop() + ' — right-click → Restore puts it back.', 'Archive')) return;
+  await fnEnsureFolder(parent); await relocateFolder(f, parent);
+}
+async function restoreFolder(f){
+  const a = archiveRoot(); if (!inArchive(f) || f === a) return;
+  const orig = f.slice(a.length + 1);
+  await fnEnsureFolder(parentOf(orig)); await relocateFolder(f, parentOf(orig));
+}
+/* ----- quick temp note (Ctrl+Alt+T) ----- */
+async function newTempNote(){
+  if (!S.root && !S.demo) return toast('Open your vault first');
+  const inbox = allFolders().find(f => !f.includes('/') && /^inbox$/i.test(f)) || '';
+  try {
+    const n = await createNote('Untitled', '', inbox);
+    if (!(folderKeepOf(inbox) && folderKeepOf(inbox).v === 'temp')) setProp(n, KEEP_PROP, 'temp');
+    await writeNote(n); S.current = n.path; renderAll(); const t = $('title'); if (t){ t.focus(); t.select(); }
+    toast('⏳ Temp note' + (inbox ? ' in ' + inbox : ''), 2500);
+  } catch(e){ toast('Could not create note: ' + e.message); }
+}
+/* ----- sidebar filter ----- */
+S.keepF = localStorage.getItem('qn-keepf') || '';
+S.hideArch = localStorage.getItem('qn-hidearch') === '1';
+function keepOk(n, m){
+  if (S.hideArch && inArchive(n.folder)) return false;
+  if (!S.keepF) return true;
+  const k = keepOf(n, m);
+  return S.keepF === 'key' ? k === 'key' : k !== 'temp';
+}
+/* ----- cleanup list ----- */
+const kcSnoozeKey = () => 'qn-kcsnooze:' + (S.root ? S.root.name : 'demo');
+function kcSnoozes(){ try { return JSON.parse(localStorage.getItem(kcSnoozeKey()) || '{}') || {}; } catch(e){ return {}; } }
+function kcSnooze(p, days){ const m = kcSnoozes(), now = Date.now(); for (const k in m) if (m[k] < now) delete m[k]; m[p] = now + days * 864e5; try { localStorage.setItem(kcSnoozeKey(), JSON.stringify(m)); } catch(e){} }
+function kcItems(){
+  const m = folderKeeps(), sn = kcSnoozes(), now = Date.now(), temp = [], key = [];
+  for (const n of S.notes.values()){
+    if (n.external || n.locked || inArchive(n.folder) || (sn[n.path] || 0) > now) continue;
+    const k = keepOf(n, m), age = now - (n.mtime || now);
+    if (k === 'temp' && age > KEEP_TEMP_DAYS * 864e5) temp.push({ n, age });
+    else if (noteKeepRaw(n) === 'key'){ const used = Math.max(openedOf(n.path), n.mtime || 0); if (now - used > KEEP_KEY_DAYS * 864e5) key.push({ n, used }); }
+  }
+  for (const f of Object.keys(m)) if (m[f] === 'key' && allFolders().includes(f) && !((sn['f:' + f] || 0) > now)){
+    let used = 0; for (const n of S.notes.values()) if (!n.external && (n.folder === f || n.folder.startsWith(f + '/'))) used = Math.max(used, openedOf(n.path), n.mtime || 0);
+    if (used && now - used > KEEP_KEY_DAYS * 864e5) key.push({ f, used });
+  }
+  temp.sort((a, b) => b.age - a.age); key.sort((a, b) => a.used - b.used);
+  return { temp, key };
+}
+function kcCount(){ try { const r = kcItems(); return r.temp.length + r.key.length; } catch(e){ return 0; } }
+function kcBadge(){ const b = $('kcBtn'); if (!b) return; const c = S.root || S.demo ? kcCount() : 0; b.querySelector('.kcn').textContent = c ? String(c) : ''; b.classList.toggle('has', c > 0); b.title = c ? c + ' note' + (c === 1 ? '' : 's') + ' to look at: temp notes older than ' + KEEP_TEMP_DAYS + ' days, Key notes unused for 3 months' : 'Cleanup — nothing waiting'; }
+const kcUndoKey = () => 'kc-undo:' + (S.root ? S.root.name : 'demo');
+async function kcPush(a){ let l = []; try { l = (await idbGet(kcUndoKey())) || []; } catch(e){} l.push(a); await idbSet(kcUndoKey(), l.slice(-60)).catch(() => {}); }
+function kcOpen(){
+  if (!S.root && !S.demo) return toast('Open your vault first');
+  hideCtx && hideCtx(); vorgIsOpen() && vorgClose(); fnIsOpen() && fnClose();
+  let pg = $('kcPage');
+  if (!pg){ pg = document.createElement('div'); pg.id = 'kcPage'; document.querySelector('main.main').appendChild(pg); pg.addEventListener('click', kcClick); }
+  pg.style.display = 'flex'; kcRender();
+}
+function kcClose(){ const pg = $('kcPage'); if (pg) pg.style.display = 'none'; }
+const kcIsOpen = () => { const pg = $('kcPage'); return !!(pg && pg.style.display === 'flex'); };
+const kcDays = ms => { const d = Math.round(ms / 864e5); return d < 60 ? d + ' days' : Math.round(d / 30) + ' months'; };
+async function kcRender(){
+  const pg = $('kcPage'); if (!pg) return;
+  const { temp, key } = kcItems(); let canUndo = false; try { canUndo = !!((await idbGet(kcUndoKey())) || []).length; } catch(e){}
+  const b = (a, i, label, cls) => `<button class="ghost ${cls || ''}" data-kc="${a}" data-i="${i}">${label}</button>`;
+  pg.innerHTML = `<div class="orghead">${UI('hourglass')}<b>Cleanup</b><span class="orgsub">temp notes older than ${KEEP_TEMP_DAYS} days · Key notes unused for 3 months</span><span class="sp"></span>
+      ${canUndo ? `<button class="ghost" data-kc="undo">${UI('undo-2')} Undo last</button>` : ''}<button class="ghost" data-kc="close">✕ Close</button></div>
+    <div class="vorgintro" style="margin:0">Nothing happens by itself — each button does exactly one thing. <b>Keep</b> hides a note from this list for 30 days. <b>Archive</b> moves it into ${esc(archiveRoot())} (keeping its folder path, so <b>Restore</b> puts it back). <b>Delete</b> moves it to the Trash.</div>
+    <div class="kclist">
+      <div class="kcsect"><span>${UI('hourglass')} Temp (${temp.length})</span>${temp.length ? `<span class="sp"></span>${b('archall', -1, UI('archive') + ' Archive all')}${b('keepall', -1, 'Keep all')}` : ''}</div>
+      ${temp.length ? temp.map((x, i) => `<div class="kcrow"><a data-open="${esc(x.n.path)}">${esc(x.n.name)}</a><span class="vorgmuted">${esc(x.n.folder || 'vault root')}</span><span class="vorgmuted kcage">${kcDays(x.age)} old</span>
+        <span class="kcbtns">${b('keep', i, 'Keep')}${b('normal', i, 'Make normal')}${b('arch', i, UI('archive') + ' Archive')}${b('del', i, UI('trash') + ' Delete', 'kcdel')}</span></div>`).join('') : '<div class="vorgmuted kcnone">No old temp notes. 👍</div>'}
+      <div class="kcsect"><span>⭐ Still key? (${key.length})</span></div>
+      ${key.length ? key.map((x, i) => `<div class="kcrow">${x.f ? `<span>${UI('folder')} <b>${esc(x.f)}</b></span><span class="vorgmuted">folder</span>` : `<a data-open="${esc(x.n.path)}">${esc(x.n.name)}</a><span class="vorgmuted">${esc(x.n.folder || 'vault root')}</span>`}
+        <span class="vorgmuted kcage">not used for ${kcDays(Date.now() - x.used)}</span><span class="kcbtns">${b('stay', i, 'Stay key')}${b('unkey', i, 'Make normal')}</span></div>`).join('') : '<div class="vorgmuted kcnone">All Key notes are in use.</div>'}
+    </div>`;
+}
+async function kcClick(e){
+  const op = e.target.closest('[data-open]');
+  if (op){ const p = op.dataset.open; kcClose(); S.current = p; if (!S.tabs.includes(p)) S.tabs.push(p); return renderAll(); }
+  const bt = e.target.closest('[data-kc]'); if (!bt || S._kcBusy) return;
+  const a = bt.dataset.kc, i = +bt.dataset.i, { temp, key } = kcItems();
+  if (a === 'close') return kcClose();
+  S._kcBusy = true;
+  try {
+    await flushAll();
+    if (a === 'undo') await kcUndo();
+    else if (a === 'keep'){ kcSnooze(temp[i].n.path, 30); }
+    else if (a === 'keepall'){ temp.forEach(x => kcSnooze(x.n.path, 30)); }
+    else if (a === 'stay'){ const x = key[i]; kcSnooze(x.f ? 'f:' + x.f : x.n.path, KEEP_KEY_DAYS); }
+    else if (a === 'normal' || (a === 'unkey' && key[i].n)){
+      const n = (a === 'normal' ? temp[i] : key[i]).n, before = serialize(n);
+      setNoteKeep(n, ''); await writeNote(n); await kcPush({ k:'text', path:n.path, before });
+    }
+    else if (a === 'unkey' && key[i].f){ const f = key[i].f; setFolderKeep(f, ''); await kcPush({ k:'folder', f, before:'key' }); }
+    else if (a === 'arch' || a === 'archall'){
+      const list = a === 'arch' ? [temp[i]] : temp;
+      if (a === 'archall' && !await confirmIt('Move ' + list.length + ' temp note' + (list.length === 1 ? '' : 's') + ' into ' + archiveRoot() + '? “Undo last” or Restore puts them back.', 'Archive')) return;
+      const moves = [];
+      for (const x of list){ const from = x.n.path, to = archiveRoot() + (x.n.folder ? '/' + x.n.folder : ''); await fnEnsureFolder(to); await moveNote(x.n, to); moves.push({ from, to:x.n.path }); }
+      await kcPush({ k:'moves', moves });
+      toast('Archived ' + moves.length + ' note' + (moves.length === 1 ? '' : 's'), 4000);
+    }
+    else if (a === 'del'){ const n = temp[i].n; if (!await confirmIt('Move “' + n.name + '” to the Trash? You can get it back from the Trash (bottom left).', 'Move to Trash')) return; await trashNote(n); }
+  } catch(err){ toast(err.message, 7000); }
+  finally { S._kcBusy = false; }
+  renderSidebar(); kcBadge(); kcRender();
+}
+async function kcUndo(){
+  let l = []; try { l = (await idbGet(kcUndoKey())) || []; } catch(e){}
+  const a = l.pop(); if (!a) return toast('Nothing to undo');
+  if (a.k === 'text'){ const n = S.notes.get(a.path); if (n){ Object.assign(n, parse(a.before)); n._noCreated = true; try { await writeNote(n); } finally { delete n._noCreated; } } }
+  if (a.k === 'folder') setFolderKeep(a.f, a.before);
+  if (a.k === 'moves') for (const m of [...a.moves].reverse()){ const n = S.notes.get(m.to); if (n){ await fnEnsureFolder(parentOf(m.from)); await moveNote(n, parentOf(m.from)); } }
+  await idbSet(kcUndoKey(), l).catch(() => {});
+  toast('Undone', 2500);
+}
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.key.toLowerCase() === 't'){ e.preventDefault(); newTempNote(); }
+  else if (e.key === 'Escape' && kcIsOpen() && !S._kcBusy && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]')) kcClose();
+});
+
 /* ---------- command palette: every action, found by typing ---------- */
 function cmdList(){
   const n = cur(), note = !!(n && !n.external), b = S.bases.get(S.current), inMap = !!(n && S.map && S.map.path === n.path && $('mapvp'));
@@ -11186,6 +11410,9 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
     ['Find', 'Find notes: ask in your own words…', 'Ctrl+Shift+F', true, () => fnOpen()],
+    ['Note', 'New ⏳ temp note', 'Ctrl+Alt+T', true, () => newTempNote()],
+    ['Note', 'Cleanup: old temp notes and unused Key notes…', '', true, () => kcOpen()],
+    ['View', S.hideArch ? 'Show the archive in the sidebar' : 'Hide the archive in the sidebar', '', true, () => $('keepFilter').querySelector('[data-k=arch]').click()],
     ['Find', 'Undo the last change made with Find notes…', '', !!S.root || S.demo, () => fnUndo()],
     ['View', localStorage.getItem('qn-tagshid') === '1' ? 'Show the tags in the sidebar' : 'Hide the tags in the sidebar', '', true, () => $('tagToggle').click()],
     ['View', 'Show all folders again (leave “Show only this folder”)', '', !!localStorage.getItem('qn-focusf') && allFolders().includes(localStorage.getItem('qn-focusf')), () => focusFolder('')],
@@ -11337,6 +11564,10 @@ function jumpToHit(){
 $('sort').onchange = e => { S.sort = e.target.value; try { localStorage.setItem('qn-sort', S.sort); } catch(x){} renderSidebar(); };
 try { const v = localStorage.getItem('qn-sort'); if (v && $('sort').querySelector('option[value="' + v + '"]')){ S.sort = v; $('sort').value = v; } } catch(e){}
 $('impFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.imp = b.dataset.v; renderSidebar(); };
+$('keepFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.k === 'arch'){ S.hideArch = !S.hideArch; localStorage.setItem('qn-hidearch', S.hideArch ? '1' : '0'); }
+  else { S.keepF = b.dataset.k; localStorage.setItem('qn-keepf', S.keepF); }
+  renderSidebar(); };
 $('dateFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.dateF = b.dataset.d; renderSidebar(); };
 /* pinned items: drag to change their order */
 $('list').addEventListener('dragstart', e => {
@@ -11568,7 +11799,7 @@ window.addEventListener('drop', e => { if (!hasFiles(e)) return; if (e.defaultPr
 /* ---------- settings stored in the vault (.quietnotes/settings.json) ---------- */
 // Same pins, folders, tabs and look on every PC that opens this vault. The Firecrawl key stays on each PC.
 const VS_SHARED = ['qn-prompts','qn-web','qn-look','qn-sort','qn-showrecent','qn-collapsed','qn-recent','qn-props-open','qn-clip-folder','qn-clip-main','qn-outline'];
-const VS_PERVAULT = ['qn-savedsearch','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
+const VS_PERVAULT = ['qn-savedsearch','qn-folderkeep','qn-foldersort','qn-pinorder','qn-tabs','qn-basepins','qn-folderpins','qn-icons','qn-unbm','qn-bookmarks','qn-types','qn-attach','qn-obimport','qn-lockcheck'];
 // v56: settings live in the hidden folder ".mynotes" (a dot folder = app files, like Obsidian's .obsidian), with a backup and a README.
 // Before v56 they were in a normal-looking folder "My Notes" (and before that "Quiet Notes") — easy to delete by mistake.
 const VS_DIR = '.mynotes', VS_PREV_DIR = 'My Notes', VS_OLD_DIR = 'Quiet Notes', VS_NOTE = 'settings.md', VS_BACKUP = 'settings.backup.md', VS_README = 'README.md';
