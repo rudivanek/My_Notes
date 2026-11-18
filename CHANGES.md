@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v71-2026-11-18
+**Notes table: faster, safer, lines stay in place.**
+- Every change shows a spinner over the whole app until all files are written — nothing can be clicked meanwhile (with many notes it counts: *3 of 12*).
+- Faster: the sidebar is redrawn once, shortly after your changes, instead of after every single note.
+- **Lines stay where they are** after a change (changing a note changes its *Edited* date, which used to make it jump to the top). A **Re-sort** button appears at the top; it also re-sorts when you click a column, filter, or open the table again.
+
 ## v70-2026-11-18
 **Notes table button at the bottom left.** A table icon next to **Find** opens (and closes) the Notes table — same as Ctrl+Alt+L.
 

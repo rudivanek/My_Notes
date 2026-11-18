@@ -885,7 +885,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v70-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v71-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -4001,7 +4001,7 @@ async function moveNote(n, folder){
   S.collapsed.delete(folder); saveCollapsed();
   if (!S.demo && serialize(n) !== n._saved) queueSave(n);
   setStatus('Moved to ' + (folder || 'vault root'));
-  renderSidebar(); if (wasCurrent) renderMetaFolder();
+  if (!S._ntQuiet) renderSidebar(); if (wasCurrent) renderMetaFolder();   // v71: the Notes table redraws the sidebar once at the end
 }
 /* ---------- images ---------- */
 const normPath = p => { const out = []; for (const seg of p.split('/')){ if (!seg || seg === '.') continue; if (seg === '..') out.pop(); else out.push(seg); } return out.join('/'); };
@@ -10861,23 +10861,33 @@ function ntRows(){
   rows.sort((a, b) => { const x = key(a), y = key(b); if (s.by === 'created' && (x < 0) !== (y < 0)) return x < 0 ? 1 : -1; return (typeof x === 'string' ? NCOLL.compare(x, y) : x - y) * d || NCOLL.compare(a.name, b.name); });
   return rows;
 }
+// v71: the order is kept while you change notes (changing a note changes its Edited date — the line must not jump).
+// It is worked out again only when you sort, filter, open the table or click "Re-sort".
+function ntList(){
+  if (!NT.order){ NT.order = ntRows().map(n => n.path); NT.stale = false; }
+  return NT.order.map(p => S.notes.get(p)).filter(n => n && !n.external);
+}
+const ntResort = () => { NT.order = null; NT.stale = false; };
+function ntRemap(from, to){ if (from === to || !NT.order) return; const i = NT.order.indexOf(from); if (i >= 0) NT.order[i] = to; if (NT.sel.has(from)){ NT.sel.delete(from); NT.sel.add(to); } }
+let NT_SIDE_T = 0;
+const ntSideSoon = () => { clearTimeout(NT_SIDE_T); NT_SIDE_T = setTimeout(() => { NT_SIDE_T = 0; renderSidebar(); kcBadge(); }, 600); };
 function ntOpen(only, label){
   if (!S.root && !S.demo) return toast('Open your vault first');
   hideCtx && hideCtx(); vorgIsOpen() && vorgClose(); fnIsOpen() && fnClose(); kcIsOpen() && kcClose();
-  NT.only = only ? new Set(only) : null; NT.onlyLabel = label || ''; NT.sel.clear(); NT.show = 300; NT.cur = -1;
+  NT.only = only ? new Set(only) : null; NT.onlyLabel = label || ''; NT.sel.clear(); ntResort(); NT.show = 300; NT.cur = -1;
   let pg = $('ntPage');
   if (!pg){ pg = document.createElement('div'); pg.id = 'ntPage'; pg.tabIndex = -1; document.querySelector('main.main').appendChild(pg);
     pg.addEventListener('click', ntClick); pg.addEventListener('dblclick', ntDbl); pg.addEventListener('input', ntInput); pg.addEventListener('keydown', ntKeys);
     pg.addEventListener('mouseover', ntHover); pg.addEventListener('mouseout', e => { if (!e.relatedTarget || !e.relatedTarget.closest('.ntname')) ntTip(null); }); }
   pg.style.display = 'flex'; ntRender(); setTimeout(() => pg.focus(), 30);
 }
-function ntClose(){ const pg = $('ntPage'); if (pg) pg.style.display = 'none'; ntTip(null); }
+function ntClose(){ const pg = $('ntPage'); if (pg) pg.style.display = 'none'; ntTip(null); if (NT_SIDE_T){ clearTimeout(NT_SIDE_T); NT_SIDE_T = 0; renderSidebar(); kcBadge(); } }
 const ntIsOpen = () => { const pg = $('ntPage'); return !!(pg && pg.style.display === 'flex'); };
 const ntDate = t => t ? fnDay(t) : '';
 function ntRender(keepScroll){
   const pg = $('ntPage'); if (!pg) return;
   const list = pg.querySelector('.ntlist'), top = keepScroll && list ? list.scrollTop : 0;
-  const rows = ntRows(); NT.rowsNow = rows;
+  const rows = ntList(); NT.rowsNow = rows;
   for (const p of [...NT.sel]) if (!S.notes.has(p)) NT.sel.delete(p);
   const cols = ntCols(), C = c => cols.has(c), s = NT.sort, arrow = by => s.by === by ? (s.dir === 'asc' ? ' ↑' : ' ↓') : '';
   const th = (c, label, by) => C(c) ? `<th class="nt-${c}${by ? ' srt' : ''}" ${by ? `data-ntsort="${by}"` : ''}>${label}${by ? arrow(by) : ''}</th>` : '';
@@ -10902,6 +10912,7 @@ function ntRender(keepScroll){
   };
   const n = NT.sel.size;
   pg.innerHTML = `<div class="orghead">${UI('table')}<b>Notes table</b><span class="orgsub">${rows.length.toLocaleString()} note${rows.length === 1 ? '' : 's'}${NT.only ? ` · <span class="ntonly">${esc(NT.onlyLabel || 'from Find')} <button class="ghost" data-ntall="1" title="Show all notes">✕</button></span>` : ''}</span><span class="sp"></span>
+      ${NT.stale ? `<button class="ghost" data-ntresort="1" title="Your changes may belong somewhere else in this order now — sort again">${UI('arrow-up-down')} Re-sort</button>` : ''}
       ${NT.undo.length ? `<button class="ghost" data-ntundo="1" title="Take back: ${esc(NT.undo[NT.undo.length - 1].label)}">${UI('undo-2')} Undo</button>` : ''}
       <button class="ghost" data-ntcols="1" title="Show or hide columns">${UI('columns-3')} Columns</button>
       <button class="ghost" data-ntcsv="1" title="Download this list as a CSV file (Excel)">${UI('file-down')} CSV</button>
@@ -10926,30 +10937,31 @@ function ntRender(keepScroll){
 async function ntChange(notes, label, fn, opts){
   opts = opts || {};
   notes = notes.filter(n => n && !n.external); if (!notes.length) return;
-  const locked = notes.filter(n => n.locked && !opts.lockedOk); if (locked.length && !opts.lockedOk){ notes = notes.filter(n => !n.locked); if (!notes.length) return toast('Locked notes can’t be changed here — unlock them first'); }
-  await flushAll();
+  if (!opts.lockedOk){ const k = notes.length; notes = notes.filter(n => !n.locked); if (!notes.length) return toast('Locked notes can’t be changed here — unlock them first'); if (notes.length < k) toast((k - notes.length) + ' locked note' + (k - notes.length === 1 ? '' : 's') + ' skipped'); }
   const step = { label, items:[] };
-  const run = async () => {
+  // v71: always a spinner over the whole app until every file is written — nothing can be clicked meanwhile
+  await busyWhile(label + '…', async () => { S._ntQuiet = true; try {
+    let i = 0;
     for (const n of notes){
+      if (notes.length > 1) $('loadSub').textContent = (++i) + ' of ' + notes.length;
       const from = n.path, before = n.locked ? null : serialize(n);
-      try { await fn(n); step.items.push({ from, to:n.path, before }); } catch(e){ toast(n.name + ': ' + e.message, 6000); }
+      try { await fn(n); step.items.push({ from, to:n.path, before }); ntRemap(from, n.path); } catch(e){ toast(n.name + ': ' + e.message, 6000); }
     }
-  };
-  if (notes.length > 4 || opts.busy) await busyWhile(label + '…', run); else await run();
-  if (step.items.length){ NT.undo.push(step); if (NT.undo.length > 30) NT.undo.shift(); }
-  renderSidebar(); kcBadge(); ntRender(true);
+  } finally { S._ntQuiet = false; } });
+  if (step.items.length){ NT.undo.push(step); if (NT.undo.length > 30) NT.undo.shift(); NT.stale = true; }
+  ntRender(true); ntSideSoon();
 }
 async function ntUndo(){
   const st = NT.undo.pop(); if (!st) return;
-  await flushAll();
-  await busyWhile('Undo: ' + st.label + '…', async () => {
+  await busyWhile('Undo: ' + st.label + '…', async () => { S._ntQuiet = true; try {
     for (const x of [...st.items].reverse()){
       const n = S.notes.get(x.to); if (!n) continue;
       if (x.from !== x.to){ await fnEnsureFolder(parentOf(x.from)); await moveNote(n, parentOf(x.from)); if (n.name !== x.from.split('/').pop().replace(/\.md$/, '')) await renameNote(n, x.from.split('/').pop().replace(/\.md$/, '')); }
       if (x.before != null){ Object.assign(n, parse(x.before)); n._noCreated = true; try { await writeNote(n); } finally { delete n._noCreated; } }
+      ntRemap(x.to, n.path);
     }
-  });
-  toast('Undone: ' + st.label, 3000); renderAll(); ntRender(true);
+  } finally { S._ntQuiet = false; } });
+  toast('Undone: ' + st.label, 3000); ntRender(true); ntSideSoon();
 }
 const ntSetPin = async (n, on) => { if (isPinnedAny('n', n.path) !== on) togglePin('n', n.path); n.pinned = on; await writeNote(n); };
 async function ntPickFolder(cur, title){
@@ -10964,7 +10976,8 @@ const ntNoteOf = el => { const tr = el.closest('tr[data-p]'); return tr ? S.note
 async function ntClick(e){
   const t = e.target, n = ntNoteOf(t);
   if (t.closest('[data-ntclose]')) return ntClose();
-  if (t.closest('[data-ntall]')){ NT.only = null; return ntRender(); }
+  if (t.closest('[data-ntall]')){ NT.only = null; ntResort(); return ntRender(); }
+  if (t.closest('[data-ntresort]')){ ntResort(); return ntRender(true); }
   if (t.closest('[data-ntundo]')) return ntUndo();
   if (t.closest('[data-ntmore]')){ NT.show += 300; return ntRender(true); }
   if (t.closest('[data-ntcsv]')) return ntCsv();
@@ -10972,8 +10985,8 @@ async function ntClick(e){
     const r = t.closest('[data-ntcols]').getBoundingClientRect(), cols = ntCols();
     return showCtx(r.left - 120, r.bottom + 4, [{ head:'Columns' }, ...NT_COLS.map(([c, l]) => ({ icon: cols.has(c) ? '✓' : ' ', label: l || c, run: () => { const s = ntCols(); s.has(c) ? s.delete(c) : s.add(c); if (!s.has('name')) s.add('name'); ntSetCols(s); ntRender(true); } }))]);
   }
-  const qk = t.closest('[data-ntquick]'); if (qk){ NT.quick = qk.dataset.ntquick; NT.show = 300; return ntRender(); }
-  const so = t.closest('[data-ntsort]'); if (so){ const by = so.dataset.ntsort; NT.sort = { by, dir: NT.sort.by === by && NT.sort.dir === 'desc' ? 'asc' : (by === 'name' || by === 'folder') && NT.sort.by !== by ? 'asc' : 'desc' }; return ntRender(); }
+  const qk = t.closest('[data-ntquick]'); if (qk){ NT.quick = qk.dataset.ntquick; NT.show = 300; ntResort(); return ntRender(); }
+  const so = t.closest('[data-ntsort]'); if (so){ const by = so.dataset.ntsort; ntResort(); NT.sort = { by, dir: NT.sort.by === by && NT.sort.dir === 'desc' ? 'asc' : (by === 'name' || by === 'folder') && NT.sort.by !== by ? 'asc' : 'desc' }; return ntRender(); }
   if (t.closest('[data-ntselall]')){ const shown = (NT.rowsNow || []).slice(0, NT.show); const on = t.checked; shown.forEach(x => on ? NT.sel.add(x.path) : NT.sel.delete(x.path)); return ntRender(true); }
   const cb = t.closest('[data-ntsel]');
   if (cb){ const i = +cb.dataset.ntsel, rows = NT.rowsNow || [];
@@ -10990,7 +11003,7 @@ async function ntClick(e){
   if (t.closest('[data-ntarch]')) return ntChange([n], inArchive(n.folder) ? 'Restore' : 'Archive', async x => { const a = archiveRoot(), f = inArchive(x.folder) ? (x.folder === a ? '' : x.folder.slice(a.length + 1)) : a + (x.folder ? '/' + x.folder : ''); await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true });
   const ut = t.closest('[data-ntuntag]'); if (ut) return ntChange([n], 'Remove #' + ut.dataset.ntuntag, async x => { x.tags = x.tags.filter(z => z !== ut.dataset.ntuntag); await writeNote(x); });
   if (t.closest('[data-nttag]')){ const tg = await ntAddTag(); if (tg) await ntChange([n], 'Add #' + tg, async x => { if (!x.tags.includes(tg)) x.tags = [...x.tags, tg]; await writeNote(x); }); return; }
-  if (t.closest('[data-ntdel]')){ if (await confirmIt('Move “' + n.name + '” to the Trash? (Restore it from the Trash, bottom left.)', 'Move to Trash')){ await trashNote(n); renderSidebar(); ntRender(true); } return; }
+  if (t.closest('[data-ntdel]')){ if (await confirmIt('Move “' + n.name + '” to the Trash? (Restore it from the Trash, bottom left.)', 'Move to Trash')){ S._bulk = true; try { await busyWhile('Moving to the Trash…', () => trashNote(n)); } finally { S._bulk = false; } toast('Moved to the Trash — restore it from Trash at the bottom left', 4000); ntRender(true); ntSideSoon(); } return; }
   const tr = t.closest('tr[data-p]'); if (tr){ NT.cur = (NT.rowsNow || []).findIndex(x => x.path === tr.dataset.p); pgMark(); }
 }
 function pgMark(){ document.querySelectorAll('#ntPage tr.cur').forEach(x => x.classList.remove('cur')); const r = (NT.rowsNow || [])[NT.cur]; if (!r) return; const tr = [...document.querySelectorAll('#ntPage tr[data-p]')].find(x => x.dataset.p === r.path); if (tr){ tr.classList.add('cur'); tr.scrollIntoView({ block:'nearest' }); } }
@@ -11007,7 +11020,7 @@ async function ntBulk(a){
   if (a === 'restore') return ntChange(notes.filter(x => inArchive(x.folder)), 'Restore ' + N, async x => { const ar = archiveRoot(), f = x.folder === ar ? '' : x.folder.slice(ar.length + 1); await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true });
   if (a === 'del'){ if (!await confirmIt('Move ' + N + ' to the Trash? You can restore them from the Trash (bottom left). Undo here can’t bring them back.', 'Move to Trash')) return;
     await busyWhile('Moving ' + N + ' to the Trash…', async () => { S._bulk = true; try { for (const x of notes) await trashNote(x); } finally { S._bulk = false; } });
-    NT.sel.clear(); renderSidebar(); toast(N + ' moved to the Trash', 4000); return ntRender(true); }
+    NT.sel.clear(); toast(N + ' moved to the Trash', 4000); ntRender(true); ntSideSoon(); return; }
 }
 function ntDbl(e){
   const nm = e.target.closest('[data-ntopen]'); if (!nm) return; clearTimeout(NT.openT);
@@ -11017,7 +11030,7 @@ function ntDbl(e){
   inp.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); done(true); } if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); done(false); } });
   inp.addEventListener('blur', () => done(true));
 }
-function ntInput(e){ if (e.target.id === 'ntQ'){ NT.q = e.target.value; NT.show = 300; clearTimeout(NT.qt); NT.qt = setTimeout(() => { ntRender(); const i = $('ntQ'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 200); } }
+function ntInput(e){ if (e.target.id === 'ntQ'){ NT.q = e.target.value; NT.show = 300; clearTimeout(NT.qt); NT.qt = setTimeout(() => { ntResort(); ntRender(); const i = $('ntQ'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 200); } }
 function ntKeys(e){
   if (e.target.matches('input:not([type=checkbox]), textarea')) { if (e.key === 'Escape' && e.target.id === 'ntQ'){ e.target.blur(); } return; }
   const rows = NT.rowsNow || [];

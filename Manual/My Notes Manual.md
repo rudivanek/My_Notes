@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v70 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v71 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -424,6 +424,8 @@ Open it with the **table icon** at the bottom left (next to Find), **Notes table
 | 🗑 | move to the Trash |
 
 - **Sort:** click a column title (Created, Edited, Note, Folder, Importance, Words); click again for the other direction. The arrow shows which way.
+- **Lines stay in place** while you work: a changed note gets a new *Edited* date, but its line doesn't jump. Click **Re-sort** (top right) when you want the order fresh — it also re-sorts when you click a column, filter, or open the table again.
+- **While a change is saved** a spinner covers the app, so nothing can be clicked half-way; with many notes it counts (*3 of 12*).
 - **Filter:** type in the box (name, folder or `#tag`), or use the quick filters: All · ⭐ Key · ⏳ Temp · 📌 Pinned · Not archived · Archived.
 - **Change many at once:** tick the notes (Shift+click ticks a range; the box in the header ticks all you see) and use the bar at the bottom: **Move to…**, importance, **Keep**, **#+ Tag**, **Pin / Unpin**, **Archive / Restore**, **Delete**.
 - **Undo** (top right, or Ctrl+Z) takes back the last change, one step at a time. Deleted notes come back from the **Trash** (bottom left) instead.
