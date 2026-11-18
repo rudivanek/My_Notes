@@ -158,7 +158,7 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .item.ktemp .nm{opacity:.5}.item.ktemp .ico,.item.ktemp .dot{opacity:.45}
 .kmark{font-size:10px;margin-left:4px;opacity:.85;flex:none}
 .key-sect{color:var(--text)}
-.keepseg button{font-size:12px}.keephint{font-size:11.5px;color:var(--muted);margin-left:6px;font-style:italic}
+.keepseg button{font-size:12px}.archbtn{margin-left:10px;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:none;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:var(--text);cursor:pointer}.archbtn:hover{border-color:var(--accent);color:var(--accent)}.archbtn .uic{width:13px;height:13px;margin:0}.keephint{font-size:11.5px;color:var(--muted);margin-left:6px;font-style:italic}
 #kcBtn{display:inline-flex;align-items:center;gap:3px}#kcBtn .uic{width:14px;height:14px;margin:0}#kcBtn .kcn{font-size:11.5px;font-weight:600}#kcBtn.has{color:var(--accent)}
 #kcPage{position:absolute;inset:0;z-index:41;display:none;flex-direction:column;background:var(--bg);padding:18px 26px 12px;gap:10px}
 .kclist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px}
@@ -858,7 +858,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v64-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v65-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -8877,7 +8877,7 @@ function renderEditor(){
       <div><label>Importance</label><span class="imp" id="imp">
         ${['high','medium','low'].map(v => `<button data-v="${v}" class="${n.importance === v ? 'on' : ''}"><span class="dot ${v}"></span>${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}
       </span></div>
-      ${n.external ? '' : `<div><label>Keep</label><span class="imp keepseg" id="keepSeg">${[['key', '⭐ Key'], ['', '—'], ['temp', '⏳ Temp']].map(([v, l]) => `<button data-k="${v}" class="${keepOf(n) === v ? 'on' : ''}" title="${v === 'key' ? 'Important — shows under ⭐ Key at the top of the sidebar' : v === 'temp' ? 'Scratch — faded in the sidebar, offered for cleanup after ' + KEEP_TEMP_DAYS + ' days' : 'Normal note'}">${l}</button>`).join('')}</span>${(() => { const f = folderKeepOf(n.folder); return f && !noteKeepRaw(n) ? `<span class="keephint">from folder ${esc(f.from.split('/').pop())}</span>` : ''; })()}</div>`}
+      ${n.external ? '' : `<div><label>Keep</label><span class="imp keepseg" id="keepSeg">${[['key', '⭐ Key'], ['', '—'], ['temp', '⏳ Temp']].map(([v, l]) => `<button data-k="${v}" class="${keepOf(n) === v ? 'on' : ''}" title="${v === 'key' ? 'Important — shows under ⭐ Key at the top of the sidebar' : v === 'temp' ? 'Scratch — faded in the sidebar, offered for cleanup after ' + KEEP_TEMP_DAYS + ' days' : 'Normal note'}">${l}</button>`).join('')}</span>${(() => { const f = folderKeepOf(n.folder); return f && !noteKeepRaw(n) ? `<span class="keephint">from folder ${esc(f.from.split('/').pop())}</span>` : ''; })()}<button class="archbtn" id="archBtn" title="${inArchive(n.folder) ? 'Put it back where it was: ' + esc(n.folder === archiveRoot() ? 'vault root' : n.folder.slice(archiveRoot().length + 1)) : 'Move it into ' + esc(archiveRoot()) + ' (keeps its folder path — Restore puts it back)'}">${UI(inArchive(n.folder) ? 'archive-restore' : 'archive')}${inArchive(n.folder) ? 'Restore' : 'Archive'}</button></div>`}
       <div><label>Folder</label><select class="fsel" id="folderSel">${folderOptions(n.folder)}</select></div>
       <div><label>Tags</label><span class="tags" id="tags">
         ${n.tags.map(t => `<span class="chip">#${esc(t)}<button data-t="${esc(t)}" title="Remove">×</button></span>`).join('')}
@@ -8961,6 +8961,7 @@ function wireEditor(n){
   });
   $('folderSel').addEventListener('change', e => moveNote(n, e.target.value).catch(err => toast('Move failed: ' + err.message)));
   wireProps(n);
+  if ($('archBtn')) $('archBtn').onclick = guard(async () => { await flushAll(); if (inArchive(n.folder)) await restoreNote(n); else await archiveNote(n); renderAll(); });
   if ($('keepSeg')) $('keepSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (n.locked) return toast('Unlock the note first');

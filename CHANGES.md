@@ -4,6 +4,9 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v65-2026-11-18
+- **Archive button in every note**, right after the Keep buttons: one click moves the note into ARCHIVE (keeping its folder path). In an archived note the same button says **Restore** and puts it back.
+
 ## v64-2026-11-18
 **⭐ Key, ⏳ Temp and Archive — keep important notes in front and scratch notes out of the way.**
 - **Keep label** for every note: ⭐ Key (important, used often), none (normal) or ⏳ Temp (scratch). Set it with the new **Keep** buttons next to Importance, by right-click, or with Find notes. Saved in the note as `keep: key / temp / normal`.
