@@ -4,6 +4,14 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v67-2026-11-18
+**Much stronger search.**
+- **✨ Search with AI in the normal search box.** Type a sentence (*notes from last week having elena*) and click **✨ Search with AI** or press **Alt+Enter**: the results show in the sidebar under **AI search**; **Open in Find** opens them as a table.
+- **Search by meaning.** Find notes can build a one-time "meaning index" (OpenAI *text-embedding-3-small*, your OpenAI key, a few cents for a whole vault, kept in this browser). Then *notes about pricing* also finds *Preise*, *cuánto cobramos* or *how much we charge* — any language. Results show **% match**, best first. New or changed notes are added automatically when you search. Without the index, a subject is searched by its key words in EN/ES/DE.
+- **Questions get answers.** Asking a question in Find notes or the AI search (*what did I decide about …?*) opens **Ask your notes** with the answer and its sources. Ask your notes uses the meaning index too, so it finds the right notes even when the words differ.
+- Find notes understands *last week* / *this week* and more examples on its start screen.
+- **Spinner while archiving or restoring** a note or folder (also in Cleanup and its Undo): the app is blocked until the move is done.
+
 ## v66-2026-11-18
 - The **Archive** button next to the note title (it appears there once you use it often) now has a **line icon** like the other buttons, instead of the 📦 emoji — and it **toggles**: in an archived note it shows highlighted and puts the note back (Restore).
 - Same for **Mark as Key / Mark as Temp** there: line icons (star, hourglass), highlighted when the note has that label; clicking again removes it.

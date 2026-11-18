@@ -84,6 +84,8 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | See only one folder in the sidebar | right-click it → **Show only this folder** |
 | Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
+| Search with a sentence right in the sidebar | type it, then **✨ Search with AI** or **Alt+Enter** |
+| Find notes about a subject, even in other words or languages | Find notes → **Search by meaning: Set up** |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
 | Color text or highlight it | Select it → **A** or the marker in the formatting bar, or right-click the selection → [Text color and highlight](#text-color-and-highlight) |
 | See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
@@ -284,7 +286,7 @@ Some notes matter every day, some are scratch. Give them a **Keep** label:
 
 **New temp note:** **Ctrl+Alt+T** — an empty note already marked ⏳ Temp, in your INBOX folder (or the vault root if there is none). (Ctrl+Alt+N still makes a normal note.)
 
-**Archive:** the **Archive** button next to the Keep buttons in a note, or right-click a note or folder → **Archive**. It moves into your archive folder (**ARCHIVE**, or an existing folder called Archive/Archiv/Archivo) **keeping its path** — e.g. `PROJECTS/ELENA/old idea` becomes `ARCHIVE/PROJECTS/ELENA/old idea`. Nothing is deleted: you can still open, search and edit it. In an archived note the button says **Restore** (also on right-click) and puts it back where it was. If Archive is one of the buttons next to the note title (you use it often, or you ticked it under **⋯ → Customize buttons…**), it works the same way: in an archived note it shows highlighted and restores. Nothing is ever archived by itself.
+**Archive:** the **Archive** button next to the Keep buttons in a note, or right-click a note or folder → **Archive**. It moves into your archive folder (**ARCHIVE**, or an existing folder called Archive/Archiv/Archivo) **keeping its path** — e.g. `PROJECTS/ELENA/old idea` becomes `ARCHIVE/PROJECTS/ELENA/old idea`. Nothing is deleted: you can still open, search and edit it. In an archived note the button says **Restore** (also on right-click) and puts it back where it was. While a note or folder is being archived or restored, a small window with a spinner covers the app, so nothing can be typed into the note until it has arrived. If Archive is one of the buttons next to the note title (you use it often, or you ticked it under **⋯ → Customize buttons…**), it works the same way: in an archived note it shows highlighted and restores. Nothing is ever archived by itself.
 
 **Cleanup** — the **⏳** button at the bottom left shows how many notes wait for a look (e.g. **⏳ 12**). It lists:
 - **Temp notes older than 14 days** — per note: **Keep** (hide from the list for 30 days) · **Make normal** · **Archive** · **Delete** (to the Trash); or **Archive all / Keep all**.
@@ -340,6 +342,8 @@ Type in the search box at the top of the sidebar. Results are grouped:
 
 Each group shows the first few results; **Show more** shows the rest. Every result shows its folder on the right.
 
+**✨ Search with AI.** When you type a sentence instead of a few words — *notes from last week having elena*, *anything about pricing ideas* — a line **✨ Search with AI** appears at the top of the results. Click it or press **Alt+Enter**: the AI understands dates, folders, tags and the subject, and the found notes show right there in the sidebar under **AI search**. **Open in Find** opens them as a table in [Find notes](#find-notes-ask-in-your-own-words), where you can sort, add summaries, refine or change them. A question (*what did I decide about …?*) opens [Ask your notes](#19-ask-your-notes) with the answer.
+
 ![Search results grouped by kind](images/search.png)
 
 **Search is forgiving:** small typos still find the note ("websit relanch"), and so do word starts ("we re") and initials ("wrp"). Text search ignores accents. Put an exact phrase in "quotes".
@@ -368,10 +372,20 @@ Click **Find** at the bottom left (next to Organize), press **Ctrl+Shift+F**, or
 - *all notes which have elena & must do* — both must be in the note (`&`, *and*, `+` or commas = all of them)
 - *notes with copyzap or pimpmycopy, but not in ARCHIVE* — *or* = either one; *not / without* leaves things out
 - *notes tagged #ai in PROJECTS* · *high importance notes about pricing* · *notes whose title has invoice*
+- *all notes from last week having elena inside* — a date and an exact word
+- *notes about pricing ideas* — a **subject**: with search by meaning (below) this also finds notes that say *Preise*, *cuánto cobramos* or *how much we charge*
+- *what did I decide about Elena's voice?* — a **question**: Find notes opens [Ask your notes](#19-ask-your-notes) with the answer and its sources
 - *all notes ascending by date* · *notes edited in October, newest first* · *notes not touched for 6 months* · *the 20 most recent notes in INBOX*
 - *all notes in ELENA with date and short summary* · *notes about CopyZap, show tags and importance*
 
 The start screen shows these and more as **examples — click one** to put it in the box.
+
+**Search by meaning.** Normally a note must contain the words. With **search by meaning** turned on, *notes about pricing* also finds notes that talk about prices in other words or another language. The line at the top of Find notes shows its state:
+- **Search by meaning: off · Set up** — click **Set up**. My Notes sends each note's title, folder, tags and its first ~6,000 characters **once** to OpenAI (model *text-embedding-3-small*, about $0.02 per million word-pieces — for 1,600 notes usually **a few cents**; you see the estimate first) and keeps the result — a "meaning index" — in this browser. It needs an **OpenAI key** (AI settings, robot icon), even if you use Claude or DeepSeek for everything else. Locked notes are never sent.
+- **Search by meaning: on · 1,598 notes** — ready. New or changed notes are added by themselves when you search (up to 40 at a time, a fraction of a cent); with more, the line shows **N new/changed · Update**.
+- Results found by meaning are sorted **best match first** and show **NN% match**. You can still combine a subject with exact words, dates, folders or tags (*notes about pricing from this year in SHARPEN.STUDIO*).
+- Without the index, a subject is searched by its key words in English, Spanish and German — a note shows *Searched … by its key words* so you know.
+- The index belongs to this PC/browser; on another PC click **Set up** once there too.
 
 **Exact words / Similar words too.** *Exact* finds only the words you typed. *Similar words too* lets the AI add other ways to say them — synonyms and English, Spanish and German (*must do* → *pendiente*, *to do*…). The line *Also matched* shows which words were added.
 
@@ -387,7 +401,7 @@ The start screen shows these and more as **examples — click one** to put it in
 - Every change is listed in the note **Find notes log**.
 - Locked notes are never changed. Deleting is not possible here — move notes to an archive folder instead.
 
-**Privacy and cost.** For searching, the AI sees only **your request** and your folder and tag names — never the text of your notes. The search itself runs in the app over every note, free and fast. Only summaries send note text (the first ~1,600 characters of each). Without AI set up, Find notes still works as a plain search: words joined by `&` or *and* must all appear.
+**Privacy and cost.** For searching, the AI sees only **your request** and your folder and tag names — never the text of your notes. (Search by meaning is the exception you turn on yourself: it sends each note's text once to OpenAI to build the index.) The search itself runs in the app over every note, free and fast. Only summaries send note text (the first ~1,600 characters of each). Without AI set up, Find notes still works as a plain search: words joined by `&` or *and* must all appear.
 
 ### Jump to a note (Ctrl+O)
 The fastest way to open a note when you roughly know its name. It searches names only (tables too), forgives typos, understands initials, puts recently opened notes first, and also understands `folder:` and `tag:`. If nothing fits, **Enter** creates a note with that name.
@@ -693,6 +707,8 @@ Ask a question in normal words and get an answer **written from your own notes**
 - **Follow-up questions** continue the conversation ("and the budget?"). **New question** starts over. Closing the window keeps the conversation until you start a new one.
 - **Save as note** writes the questions and answers into a new note, with `[[links]]` to the sources.
 - Narrow it down with the same words as in search: `folder:Clients`, `tag:website`, `edited:30d`.
+
+**With search by meaning** (set up in [Find notes](#find-notes-ask-in-your-own-words)), Ask your notes also picks notes that are *about* your question in other words or languages — the answers get much better when your notes use different words than your question.
 
 **How it works:** Claude first turns your question into search words (including English, Spanish and German versions). My Notes then searches your vault **on your PC** and picks the best-fitting notes, up to 14 (long notes only in parts). Only those notes are sent to Claude, which answers from them alone. If the answer isn't in them, it says so instead of guessing; try other words or a folder.
 

@@ -154,6 +154,12 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .fntab a{color:var(--text);cursor:pointer;text-decoration:none;font-weight:500}.fntab a:hover{color:var(--accent);text-decoration:underline}
 .fnd{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}.fnn{white-space:nowrap}.fnn .dot{margin-right:6px}.fnm{color:var(--muted);font-size:12.5px;max-width:380px}.fns{max-width:420px}
 .fntag{font-size:12px;color:var(--muted)}.fnmore{margin:8px 10px}
+.semstat{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}.semstat .ghost{padding:2px 8px;font-size:12px}
+.semdot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}.semdot.on{background:#16a34a}
+.aisrgo{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:13px}.aisrgo .uic{width:14px;height:14px;margin:0}.aisrgo span:first-of-type{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aisr{border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:9px;margin:4px 2px 10px;padding:4px 2px 6px;background:color-mix(in srgb,var(--accent) 3%,var(--bg))}
+.aisrh{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:13px}.aisrh .uic{width:14px;height:14px;margin:0;color:var(--accent)}.aisrh .sp{flex:1}.aisrh .ghost{padding:2px 6px;font-size:12px;display:inline-flex;align-items:center;gap:3px}
+.aisrx{font-size:12px;color:var(--muted);padding:0 8px 4px}
 .segk button{font-size:12px;white-space:nowrap}.segk .karch{display:inline-flex;align-items:center;gap:3px}.segk .karch .uic{width:13px;height:13px;margin:0}.segk .karch.hid span{text-decoration:line-through}
 .item.ktemp .nm{opacity:.5}.item.ktemp .ico,.item.ktemp .dot{opacity:.45}
 .kmark{font-size:10px;margin-left:4px;opacity:.85;flex:none}
@@ -858,7 +864,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v66-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v67-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -5922,6 +5928,14 @@ async function askRun(q){
     const kws = await askKeywords(q);
     turn.state = 'Searching your notes…'; askRender();
     const pick = askPick(q, kws);
+    try {   // v67: with the meaning index, also the notes that are about the question in other words
+      if (await semReady()){
+        const sims = semScores(await semQueryVec(q)), pool = [...sims.entries()].filter(([p]) => { const n = S.notes.get(p); return n && !n.locked && (!ASK.scope || n.folder === ASK.scope || n.folder.startsWith(ASK.scope + '/')); }).sort((a, b) => b[1] - a[1]);
+        const best = pool.length ? pool[0][1] : 0, sem = pool.filter(([, v]) => v >= Math.max(0.22, best - 0.15)).slice(0, ASK_MAX_NOTES).map(([p]) => S.notes.get(p));
+        const merged = []; for (let i = 0; merged.length < ASK_MAX_NOTES && (i < sem.length || i < pick.list.length); i++){ for (const n of [sem[i], pick.list[i]]) if (n && !merged.includes(n) && merged.length < ASK_MAX_NOTES) merged.push(n); }
+        pick.list = merged; turn.sem = true;
+      }
+    } catch(e){ console.warn('[MN] meaning search in Ask', e); }
     const blk = askSourceBlock(pick.list, pick.terms);
     turn.sent = blk.added; turn.found = pick.list.length;
     turn.state = (blk.added.length ? AIN() + ' is reading ' + blk.added.length + ' note' + (blk.added.length === 1 ? '' : 's') : AIN() + ' is thinking') + '…'; askRender();
@@ -8637,6 +8651,7 @@ function renderSearchResults(){
     H.push(sect('Pick ' + sm[1].toLowerCase() + ':'));
     H.push(sugg.map(({ k, x }) => `<div class="item srsugg" data-sugg="${esc(k + ':' + (/\s/.test(x) ? '"' + x + '"' : x))}">${k === 'folder' ? iconHtml(x, DEF_FOLDER, 'fic') : k === 'tag' ? '<span class="sgi">#</span>' : '<span class="sgi">›</span>'}<span class="nm">${esc(x)}</span></div>`).join(''));
   }
+  const aiH = sbAiHtml(); if (aiH) H.push(aiH);
   const all = [...S.notes.values()].filter(ok);
   if (!terms.length){
     // only narrowing words: list everything that fits, newest first
@@ -8692,7 +8707,7 @@ function renderSearchResults(){
   srKeyMark();
 }
 /* keyboard in the results: ↓/↑ move, Enter opens, Ctrl+Enter opens and stays in the search */
-function srItems(){ return [...$('list').querySelectorAll('.item[data-p], .item[data-showfolder], .item[data-srtog], .item[data-sugg], .item[data-ss]')]; }
+function srItems(){ return [...$('list').querySelectorAll('.item[data-aisearch], .item[data-p], .item[data-showfolder], .item[data-srtog], .item[data-sugg], .item[data-ss]')]; }
 function srKeyMark(){ const it = srItems(); $('list').querySelectorAll('.kact').forEach(x => x.classList.remove('kact')); if (S.kIdx == null || S.kIdx < 0) return; S.kIdx = Math.min(S.kIdx, it.length - 1); const el = it[S.kIdx]; if (el){ el.classList.add('kact'); el.scrollIntoView({ block:'nearest' }); } }
 const ssKey = () => 'qn-savedsearch' + (S.root ? ':' + S.root.name : '');
 function savedSearches(){ try { const v = JSON.parse(localStorage.getItem(ssKey()) || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } }
@@ -10811,7 +10826,9 @@ const FN_EXAMPLES = [
     ['all notes which have elena & must do', 'both words must be in the note'],
     ['notes with copyzap or pimpmycopy, but not in ARCHIVE', 'either word · leave a folder out'],
     ['notes tagged #ai in PROJECTS', 'tag + folder'],
-    ['high importance notes about pricing', 'importance + a word'],
+    ['all notes from last week having elena inside', 'a date + an exact word'],
+    ['notes about pricing ideas', 'by meaning — also finds “Preise”, “costos”…'],
+    ['high importance notes about pricing', 'importance + a subject'],
     ['key notes about CopyZap', '⭐ Key label + a word'],
     ['temp notes older than a month', '⏳ Temp label + a date'],
     ['notes whose title has invoice', 'only the title']]],
@@ -10820,6 +10837,9 @@ const FN_EXAMPLES = [
     ['notes edited in October, newest first', 'a month'],
     ['notes not touched for 6 months', 'old notes'],
     ['the 20 most recent notes in INBOX', 'a number + a folder']]],
+  ['Questions (answered from your notes)', 'message-circle-question-mark', [
+    ['what did I decide about Elena’s voice?', 'opens Ask your notes with the answer and its sources'],
+    ['¿cuánto cobramos por un sitio web?', 'any language']]],
   ['Columns & summaries', 'table', [
     ['all notes in ELENA with date and short summary', 'summaries cost a little AI — you see the price first'],
     ['notes about CopyZap, show tags and importance', 'extra columns']]],
@@ -10838,6 +10858,7 @@ function fnOpen(q){
   if (!pg){ pg = document.createElement('div'); pg.id = 'fnPage'; document.querySelector('main.main').appendChild(pg);
     pg.addEventListener('click', fnClick); pg.addEventListener('keydown', fnKeys); pg.addEventListener('change', fnChange); }
   pg.style.display = 'flex'; if (q != null){ FN.q = q; }
+  semLoad().then(() => semProgress()).catch(() => {});
   fnRender(); setTimeout(() => { const i = $('fnQ'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 30);
 }
 function fnClose(){ const pg = $('fnPage'); if (pg) pg.style.display = 'none'; }
@@ -10847,6 +10868,7 @@ const fnDay = t => t ? new Date(t).toISOString().slice(0, 10) : '—';
 function fnExplain(sp){
   if (!sp) return '';
   const q = a => a.map(t => '“' + (Array.isArray(t) ? t[0] : t) + '”'), P = [];
+  if (sp.about) P.push('about “' + sp.about + '”');
   if (sp.all && sp.all.length) P.push('has ' + q(sp.all).join(' and '));
   if (sp.any && sp.any.length) P.push('has ' + q(sp.any).join(' or '));
   if (sp.none && sp.none.length) P.push('without ' + q(sp.none).join(', '));
@@ -10861,8 +10883,8 @@ function fnExplain(sp){
   if (sp.edited_after) P.push('edited from ' + sp.edited_after);
   if (sp.edited_before) P.push('edited before ' + sp.edited_before);
   if (!P.length) P.push('all notes');
-  const by = { edited:'date', name:'name', folder:'folder', opened:'last opened' }[(sp.sort || {}).by] || 'date';
-  P.push('· ' + by + ((sp.sort || {}).dir === 'asc' ? (by === 'date' ? ', oldest first' : ', A→Z') : (by === 'date' ? ', newest first' : ', Z→A')));
+  const by = { edited:'date', name:'name', folder:'folder', opened:'last opened', relevance:'relevance' }[(sp.sort || {}).by] || 'date';
+  P.push('· ' + (by === 'relevance' ? 'best match first' : by + ((sp.sort || {}).dir === 'asc' ? (by === 'date' ? ', oldest first' : ', A→Z') : (by === 'date' ? ', newest first' : ', Z→A'))));
   if (sp.limit) P.push('· first ' + sp.limit);
   if (sp.summaries) P.push('· with summaries');
   return P.join(' ');
@@ -10874,9 +10896,12 @@ function fnLocalSpec(q){
   return { all, sort:{ by:'edited', dir:'desc' }, columns:['date', 'name', 'folder', 'match'], local:true };
 }
 const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request turned into a search of their notes, a change to the found notes, or both.', schema:{ type:'object', properties:{
-  intent:{ type:'string', enum:['find', 'refine', 'change'], description:'find = new search · refine = adjust the current search · change = do something to the notes found now' },
+  intent:{ type:'string', enum:['find', 'refine', 'change', 'answer'], description:'find = new search · refine = adjust the current search · change = do something to the notes found now · answer = a question about what the notes say' },
+  question:{ type:'string', description:'Only for intent answer: the question, as the user asked it.' },
   search:{ type:'object', description:'The complete search after this request (for refine: the current search with the change applied).', properties:{
     all:{ type:'array', items:{ type:'string' }, description:'words or phrases that must ALL appear' },
+    about:{ type:'string', description:'the subject the notes should be ABOUT (search by meaning), in the user\'s words' },
+    about_words:{ type:'array', items:{ type:'string' }, description:'key words for that subject in English, Spanish and German (used when search by meaning is off)' },
     any:{ type:'array', items:{ type:'string' }, description:'at least one of these must appear' },
     none:{ type:'array', items:{ type:'string' }, description:'none of these may appear' },
     title_only:{ type:'boolean' }, folders:{ type:'array', items:{ type:'string' } }, not_folders:{ type:'array', items:{ type:'string' } },
@@ -10884,7 +10909,7 @@ const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request tu
     importance:{ type:'array', items:{ type:'string', enum:['high', 'medium', 'low', 'none'] } },
     labels:{ type:'array', items:{ type:'string', enum:['key', 'temp', 'none'] }, description:'the note\'s Keep label: key (⭐ important), temp (⏳ scratch), none (normal)' },
     edited_after:{ type:'string', description:'YYYY-MM-DD' }, edited_before:{ type:'string', description:'YYYY-MM-DD (exclusive)' },
-    sort:{ type:'object', properties:{ by:{ type:'string', enum:['edited', 'name', 'folder', 'opened'] }, dir:{ type:'string', enum:['asc', 'desc'] } } },
+    sort:{ type:'object', properties:{ by:{ type:'string', enum:['relevance', 'edited', 'name', 'folder', 'opened'] }, dir:{ type:'string', enum:['asc', 'desc'] } } },
     limit:{ type:'integer' }, summaries:{ type:'boolean' },
     columns:{ type:'array', items:{ type:'string', enum:['date', 'name', 'folder', 'match', 'tags', 'importance', 'summary'] } } } },
   similar_words:{ type:'array', description:'Only when similar words are allowed: for each word/phrase in all/any/none, other ways to say it (synonyms, English / Spanish / German translations, common spellings).', items:{ type:'object', properties:{ word:{ type:'string' }, also:{ type:'array', items:{ type:'string' } } }, required:['word', 'also'] } },
@@ -10893,18 +10918,12 @@ const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request tu
     label:{ type:'string', enum:['key', 'temp', 'none'] },
     tag:{ type:'string' }, folder:{ type:'string' }, importance:{ type:'string', enum:['high', 'medium', 'low', 'none'] },
     find:{ type:'string' }, replace:{ type:'string' }, text:{ type:'string' }, property:{ type:'string' }, value:{ type:'string' }, why_not:{ type:'string' } } },
-  explain:{ type:'string', description:'One short plain-English line: what you understood.' } }, required:['intent', 'search', 'explain'] } };
-async function fnAsk(q){
-  q = (q || '').trim(); if (!q) return;
-  FN.q = q;
-  const hasResults = !!FN.spec;
-  if (!aiKey()){   // no AI: plain search
-    if (hasResults && /^(add|remove|move|set|replace|append|pin|unpin)\b/i.test(q)) return toast('Changing notes with words needs AI — set it up in AI settings (robot icon, bottom left)', 7000);
-    FN.spec = fnLocalSpec(q); FN.similarMap = null; FN.lastQ = q; FN.explain = 'Without AI: ' + fnExplain(FN.spec); return fnSearch();
-  }
+  explain:{ type:'string', description:'One short plain-English line: what you understood.' } }, required:['intent', 'explain'] } };
+// v67: the AI part, shared by Find notes and the ✨ AI search in the sidebar
+async function fnParse(q, hasResults){
   const folders = allFolders().filter(f => !f.split('/').some(x => x.startsWith('.'))).slice(0, 500);
   const tags = [...new Set([...S.notes.values()].flatMap(n => n.external ? [] : allTags(n)))].slice(0, 400);
-  const prompt = `Today is ${fnDay(Date.now())}. The user searches their own notes vault (Markdown notes; each note has a title, folder, tags, importance high/medium/low, an edit date and text).
+  const prompt = `Today is ${fnDay(Date.now())} (${new Date().toLocaleDateString('en', { weekday:'long' })}). The user searches their own notes vault (Markdown notes; each note has a title, folder, tags, importance high/medium/low, a Keep label, an edit date and text). Notes are written in English, Spanish and German.
 Folders: ${folders.join(' | ') || '(none)'}
 Tags: ${tags.join(' ') || '(none)'}
 ${hasResults ? 'Current search: ' + JSON.stringify(fnSpecOut(FN.spec)) + '\nNotes found now: ' + FN.rows.length + '\n' : 'There are no results yet.\n'}
@@ -10913,47 +10932,78 @@ Similar words: ${FN.similar ? 'ALLOWED — fill similar_words for every search w
 The user says: "${q}"
 
 Rules:
-- Decide the intent. With results present, a follow-up like "only from October", "without ARCHIVE", "newest first", "add summaries" is "refine" (return the whole adjusted search). An instruction to modify notes ("add tag…", "move them to…", "set importance…", "replace X with Y", "add the line…", "set property…", "pin them") is "change" — keep the search as it is. Anything else is a new "find".
-- Words joined by "&", "and", "+" or listed with commas go to "all". "or" → "any". "not", "without", "except" → "none" or not_folders / tags_none.
+- Decide the intent. With results present, a follow-up like "only from October", "without ARCHIVE", "newest first", "add summaries" is "refine" (return the whole adjusted search). An instruction to modify notes ("add tag…", "move them to…", "set importance…", "replace X with Y", "add the line…", "set property…", "pin them") is "change" — keep the search as it is. A real question about what the notes SAY ("what did I decide about…", "why…", "how much…", "¿qué…?", "was habe ich…") is "answer" — put the question in "question". Anything else is a new "find".
+- Exact words: "having X inside", "that contain X", "with the word X", names, codes → put them in "all" (several joined by "&", "and", "+" or commas → all of them; "or" → "any"; "not", "without", "except" → "none" or not_folders / tags_none).
+- Meaning: when the user asks for notes ABOUT a subject or idea ("notes about pricing", "anything on marketing ideas", "notes related to the trip"), put that subject in "about" (short, in the user's words) and 6–12 "about_words" (key words for it in English, Spanish and German). Don't also put it in all/any unless the user wants that exact word. Sort by "relevance" unless the user asked for an order.
 - Use folder and tag names exactly as listed (match case-insensitively; tags without #). Sub-folders are included automatically.
-- Dates: "in October" = the most recent October (edited_after first day, edited_before first day of the next month). "not touched for 6 months" = edited_before 6 months ago. "ascending/oldest first" = sort edited asc. Default sort: edited desc.
+- Dates: "last week" = the 7 days before today (edited_after = today − 7 days). "this week" = since Monday. "in October" = the most recent October (edited_after first day, edited_before first day of the next month). "not touched for 6 months" = edited_before 6 months ago. "ascending/oldest first" = sort edited asc. Default sort without "about": edited desc.
 - "with summary"/"short summary"/"what they are about" → summaries true and add "summary" to columns. Default columns: date, name, folder, match. Add tags/importance columns when asked.
 - Every note has a Keep label: "key" (⭐ important), "temp" (⏳ scratch) or none. "key notes …" → labels ["key"]; "temp notes" → labels ["temp"]. To label notes use change.action "set_label" with label; "archive them" → action "archive" (moves them into the archive folder, keeping their path); "restore them" → "restore".
 - Deleting notes is never possible here: use change.action "not_possible" with why_not (suggest moving them to an archive folder instead). Same for anything else you can't do with the listed actions.
-- explain: one short line, e.g. "Notes that contain “elena” and “must do”, oldest first".
+- explain: one short line, e.g. "Notes edited in the last 7 days that contain “elena”".
 Answer by calling notes_request.`;
-  FN.busy = true; fnRender();
-  let res;
-  try { res = await aiCall({ tier:'small', max:1500, messages:[{ role:'user', content:prompt }], tool:FN_SPEC_TOOL, force:true }); }
-  catch(err){ FN.busy = false; fnRender(); if (err.code === 'BADKEY' || err.code === 'NOKEY') aiAskKey(err.message).catch(() => {}); return toast(err.message, 7000); }
-  FN.busy = false;
+  const res = await aiCall({ tier:'small', max:1500, messages:[{ role:'user', content:prompt }], tool:FN_SPEC_TOOL, force:true });
   FN.usage = usageAdd(FN.usage, res.usage || AI_USAGE.last);
   let o = res.input; if (!o){ const t = res.text || '', a = t.indexOf('{'), z = t.lastIndexOf('}'); try { o = JSON.parse(t.slice(a, z + 1)); } catch(e){} }
-  if (!o || !o.search){ FN.spec = fnLocalSpec(q); FN.explain = 'The AI didn’t answer clearly — plain search: ' + fnExplain(FN.spec); return fnSearch(); }
+  if (!o || (!o.search && o.intent !== 'answer')){ const sp = fnLocalSpec(q); return { intent:'find', search:sp, explain:'The AI didn’t answer clearly — plain search: ' + fnExplain(sp) }; }
+  return o;
+}
+function fnNormSpec(o){
+  const sp = o.search || {};
+  sp.columns = (sp.columns && sp.columns.length ? sp.columns : ['date', 'name', 'folder', 'match']).filter(c => FN_COLS[c]);
+  if (sp.summaries && !sp.columns.includes('summary')) sp.columns.push('summary');
+  if (!sp.columns.includes('name')) sp.columns.unshift('name');
+  if (sp.about && !sp.sort) sp.sort = { by:'relevance', dir:'desc' };
+  return sp;
+}
+async function fnAsk(q){
+  q = (q || '').trim(); if (!q) return;
+  FN.q = q;
+  const hasResults = !!FN.spec;
+  if (!aiKey()){   // no AI: plain search
+    if (hasResults && /^(add|remove|move|set|replace|append|pin|unpin)\b/i.test(q)) return toast('Changing notes with words needs AI — set it up in AI settings (robot icon, bottom left)', 7000);
+    FN.spec = fnLocalSpec(q); FN.similarMap = null; FN.qv = null; FN.lastQ = q; FN.explain = 'Without AI: ' + fnExplain(FN.spec); return fnSearch();
+  }
+  FN.busy = true; fnRender();
+  let o;
+  try { o = await fnParse(q, hasResults); }
+  catch(err){ FN.busy = false; fnRender(); if (err.code === 'BADKEY' || err.code === 'NOKEY') aiAskKey(err.message).catch(() => {}); return toast(err.message, 7000); }
+  if (o.intent === 'answer'){ FN.busy = false; fnRender(); fnClose(); askOpen(); setTimeout(() => askRun(o.question || q), 50); return; }
   if (o.intent === 'change' && hasResults && o.change){
+    FN.busy = false;
     if (o.change.action === 'not_possible') return fnRender(), toast(o.change.why_not || 'That can’t be done here', 8000);
     return fnPlanChange(o.change, o.explain);
   }
-  const sp = o.search; sp.columns = (sp.columns && sp.columns.length ? sp.columns : ['date', 'name', 'folder', 'match']).filter(c => FN_COLS[c]);
-  if (sp.summaries && !sp.columns.includes('summary')) sp.columns.push('summary');
-  if (!sp.columns.includes('name')) sp.columns.unshift('name');
-  FN.similarMap = FN.similar ? new Map((o.similar_words || []).map(x => [fold(String(x.word || '')), (x.also || []).map(String).filter(Boolean)])) : null;
+  const sp = fnNormSpec(o);
+  FN.similarMap = FN.similar ? fnSimMap(o.similar_words) : null;
+  FN.qv = null; FN.semOff = false;
+  if (sp.about){
+    try { if (await semReady()) FN.qv = await semQueryVec(sp.about); else FN.semOff = true; }
+    catch(e){ FN.semOff = true; toast('Search by meaning didn’t work this time (' + e.message + ') — searched by words instead', 7000); }
+  }
+  FN.busy = false;
   if (o.intent !== 'refine' || !FN.lastQ) FN.lastQ = q;
   FN.spec = sp; FN.explain = o.explain || fnExplain(sp); FN.change = null; FN.sortBy = null; FN.show = 300;
   fnSearch();
   if (sp.summaries) setTimeout(() => fnSummaries(), 50);
 }
+const fnSimMap = list => new Map((list || []).map(x => [fold(String(x.word || '')), (x.also || []).map(String).filter(Boolean)]));
 const fnSpecOut = sp => { const o = {}; for (const [k, v] of Object.entries(sp || {})) if (k !== 'local' && v != null && !(Array.isArray(v) && !v.length)) o[k] = v; return o; };
-// ----- the search itself (no AI) -----
-function fnSearch(){
-  const sp = FN.spec || {}, now = Date.now();
-  const variants = w => { const k = fold(String(w)); const al = (FN.similarMap && FN.similarMap.get(k)) || []; return [k, ...al.map(fold)].filter(Boolean); };
+// ----- the search itself (no AI): every note, filtered; with a meaning vector the notes are ranked by how close they are -----
+function fnFilter(sp, qv, simWords, sortBy){
+  sp = sp || {};
+  const simMap = simWords instanceof Map ? simWords : simWords ? fnSimMap(simWords) : null;
+  const variants = w => { const k = fold(String(w)); const al = (simMap && simMap.get(k)) || []; return [k, ...al.map(fold)].filter(Boolean); };
   const groups = a => (a || []).map(w => ({ w, v: variants(w) }));
-  const all = groups(sp.all), any = groups(sp.any), none = groups(sp.none);
+  const all = groups(sp.all), none = groups(sp.none);
+  let any = groups(sp.any);
+  // "about" without a meaning index: its key words (all languages) — any of them
+  if (sp.about && !qv){ const aw = [...new Set([sp.about, ...(sp.about_words || [])].map(x => fold(String(x))).filter(Boolean))]; any = any.concat([{ w:sp.about, v:aw }]); }
   const inF = (n, list) => list.some(f => { const l = fold(f).replace(/\/+$/, ''); const nf = fold(n.folder); return nf === l || nf.startsWith(l + '/') || nf.split('/').includes(l); });
   const tagIn = (n, t) => allTags(n).some(x => fold(x) === fold(String(t).replace(/^#/, '')) || fold(x).startsWith(fold(String(t).replace(/^#/, '')) + '/'));
   const after = sp.edited_after ? Date.parse(sp.edited_after) : null, before = sp.edited_before ? Date.parse(sp.edited_before) : null;
-  const rows = [];
+  const sims = qv ? semScores(qv) : null;
+  let rows = [];
   for (const n of S.notes.values()){
     if (n.external) continue;
     if (sp.folders && sp.folders.length && !inF(n, sp.folders)) continue;
@@ -10970,16 +11020,29 @@ function fnSearch(){
     if (all.length && !all.every(hit)) continue;
     if (any.length && !any.some(hit)) continue;
     if (none.length && none.some(hit)) continue;
+    if (sims && !sims.has(n.path)) continue;   // not in the meaning index (locked, empty)
     // "where it matched": the first matching word in the text, with a little around it
     let match = '';
     const first = [...all, ...any].map(hit).find(Boolean);
     if (first && !n.locked){ const b = n.body || '', i = fold(b).indexOf(first); if (i >= 0){ const a = Math.max(0, i - 40); match = (a ? '…' : '') + b.slice(a, i + first.length + 60).replace(/\s+/g, ' ').trim() + '…'; } else if (title.includes(first)) match = 'in the title'; }
-    rows.push({ n, match });
+    rows.push({ n, match, sim: sims ? sims.get(n.path) : null });
   }
-  const s = FN.sortBy || sp.sort || { by:'edited', dir:'desc' }, dir = s.dir === 'asc' ? 1 : -1;
-  const key = { edited: r => r.n.mtime || 0, name: r => r.n.name, folder: r => r.n.folder + '/' + r.n.name, opened: r => openedAt(r.n.path) || 0 }[s.by] || (r => r.n.mtime || 0);
-  rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'string' ? NCOLL.compare(x, y) : x - y) * dir; });
-  FN.rows = sp.limit ? rows.slice(0, sp.limit) : rows; FN.view = 'results';
+  if (sims){   // keep the notes that are really about it: close to the best one, and not too far in absolute terms
+    const best = rows.reduce((m, r) => Math.max(m, r.sim), 0), cut = Math.max(0.22, best - 0.17);
+    rows = rows.filter(r => r.sim >= cut).slice(0);
+    for (const r of rows){ const pct = Math.round(Math.min(1, Math.max(0, (r.sim - 0.15) / Math.max(0.05, best - 0.15))) * 100); r.match = pct + '% match' + (r.match ? ' · ' + r.match : !r.n.locked ? ' · ' + (r.n.body || '').replace(/\s+/g, ' ').trim().slice(0, 90) + '…' : ''); }
+  }
+  const s = sortBy || sp.sort || { by:'edited', dir:'desc' }, dir = s.dir === 'asc' ? 1 : -1;
+  if (s.by === 'relevance' && sims) rows.sort((a, b) => b.sim - a.sim);
+  else {
+    const key = { edited: r => r.n.mtime || 0, name: r => r.n.name, folder: r => r.n.folder + '/' + r.n.name, opened: r => openedAt(r.n.path) || 0 }[s.by] || (r => r.n.mtime || 0);
+    rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'string' ? NCOLL.compare(x, y) : x - y) * (s.by === 'relevance' ? -1 : dir); });
+  }
+  if (sims && rows.length > 200) rows = rows.slice(0, 200);
+  return sp.limit ? rows.slice(0, sp.limit) : rows;
+}
+function fnSearch(){
+  FN.rows = fnFilter(FN.spec, FN.qv, FN.similarMap, FN.sortBy); FN.view = 'results';
   fnRender();
 }
 function openedAt(p){ try { return (JSON.parse(localStorage.getItem('qn-opened') || '{}') || {})[p] || 0; } catch(e){ return 0; } }
@@ -11134,6 +11197,7 @@ async function fnRender(){
       <button class="primary" data-fn="go" ${FN.busy ? 'disabled' : ''}>${FN.busy ? '…' : UI('arrow-right')}${FN.busy ? '' : (FN.spec ? ' Go' : ' Search')}</button></div>
     <div class="fnopts"><label class="fnsw" title="Exact: only these words. Similar: the AI adds other ways to say them — synonyms and English / Spanish / German."><input type="radio" name="fnsim" value="0" ${FN.similar ? '' : 'checked'}> Exact words</label>
       <label class="fnsw"><input type="radio" name="fnsim" value="1" ${FN.similar ? 'checked' : ''}> Similar words too <span class="vorgmuted">(EN · ES · DE)</span></label>
+      <span class="semstat" data-semstat="1">${semStatusHtml()}</span>
       <span class="sp"></span>${FN.spec ? `<button class="ghost" data-fn="ex">${UI('lightbulb')} ${FN.showEx ? 'Hide examples' : 'Examples'}</button><button class="ghost" data-fn="new">${UI('rotate-ccw')} New search</button>` : ''}
       ${aiKey() ? '' : `<span class="vorgmuted">No AI set up — plain search (words joined by &amp; must all appear)</span>`}</div>`;
   if (!FN.spec){
@@ -11166,7 +11230,7 @@ async function fnRender(){
     return '<td></td>';
   };
   const shown = FN.rows.slice(0, FN.show);
-  pg.innerHTML = head + ex + `<div class="fnund">${UI('sparkles')} <b>Understood:</b> ${esc(FN.explain || fnExplain(sp))}${sp.local ? '' : ` <span class="vorgmuted">· ${esc(fnExplain(sp))}</span>`}</div>${sim}
+  pg.innerHTML = head + ex + `<div class="fnund">${UI('sparkles')} <b>Understood:</b> ${esc(FN.explain || fnExplain(sp))}${sp.local ? '' : ` <span class="vorgmuted">· ${esc(fnExplain(sp))}</span>`}</div>${sim}${sp.about && FN.semOff ? `<div class="fnsim">${UI('info')} Searched “${esc(sp.about)}” by its key words. Turn on <b>search by meaning</b> (above) to also find notes that say it in other words.</div>` : ''}
     <div class="orgbar"><span class="orgseln">${FN.rows.length} note${FN.rows.length === 1 ? '' : 's'}${FN.busy && FN.sumAll ? ' · summarizing ' + FN.sumDone + ' / ' + FN.sumAll : ''}</span><span class="sp"></span>
       ${est && est.n ? `<button class="ghost" data-fn="sum" title="AI writes one sentence per note — you see the price first">${UI('sparkles')} Add summaries (~${est.usd < 0.01 ? '<$0.01' : '$' + est.usd.toFixed(2)})</button>` : ''}
       <button class="ghost" data-fn="save" ${FN.rows.length ? '' : 'disabled'}>${UI('file-plus')} Save as note</button></div>
@@ -11187,6 +11251,7 @@ function fnClick(e){
   if (ex){ const q = $('fnQ'); q.value = ex.dataset.ex; q.focus(); return; }
   const th = e.target.closest('th[data-sort]');
   if (th){ const by = th.dataset.sort, cur = FN.sortBy || FN.spec.sort || {}; FN.sortBy = { by, dir: cur.by === by && cur.dir === 'asc' ? 'desc' : 'asc' }; return fnSearch(); }
+  if (e.target.closest('[data-sem="build"]')){ semBuild().then(() => fnRender()); return; }
   const b = e.target.closest('[data-fn]'); if (!b || (FN.busy && b.dataset.fn !== 'close')) return;
   const v = b.dataset.fn;
   if (v === 'close') return fnClose();
@@ -11232,27 +11297,31 @@ function setNoteKeep(n, v){
 /* ----- archive ----- */
 function archiveRoot(){ const top = allFolders().filter(f => !f.includes('/')); return top.find(f => /^(archive|archiv|archivo|archives)$/i.test(f)) || 'ARCHIVE'; }
 const inArchive = p => { const a = archiveRoot(); return p === a || p.startsWith(a + '/'); };
+async function busyWhile(title, fn){   // v67: a spinner over the whole app while a note or folder moves — nothing can be edited meanwhile
+  await flushAll(); loading(true, title); clearInterval(S.loadTick); $('loadSub').textContent = 'Please wait…';
+  try { return await fn(); } finally { loading(false); }
+}
 async function archiveNote(n){
   if (inArchive(n.folder)) return toast('Already in the archive');
   const to = archiveRoot() + (n.folder ? '/' + n.folder : '');
-  await fnEnsureFolder(to); await moveNote(n, to);
+  await busyWhile('Archiving “' + n.name + '”…', async () => { await fnEnsureFolder(to); await moveNote(n, to); });
   toast('Archived to ' + to + ' — right-click → Restore puts it back', 6000);
 }
 async function restoreNote(n){
   const a = archiveRoot(); if (!inArchive(n.folder)) return;
   const to = n.folder === a ? '' : n.folder.slice(a.length + 1);
-  await fnEnsureFolder(to); await moveNote(n, to); toast('Restored to ' + (to || 'the vault root'));
+  await busyWhile('Restoring “' + n.name + '”…', async () => { await fnEnsureFolder(to); await moveNote(n, to); }); toast('Restored to ' + (to || 'the vault root'));
 }
 async function archiveFolder(f){
   const a = archiveRoot(); if (inArchive(f)) return toast('Already in the archive');
   const parent = a + (parentOf(f) ? '/' + parentOf(f) : '');
   if (!await confirmIt('Archive the folder “' + f + '”? It moves to ' + parent + '/' + f.split('/').pop() + ' — right-click → Restore puts it back.', 'Archive')) return;
-  await fnEnsureFolder(parent); await relocateFolder(f, parent);
+  await busyWhile('Archiving the folder “' + f.split('/').pop() + '”…', async () => { await fnEnsureFolder(parent); await relocateFolder(f, parent); });
 }
 async function restoreFolder(f){
   const a = archiveRoot(); if (!inArchive(f) || f === a) return;
   const orig = f.slice(a.length + 1);
-  await fnEnsureFolder(parentOf(orig)); await relocateFolder(f, parentOf(orig));
+  await busyWhile('Restoring the folder “' + f.split('/').pop() + '”…', async () => { await fnEnsureFolder(parentOf(orig)); await relocateFolder(f, parentOf(orig)); });
 }
 /* ----- quick temp note (Ctrl+Alt+T) ----- */
 async function newTempNote(){
@@ -11345,7 +11414,7 @@ async function kcClick(e){
       const list = a === 'arch' ? [temp[i]] : temp;
       if (a === 'archall' && !await confirmIt('Move ' + list.length + ' temp note' + (list.length === 1 ? '' : 's') + ' into ' + archiveRoot() + '? “Undo last” or Restore puts them back.', 'Archive')) return;
       const moves = [];
-      for (const x of list){ const from = x.n.path, to = archiveRoot() + (x.n.folder ? '/' + x.n.folder : ''); await fnEnsureFolder(to); await moveNote(x.n, to); moves.push({ from, to:x.n.path }); }
+      await busyWhile('Archiving ' + list.length + ' note' + (list.length === 1 ? '' : 's') + '…', async () => { for (const x of list){ const from = x.n.path, to = archiveRoot() + (x.n.folder ? '/' + x.n.folder : ''); $('loadSub').textContent = x.n.name; await fnEnsureFolder(to); await moveNote(x.n, to); moves.push({ from, to:x.n.path }); } });
       await kcPush({ k:'moves', moves });
       toast('Archived ' + moves.length + ' note' + (moves.length === 1 ? '' : 's'), 4000);
     }
@@ -11359,7 +11428,7 @@ async function kcUndo(){
   const a = l.pop(); if (!a) return toast('Nothing to undo');
   if (a.k === 'text'){ const n = S.notes.get(a.path); if (n){ Object.assign(n, parse(a.before)); n._noCreated = true; try { await writeNote(n); } finally { delete n._noCreated; } } }
   if (a.k === 'folder') setFolderKeep(a.f, a.before);
-  if (a.k === 'moves') for (const m of [...a.moves].reverse()){ const n = S.notes.get(m.to); if (n){ await fnEnsureFolder(parentOf(m.from)); await moveNote(n, parentOf(m.from)); } }
+  if (a.k === 'moves') await busyWhile('Putting notes back…', async () => { for (const m of [...a.moves].reverse()){ const n = S.notes.get(m.to); if (n){ await fnEnsureFolder(parentOf(m.from)); await moveNote(n, parentOf(m.from)); } } });
   await idbSet(kcUndoKey(), l).catch(() => {});
   toast('Undone', 2500);
 }
@@ -11367,6 +11436,124 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.key.toLowerCase() === 't'){ e.preventDefault(); newTempNote(); }
   else if (e.key === 'Escape' && kcIsOpen() && !S._kcBusy && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]')) kcClose();
 });
+
+/* ---------- v67: Search by meaning ----------
+   A one-time "meaning index": each note (title, folder, tags and the first ~6,000 characters) is turned into a list of
+   numbers by OpenAI's text-embedding-3-small (your OpenAI key, about $0.02 per million words-pieces → a few cents for a
+   whole vault). Notes about the same thing get similar numbers — in any language — so "notes about pricing" also finds
+   "Preise", "costo mensual" or "how much we charge". The index lives in this browser (IndexedDB); only new or changed
+   notes are sent again. Used by Find notes, the ✨ AI search in the sidebar, and Ask your notes. */
+const SEM_MODEL = 'text-embedding-3-small', SEM_DIMS = 512, SEM_USD_PER_MTOK = 0.02, SEM_CHARS = 6000;
+const SEM = { idx:null, key:'', building:false, done:0, all:0, qcache:new Map() };
+const semKey = () => 'sem:' + (S.root ? S.root.name : 'demo');
+const semOpenAIKey = () => lsGet('qn-openai-key');
+async function semLoad(){
+  if (SEM.idx && SEM.key === semKey()) return SEM.idx;
+  let v = null; try { v = await idbGet(semKey()); } catch(e){}
+  SEM.idx = v && v.model === SEM_MODEL && v.dims === SEM_DIMS ? v : { model:SEM_MODEL, dims:SEM_DIMS, v:{}, at:0 };
+  SEM.key = semKey(); return SEM.idx;
+}
+async function semSave(){ try { await idbSet(semKey(), SEM.idx); } catch(e){ console.warn('[MN] meaning index', e); } }
+function semText(n){
+  const body = (n.body || '').replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/<[^>]+>/g, ' ').replace(/%%[\s\S]*?%%/g, ' ').replace(/\s+/g, ' ').trim();
+  return (n.name + '\n' + (n.folder ? 'Folder: ' + n.folder + '\n' : '') + (allTags(n).length ? 'Tags: ' + allTags(n).join(', ') + '\n' : '') + body).slice(0, SEM_CHARS);
+}
+const semEligible = () => [...S.notes.values()].filter(n => !n.external && !n.locked && !isLockedText(n._saved) && (n.name + (n.body || '')).trim());
+function semStatus(){
+  const idx = SEM.idx && SEM.key === semKey() ? SEM.idx : null, notes = semEligible();
+  if (!idx) return { ready:false, have:0, stale:notes, total:notes.length };
+  const stale = notes.filter(n => { const e = idx.v[n.path]; return !e || e.m !== (n.mtime || 0); });
+  return { ready: Object.keys(idx.v).length > 0, have: notes.length - stale.length, stale, total: notes.length };
+}
+const semCost = notes => notes.reduce((a, n) => a + Math.min(semText(n).length, SEM_CHARS), 0) / 3.5 / 1e6 * SEM_USD_PER_MTOK;
+async function semEmbed(texts){
+  const key = semOpenAIKey(); if (!key) throw Object.assign(new Error('Meaning search needs an OpenAI key — add one in AI settings (robot icon, bottom left)'), { code:'NOKEY' });
+  let r;
+  try { r = await fetch(AI_BASE.openai + '/embeddings', { method:'POST', headers:{ 'content-type':'application/json', authorization:'Bearer ' + key }, body: JSON.stringify({ model:SEM_MODEL, input:texts, dimensions:SEM_DIMS }) }); }
+  catch(e){ throw new Error('Could not reach OpenAI (network, or a wrong key) — ' + e.message); }
+  if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} throw aiErr('openai', r.status, m || ('HTTP ' + r.status)); }
+  const j = await r.json();
+  return { vecs: j.data.sort((a, b) => a.index - b.index).map(d => new Float32Array(d.embedding)), tokens: (j.usage && j.usage.prompt_tokens) || 0 };
+}
+// update the index for the given notes (default: every new or changed note)
+async function semBuild(list, opts){
+  opts = opts || {};
+  if (SEM.building) return toast('The meaning index is already being updated…');
+  if (!semOpenAIKey()){ toast('Meaning search uses OpenAI — add your OpenAI key (it is also used for nothing else unless you choose OpenAI)', 8000); aiSettings(); return false; }
+  await semLoad();
+  const todo = list || semStatus().stale; if (!todo.length){ if (!opts.quiet) toast('The meaning index is up to date'); return true; }
+  if (!opts.quiet && todo.length > 30 && !await confirmIt('Build the meaning index for ' + todo.length + ' note' + (todo.length === 1 ? '' : 's') + '? This sends their text to OpenAI once (about ' + (semCost(todo) < 0.01 ? 'less than $0.01' : '$' + semCost(todo).toFixed(2)) + ') and keeps the result on this PC. Later only new or changed notes are sent. Locked notes are never sent.', 'Build index')) return false;
+  SEM.building = true; SEM.done = 0; SEM.all = todo.length; semProgress();
+  let tokens = 0;
+  try {
+    for (let i = 0; i < todo.length; i += 64){
+      const part = todo.slice(i, i + 64), { vecs, tokens:t } = await semEmbed(part.map(semText));
+      part.forEach((n, j) => { SEM.idx.v[n.path] = { m:n.mtime || 0, e:vecs[j] }; });
+      tokens += t; SEM.done = Math.min(todo.length, i + 64); semProgress();
+      if (i % 640 === 0) await semSave();
+    }
+    for (const p of Object.keys(SEM.idx.v)) if (!S.notes.has(p)) delete SEM.idx.v[p];   // notes that are gone
+    SEM.idx.at = Date.now(); await semSave();
+    if (!opts.quiet) toast('Meaning index ready: ' + Object.keys(SEM.idx.v).length + ' notes · cost $' + (tokens / 1e6 * SEM_USD_PER_MTOK).toFixed(4), 6000);
+    return true;
+  } catch(e){ toast(e.message, 8000); return false; }
+  finally { SEM.building = false; semProgress(); }
+}
+function semProgress(){ document.querySelectorAll('[data-semstat]').forEach(el => el.innerHTML = semStatusHtml()); }
+function semStatusHtml(){
+  if (SEM.building) return `<span class="semdot on"></span> Building meaning index… ${SEM.done} / ${SEM.all}`;
+  const st = semStatus();
+  if (!st.ready) return `<span class="semdot"></span> Search by meaning: off <button class="ghost" data-sem="build" title="Lets the search find notes about a subject even when other words are used (any language). Needs your OpenAI key; about ${semCost(semEligible()) < 0.01 ? '<$0.01' : '$' + semCost(semEligible()).toFixed(2)} once.">Set up</button>`;
+  return `<span class="semdot on"></span> Search by meaning: on · ${st.have.toLocaleString()} notes${st.stale.length ? ` · ${st.stale.length} new/changed <button class="ghost" data-sem="build">Update</button>` : ''}`;
+}
+async function semQueryVec(text){
+  text = String(text || '').trim(); if (!text) return null;
+  if (SEM.qcache.has(text)) return SEM.qcache.get(text);
+  const { vecs } = await semEmbed([text]); SEM.qcache.set(text, vecs[0]); return vecs[0];
+}
+const semDot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+// similarity of every indexed note to the query vector: Map path → 0…1
+function semScores(qv){
+  const out = new Map(); if (!qv || !SEM.idx) return out;
+  for (const [p, e] of Object.entries(SEM.idx.v)) if (S.notes.has(p)) out.set(p, semDot(qv, e.e));
+  return out;
+}
+// before a meaning search: quietly add a few new/changed notes (≤ 40); more than that → the status line offers "Update"
+async function semReady(){
+  if (!semOpenAIKey()) return false;
+  await semLoad(); const st = semStatus();
+  if (!st.ready) return false;
+  if (st.stale.length && st.stale.length <= 40 && !SEM.building) await semBuild(st.stale, { quiet:true });
+  return true;
+}
+/* ----- ✨ AI search in the sidebar search box ----- */
+const looksLikeSentence = q => { q = (q || '').trim(); return q.split(/\s+/).length >= 3 && !/\b(folder|tag|is|edited|opened):/i.test(q); };
+async function sbAiSearch(q){
+  q = (q || '').trim(); if (!q) return;
+  if (!aiKey()){ await aiAskKey('AI search needs AI'); if (!aiKey()) return; }
+  S.aiRes = { q, busy:true }; renderSidebar();
+  try {
+    const o = await fnParse(q, false);
+    if (o.intent === 'answer'){ S.aiRes = null; renderSidebar(); askOpen(); setTimeout(() => askRun(o.question || q), 50); return; }
+    const sp = fnNormSpec(o);
+    const qv = sp.about && await semReady().catch(() => false) ? await semQueryVec(sp.about) : null;
+    const rows = fnFilter(sp, qv, o.similar_words);
+    S.aiRes = { q, spec:sp, explain:o.explain || fnExplain(sp), rows, qv, sim:o.similar_words, sem: !!qv };
+  } catch(e){ S.aiRes = null; toast(e.message, 7000); }
+  renderSidebar();
+}
+function sbAiHtml(){
+  const r = S.aiRes, q = (S.q || '').trim();
+  if (r && r.q === q){
+    if (r.busy) return `<div class="aisr"><div class="aisrh"><span class="aspin"></span> AI is reading your request…</div></div>`;
+    setTimeout(() => { if (S.aiRes === r) $('count').textContent = r.rows.length + ' found by AI'; }, 0);
+    const rows = r.rows.slice(0, 60).map(x => `<div class="item sr ${x.n.path === S.current ? 'sel' : ''}" draggable="true" data-p="${esc(x.n.path)}" title="${esc(x.n.path)}"><div class="rtop">${noteDot(x.n)}${iconHtml(x.n.path, isMap(x.n) ? MAP_ICON : null)}<span class="nm">${esc(x.n.name)}</span><span class="srwhere">${esc(x.n.folder || 'Vault root')}</span></div>${x.match ? `<div class="snip">${esc(x.match)}</div>` : ''}</div>`).join('');
+    return `<div class="aisr"><div class="aisrh">${UI('sparkles')} <b>AI search</b> <span class="pcount">${r.rows.length}</span><span class="sp"></span><button class="ghost" data-aitofind="1" title="Open these results as a table in Find notes — sort, summaries, refine or change them with words">Open in Find ${UI('arrow-up-right')}</button></div>
+      <div class="aisrx">${esc(r.explain)}${r.sem ? ' · by meaning' : ''}</div>${rows || '<div class="vorgmuted" style="padding:4px 8px">No notes found.</div>'}${r.rows.length > 60 ? `<div class="vorgmuted" style="padding:4px 8px">+ ${r.rows.length - 60} more — Open in Find</div>` : ''}</div>`;
+  }
+  if (!looksLikeSentence(q)) return '';
+  return `<div class="item aisrgo" data-aisearch="1" title="Let AI understand this as a request (dates, folders, tags, meaning) — Alt+Enter">${UI('sparkles')}<span>Search with AI: <b>${esc(q.length > 60 ? q.slice(0, 60) + '…' : q)}</b></span><span class="srhint">Alt+Enter</span></div>`;
+}
 
 /* ---------- command palette: every action, found by typing ---------- */
 function cmdList(){
@@ -11546,6 +11733,7 @@ $('search').addEventListener('keydown', e => {
     S.kIdx = S.kIdx == null || S.kIdx < 0 ? (e.key === 'ArrowDown' ? 0 : n - 1) : Math.max(0, Math.min(n - 1, S.kIdx + (e.key === 'ArrowDown' ? 1 : -1)));
     srKeyMark(); return;
   }
+  if (e.key === 'Enter' && e.altKey){ e.preventDefault(); clearTimeout(searchT); if (fold(e.target.value) !== fold(S.q || '')) setSearch(e.target.value); sbAiSearch(e.target.value); return; }
   if (e.key === 'Enter'){
     e.preventDefault(); clearTimeout(searchT); if (fold(e.target.value) !== fold(S.q || '')) setSearch(e.target.value);
     const it = srItems(), el = it[S.kIdx >= 0 ? S.kIdx : 0] || $('list').querySelector('.item'); if (!el) return;
@@ -11614,6 +11802,8 @@ $('list').onclick = async e => {
   }
   if (e.target.closest('[data-textopen]')){ S.textOpen = !S.textOpen; renderSidebar(); return; }
   if (e.target.closest('[data-unfocus]')){ focusFolder(''); return; }
+  if (e.target.closest('[data-aisearch]')){ sbAiSearch(S.q); return; }
+  if (e.target.closest('[data-aitofind]') && S.aiRes && S.aiRes.spec){ const r = S.aiRes; fnOpen(); FN.q = r.q; FN.lastQ = r.q; FN.spec = r.spec; FN.explain = r.explain; FN.qv = r.qv || null; FN.similarMap = r.sim ? fnSimMap(r.sim) : null; FN.change = null; FN.sortBy = null; FN.show = 300; FN.semOff = !!(r.spec.about && !r.qv); fnSearch(); return; }
   const tg = !e.target.closest('[data-srjump]') && e.target.closest('[data-srtog]');
   if (tg){   // v59: open / close a folder inside the search results
     const k = tg.dataset.srtog, top = $('list').scrollTop;
