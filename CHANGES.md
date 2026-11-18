@@ -4,6 +4,9 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v68-2026-11-18
+**AI usage note — tokens and cost per month.** The note **AI usage** (vault root) is updated by itself a few seconds after any AI use: per month, each feature's calls, tokens in/out and estimated cost, plus cost by model and by PC. Each PC keeps its own numbers in `.mynotes/usage-<pc>.json`; the note adds up all your PCs. Palette: *AI usage*. Costs are estimates from token counts and list prices — your provider's usage page is the exact bill. Counting starts with this version.
+
 ## v67-2026-11-18
 **Much stronger search.**
 - **✨ Search with AI in the normal search box.** Type a sentence (*notes from last week having elena*) and click **✨ Search with AI** or press **Alt+Enter**: the results show in the sidebar under **AI search**; **Open in Find** opens them as a table.

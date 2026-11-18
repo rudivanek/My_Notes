@@ -864,7 +864,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v67-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v68-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -5584,6 +5584,7 @@ async function aiCall(o){
     out.usage.off = !dsPeak();
   }
   if (out.usage) out.usage.model = model;
+  try { usageRecord(o.feature || AI_FEAT || 'Other AI', (out.usage && out.usage.model) || model, out.usage); } catch(e){}
   return out;
 }
 // models the key can use ("Show all models from your key…")
@@ -5614,7 +5615,8 @@ async function aiSettings(title, intro){
     <label>Which AI should My Notes use?</label>
     <select name="prov">${ps.map(p => `<option value="${p}" ${p === cur ? 'selected' : ''}>${AIP[p].name}${aiKeyOf(p) ? ' ✓ key saved' : ' — no key yet'}${p === 'deepseek' ? ' · very cheap, no web search (servers in China)' : ''}</option>`).join('')}</select>
     ${ps.map(block).join('')}
-    <p class="aipnote">Keys are saved only in this browser on this PC and sent only to that company. Only the notes you use AI on are sent; locked notes never.</p>`, 'Save');
+    <p class="aipnote">Keys are saved only in this browser on this PC and sent only to that company. Only the notes you use AI on are sent; locked notes never.</p>
+    <p class="aipnote">Tokens and cost per month: the note <b>${USAGE_NOTE}</b> in your vault (palette: <i>AI usage</i>) — updated after every AI use, on all your PCs.</p>`, 'Save');
   const body = $('askBody'), box = body.parentElement; box.classList.add('aiset');
   const sp = $('selAi'), spWas = sp && sp.style.display; if (sp && spWas && spWas !== 'none') sp.style.display = 'none';   // the ✨ popup steps aside while AI settings is open
   const mark = () => { const v = body.querySelector('[name=prov]').value; body.querySelectorAll('.aipb').forEach(b => b.classList.toggle('on', b.dataset.aip === v)); };
@@ -5640,7 +5642,7 @@ async function aiSettings(title, intro){
     const p = b.dataset.aitest, key = keyOf(p), model = body.querySelector('[name=model_' + p + ']').value;
     if (!key) return say(p, 'Paste the key first', 'bad');
     say(p, 'Testing ' + aiLabel(model) + '…'); const t0 = performance.now();
-    try { await aiCall({ p, key, model, max:20, messages:[{ role:'user', content:'Reply with just: OK' }] }); say(p, '✓ Works — ' + aiLabel(model) + ' answered in ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s', 'ok'); }
+    try { await aiCall({ feature:'AI settings test', p, key, model, max:20, messages:[{ role:'user', content:'Reply with just: OK' }] }); say(p, '✓ Works — ' + aiLabel(model) + ' answered in ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s', 'ok'); }
     catch(e){ say(p, '✗ ' + e.message, 'bad'); }
   }));
   const v = await pr; box.classList.remove('aiset');
@@ -5670,7 +5672,7 @@ function aiNoteText(n){
   let b = (n.body || '').replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '[image]').replace(/\n{3,}/g, '\n\n');
   return b.length > 9000 ? b.slice(0, 9000) + '\n[…note continues…]' : b;
 }
-async function aiSuggest(n){
+async function aiSuggest(n){ aiFeat('Suggest tags & more');
   if (n && n.locked) throw new Error('LOCKED');
   const key = aiKey(); if (!key) throw new Error('NOKEY');
   const ck = n.path + '|' + aiHash(n.body || '');
@@ -5753,7 +5755,7 @@ function aiMapText(srcName, data){
   }
   return out.join('\n');
 }
-async function noteToMap(n){
+async function noteToMap(n){ aiFeat('Note → map');
   if (!n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
   if (n.external) return toast('Open this file from your vault to turn it into a map');
@@ -5847,7 +5849,7 @@ function usageLine(a, tier){
   return t + '*';
 }
 // search words for the question (Haiku), with the earlier questions so "and the agency plan?" still makes sense
-async function askKeywords(q){
+async function askKeywords(q){ aiFeat('Ask your notes');
   const prev = ASK.turns.map(t => t.q).slice(-3);
   const prompt = `Someone searches their own personal notes (written in English, Spanish and German) to answer a question.
 ${prev.length ? 'Earlier questions in this conversation:\n' + prev.map(x => '- ' + x).join('\n') + '\n' : ''}Question: ${q}
@@ -5917,7 +5919,7 @@ const ASK_SYSTEM = `You answer questions about the user's own personal notes. Th
 - When notes disagree or a decision changed over time, say so and give the dates (the "edited" date of the note); the most recent usually counts.
 - Answer in the same language as the question. Keep Markdown simple (bold, bullets). No headings.`;
 
-async function askRun(q){
+async function askRun(q){ aiFeat('Ask your notes');
   q = (q || '').trim(); if (!q || ASK.busy) return;
   if (S.demo || !S.root) return toast('Open your vault first');
   if (!aiKey() && !(await aiAskKey('Turn on AI to ask your notes'))) return;
@@ -6146,7 +6148,7 @@ function stFieldsHtml(n, b){
 function stAiAutoMap(){ try { return JSON.parse(localStorage.getItem('qn-sendai') || '{}') || {}; } catch(e){ return {}; } }
 const stAiAuto = path => !!stAiAutoMap()[path];
 function stAiSetAuto(path, on){ const m = stAiAutoMap(); if (on) m[path] = true; else delete m[path]; try { localStorage.setItem('qn-sendai', JSON.stringify(m)); } catch(e){} }
-async function stAiFill(n, b){
+async function stAiFill(n, b){ aiFeat('Send to table');
   const box = $('askBody'), msg = $('stAiMsg'); if (!box) return;
   if (!aiKey() && !(await aiAskKey('Turn on AI to fill in the table columns'))) return;
   const cfg = baseConfig(b), cols = stColumns(cfg), folder = tableFolder(cfg);
@@ -6802,7 +6804,7 @@ function thNoAnswer(stop){
   return '⚠️ ' + AIN() + ' gave no answer (' + (stop || 'unknown reason') + '). Try again or ask in other words.';
 }
 const thCut = stop => stop === 'max_tokens' ? '\n\n*(The answer was cut off here — reply “continue” for the rest.)*' : stop === 'pause_turn' ? '\n\n*(' + AIN() + ' was still searching — reply “continue” to let it finish.)*' : '';
-async function thAsk(msgs){
+async function thAsk(msgs){ aiFeat('AI threads');
   if (webOn() && AIP[aiProv()].web){
     const r = await askClaudeWeb(SELAI_MODEL, msgs, 16000, thSys(true));
     if (!r.noWeb){
@@ -6933,7 +6935,7 @@ const TH_SUM_Q = `Please write a short summary of our conversation to keep in my
 **Open questions:** what is still undecided (bullets)
 **Next steps:** as checkboxes "- [ ] …"
 No preamble, no heading at the top.`;
-async function thSummarize(head){
+async function thSummarize(head){ aiFeat('AI threads');
   const v = S.editor && S.editor.view, n = cur(); if (!v || !n || n.locked) return;
   if (!aiKey() && !(await aiAskKey('Turn on AI to summarize the thread'))) return;
   let doc = v.state.doc; const x = thFind(doc, Math.min(head, doc.lines)); if (!x) return toast('This thread is no longer there');
@@ -7078,7 +7080,7 @@ function selAiRender(){
   const inp = $('selAiIn');
   if (inp) inp.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); selAiAsk(inp.value); } };
 }
-async function selAiAsk(q, rewrite, label){
+async function selAiAsk(q, rewrite, label){ aiFeat('Selection AI ✨');
   q = (q || '').trim(); if (SELAI.busy || !SELAI.sel) return;
   if (SELAI.thread != null) return q && thReply(q);
   if (!rewrite) return thStart(q);   // v48: answers go into the note as a thread (empty question: Claude responds to the selection)
@@ -7354,7 +7356,7 @@ function aiRender(){
     };
   }
 }
-async function naiAsk(q, rw, label){
+async function naiAsk(q, rw, label){ aiFeat('Note AI button');
   q = (q || '').trim(); const n = cur(); if (!q || NAI.busy || !n) return;
   if (n.locked) return toast('AI is turned off for locked notes');
   if (!aiKey() && !(await aiAskKey('Turn on AI to ask about this note'))) return;
@@ -10534,7 +10536,7 @@ async function vorgClick(e){
   if (v === 'undo') return vorgUndo();
   if (v === 'log'){ vorgClose(); S.current = VORG_LOG + '.md'; if (!S.tabs.includes(S.current)) S.tabs.push(S.current); return renderAll(); }
 }
-async function vorgPlan(){
+async function vorgPlan(){ aiFeat('Organize vault');
   if (!aiKey()){ await aiAskKey('Organize vault needs AI to make its suggestions'); if (!aiKey()) return; }
   const style = VORG.style === 'para'
     ? `Style: PARA. Aim for four top-level groups: Projects (things with an end), Areas (ongoing responsibilities), Resources (reference and interests), Archive (inactive). Reuse existing top folders with similar names (e.g. PROJECTS, ARCHIVE) instead of creating new ones; new group folders may be created by naming them as a target. Move each top-level folder into the group it belongs to. Don't move folders that are inboxes or tools (templates, daily notes, tags, tasks) — leave those at the top.`
@@ -10920,7 +10922,7 @@ const FN_SPEC_TOOL = { name:'notes_request', description:'The user\'s request tu
     find:{ type:'string' }, replace:{ type:'string' }, text:{ type:'string' }, property:{ type:'string' }, value:{ type:'string' }, why_not:{ type:'string' } } },
   explain:{ type:'string', description:'One short plain-English line: what you understood.' } }, required:['intent', 'explain'] } };
 // v67: the AI part, shared by Find notes and the ✨ AI search in the sidebar
-async function fnParse(q, hasResults){
+async function fnParse(q, hasResults){ aiFeat('Find notes');
   const folders = allFolders().filter(f => !f.split('/').some(x => x.startsWith('.'))).slice(0, 500);
   const tags = [...new Set([...S.notes.values()].flatMap(n => n.external ? [] : allTags(n)))].slice(0, 400);
   const prompt = `Today is ${fnDay(Date.now())} (${new Date().toLocaleDateString('en', { weekday:'long' })}). The user searches their own notes vault (Markdown notes; each note has a title, folder, tags, importance high/medium/low, a Keep label, an edit date and text). Notes are written in English, Spanish and German.
@@ -11055,7 +11057,7 @@ function fnSumEstimate(rows){
   const tin = chars / 3.6 + Math.ceil(need.length / 25) * 400, tout = need.length * 35;
   return { n:need.length, usd:(tin * pr.in + tout * pr.out) / 1e6 };
 }
-async function fnSummaries(){
+async function fnSummaries(){ aiFeat('Find notes · summaries');
   if (!aiKey()){ await aiAskKey('Summaries need AI'); if (!aiKey()) return; }
   const cached = await idbGet('fnsum').catch(() => null); if (cached) for (const [k, v] of Object.entries(cached)) FN.sum.set(k, v);
   const est = fnSumEstimate(FN.rows);
@@ -11472,8 +11474,9 @@ async function semEmbed(texts){
   try { r = await fetch(AI_BASE.openai + '/embeddings', { method:'POST', headers:{ 'content-type':'application/json', authorization:'Bearer ' + key }, body: JSON.stringify({ model:SEM_MODEL, input:texts, dimensions:SEM_DIMS }) }); }
   catch(e){ throw new Error('Could not reach OpenAI (network, or a wrong key) — ' + e.message); }
   if (!r.ok){ let m = ''; try { m = (await r.json()).error.message; } catch(e){} throw aiErr('openai', r.status, m || ('HTTP ' + r.status)); }
-  const j = await r.json();
-  return { vecs: j.data.sort((a, b) => a.index - b.index).map(d => new Float32Array(d.embedding)), tokens: (j.usage && j.usage.prompt_tokens) || 0 };
+  const j = await r.json(), tk = (j.usage && j.usage.prompt_tokens) || 0;
+  try { usageRecord('Search by meaning', SEM_MODEL, { in:tk, out:0 }, tk / 1e6 * SEM_USD_PER_MTOK); } catch(e){}
+  return { vecs: j.data.sort((a, b) => a.index - b.index).map(d => new Float32Array(d.embedding)), tokens: tk };
 }
 // update the index for the given notes (default: every new or changed note)
 async function semBuild(list, opts){
@@ -11555,6 +11558,94 @@ function sbAiHtml(){
   return `<div class="item aisrgo" data-aisearch="1" title="Let AI understand this as a request (dates, folders, tags, meaning) — Alt+Enter">${UI('sparkles')}<span>Search with AI: <b>${esc(q.length > 60 ? q.slice(0, 60) + '…' : q)}</b></span><span class="srhint">Alt+Enter</span></div>`;
 }
 
+/* ---------- v68: AI usage note ----------
+   Every AI call (all features, all providers, plus search by meaning) is counted: calls, tokens in/out, estimated USD —
+   per month, feature, model and PC. Each PC keeps its own numbers in .mynotes/usage-<pc>.json (no sync conflicts);
+   the visible note "AI usage" in the vault root is rebuilt from all PCs' files a few seconds after AI was used.
+   Costs are estimates from token counts and list prices — the provider's usage page is the exact bill. */
+const USAGE_NOTE = 'AI usage';
+let AI_FEAT = '';
+const aiFeat = f => { AI_FEAT = f; };
+const USG = { pending:null, timer:null, pc:'' };
+function usagePc(){
+  if (USG.pc) return USG.pc;
+  let id = lsGet('qn-pcid'); if (!id){ id = Math.random().toString(36).slice(2, 6); lsSet('qn-pcid', id); }
+  const os = /Android/i.test(navigator.userAgent) ? 'Android' : /Windows/i.test(navigator.userAgent) ? 'Windows' : /Mac/i.test(navigator.userAgent) ? 'Mac' : 'PC';
+  return USG.pc = os + '-' + id;
+}
+function usageUsd(model, u){
+  const p = aiPrice(model); if (!p) return null;
+  const k = u.off && p.off ? p.off : 1;
+  return ((u.in * p.in + u.out * p.out + (u.cw || 0) * (p.cw || p.in) + (u.cr || 0) * (p.cr || p.in)) * k) / 1e6 + (u.web || 0) * AI_SEARCH_USD;
+}
+// count one call (u = normalized usage from aiCall, or { in, out:0, usd } for embeddings)
+function usageRecord(feature, model, u, usdOverride){
+  if (!u || S.demo || !S.root) return;
+  const month = new Date().toISOString().slice(0, 7), usd = usdOverride != null ? usdOverride : usageUsd(model, u);
+  const P = USG.pending || (USG.pending = {}), m = P[month] || (P[month] = { f:{}, m:{} });
+  const f = m.f[feature] || (m.f[feature] = { calls:0, in:0, out:0, usd:0, unknown:0 });
+  f.calls++; f.in += (u.in || 0) + (u.cw || 0) + (u.cr || 0); f.out += u.out || 0; if (usd == null) f.unknown++; else f.usd += usd;
+  const mm = m.m[model] || (m.m[model] = { calls:0, usd:0 }); mm.calls++; mm.usd += usd || 0;
+  clearTimeout(USG.timer); USG.timer = setTimeout(() => usageFlush().catch(e => console.warn('[MN] usage', e)), 4000);
+}
+async function usageDir(){ return S.root.getDirectoryHandle(VS_DIR, { create:true }); }
+async function usageFlush(){
+  if (!USG.pending || S.demo || !S.root) return;
+  const add = USG.pending; USG.pending = null;
+  const d = await usageDir(), name = 'usage-' + usagePc() + '.json';
+  let mine = {}; try { mine = JSON.parse(await (await (await d.getFileHandle(name)).getFile()).text()) || {}; } catch(e){}
+  mine.pc = usagePc(); mine.months = mine.months || {};
+  for (const [mo, a] of Object.entries(add)){
+    const t = mine.months[mo] || (mine.months[mo] = { f:{}, m:{} });
+    for (const [k, v] of Object.entries(a.f)){ const x = t.f[k] || (t.f[k] = { calls:0, in:0, out:0, usd:0, unknown:0 }); for (const z of ['calls', 'in', 'out', 'usd', 'unknown']) x[z] += v[z]; }
+    for (const [k, v] of Object.entries(a.m)){ const x = t.m[k] || (t.m[k] = { calls:0, usd:0 }); x.calls += v.calls; x.usd += v.usd; }
+  }
+  mine.updated = new Date().toISOString();
+  const h = await d.getFileHandle(name, { create:true }), w = await h.createWritable(); await w.write(JSON.stringify(mine)); await w.close();
+  await usageWriteNote();
+}
+async function usageAll(){
+  const out = []; if (!S.root || S.demo) return out;
+  let d; try { d = await S.root.getDirectoryHandle(VS_DIR); } catch(e){ return out; }
+  for await (const [k, h] of d.entries()) if (h.kind === 'file' && /^usage-.+\.json$/.test(k)){ try { out.push(JSON.parse(await (await h.getFile()).text())); } catch(e){} }
+  return out;
+}
+const usd$ = v => v > 0 && v < 0.0001 ? '<$0.0001' : '$' + (v >= 1 ? v.toFixed(2) : v >= 0.01 ? v.toFixed(3) : v.toFixed(4));
+const n$ = v => Math.round(v).toLocaleString('en-US');
+function usageMarkdown(all){
+  const months = [...new Set(all.flatMap(p => Object.keys(p.months || {})))].sort().reverse(), me = usagePc();
+  const L = ['# ' + USAGE_NOTE, '', '*Kept up to date by My Notes after every AI use — on all your PCs. Costs are estimates from token counts and list prices; your provider\'s usage page (Anthropic Console, OpenAI, DeepSeek) is the exact bill. Last update: ' + new Date().toLocaleString() + '.*', ''];
+  if (!months.length) L.push('No AI used yet.');
+  for (const mo of months){
+    const F = {}, M = {}, PCs = [];
+    for (const p of all){ const t = (p.months || {})[mo]; if (!t) continue; let pcUsd = 0;
+      for (const [k, v] of Object.entries(t.f || {})){ const x = F[k] || (F[k] = { calls:0, in:0, out:0, usd:0, unknown:0 }); for (const z of ['calls', 'in', 'out', 'usd', 'unknown']) x[z] += v[z] || 0; pcUsd += v.usd || 0; }
+      for (const [k, v] of Object.entries(t.m || {})){ const x = M[k] || (M[k] = { calls:0, usd:0 }); x.calls += v.calls; x.usd += v.usd; }
+      PCs.push([p.pc, pcUsd]); }
+    const total = Object.values(F).reduce((a, v) => a + v.usd, 0), unknown = Object.values(F).reduce((a, v) => a + v.unknown, 0);
+    const title = new Date(mo + '-15').toLocaleDateString('en', { month:'long', year:'numeric' });
+    L.push('## ' + title + ' — ' + usd$(total), '', '| Feature | Calls | Tokens in | Tokens out | Cost |', '|---|--:|--:|--:|--:|');
+    for (const [k, v] of Object.entries(F).sort((a, b) => b[1].usd - a[1].usd || b[1].calls - a[1].calls))
+      L.push('| ' + k + ' | ' + n$(v.calls) + ' | ' + n$(v.in) + ' | ' + (v.out ? n$(v.out) : '—') + ' | ' + usd$(v.usd) + (v.unknown ? ' (+' + v.unknown + ' unknown price)' : '') + ' |');
+    L.push('', '**By model:** ' + Object.entries(M).sort((a, b) => b[1].usd - a[1].usd).map(([k, v]) => aiLabel(k) + ' ' + usd$(v.usd) + ' (' + v.calls + ')').join(' · '));
+    if (PCs.length > 1) L.push('', '**By PC:** ' + PCs.sort((a, b) => b[1] - a[1]).map(([pc, v]) => (pc === me ? pc + ' (this PC)' : pc) + ' ' + usd$(v)).join(' · '));
+    if (unknown) L.push('', '*' + unknown + ' call' + (unknown === 1 ? '' : 's') + ' with a model whose price My Notes doesn\'t know — not in the total.*');
+    L.push('');
+  }
+  return L.join('\n');
+}
+async function usageWriteNote(){
+  if (S.demo || !S.root) return;
+  const md = usageMarkdown(await usageAll());
+  let n = S.notes.get(USAGE_NOTE + '.md');
+  if (!n){ n = await createNote(USAGE_NOTE, md, ''); return; }
+  if (n.locked) return;
+  if (n.body.replace(/Last update: [^*]*\./, '') === md.replace(/Last update: [^*]*\./, '')) return;
+  n.body = md; await writeNote(n);
+  if (S.current === n.path && S.editor){ renderEditor(); }
+}
+window.addEventListener('beforeunload', () => { if (USG.pending) usageFlush(); });
+
 /* ---------- command palette: every action, found by typing ---------- */
 function cmdList(){
   const n = cur(), note = !!(n && !n.external), b = S.bases.get(S.current), inMap = !!(n && S.map && S.map.path === n.path && $('mapvp'));
@@ -11598,6 +11689,7 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
     ['Find', 'Find notes: ask in your own words…', 'Ctrl+Shift+F', true, () => fnOpen()],
+    ['AI', 'AI usage: tokens and cost per month (note)', '', !!S.root && !S.demo, async () => { clearTimeout(USG.timer); await usageFlush().catch(() => {}); await usageWriteNote(); const n = S.notes.get(USAGE_NOTE + '.md'); if (n){ S.current = n.path; if (!S.tabs.includes(n.path)) S.tabs.push(n.path); renderAll(); } }],
     ['Note', 'New ⏳ temp note', 'Ctrl+Alt+T', true, () => newTempNote()],
     ['Note', 'Cleanup: old temp notes and unused Key notes…', '', true, () => kcOpen()],
     ['View', S.hideArch ? 'Show the archive in the sidebar' : 'Hide the archive in the sidebar', '', true, () => $('keepFilter').querySelector('[data-k=arch]').click()],

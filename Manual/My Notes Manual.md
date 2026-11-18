@@ -86,6 +86,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | See only one folder in the sidebar | right-click it → **Show only this folder** |
 | Hide the tags in the sidebar | **Hide tags** under the tags |
 | Rearrange lots of notes and folders | **org** above the note list → the Organize page |
+| See how much AI cost me (tokens and USD) | the note **AI usage**, or the palette: *AI usage* |
 | Search with a sentence right in the sidebar | type it, then **✨ Search with AI** or **Alt+Enter** |
 | Find notes about a subject, even in other words or languages | Find notes → **Search by meaning: Set up** |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
@@ -696,6 +697,13 @@ Right-click a folder → **Triage notes in this folder** works the same way for 
 Checkbox properties get their own letter keys too; they're shown in the bar.
 
 ---
+
+### AI usage — tokens and cost
+The note **AI usage** in your vault root shows what AI cost you, **per month**: for each feature (AI threads, Find notes, summaries, search by meaning, Ask your notes, Organize vault, suggestions …) the number of calls, tokens in and out and the estimated cost; below it the cost **by model**, and **by PC** when you use My Notes on more than one computer.
+- It updates by itself a few seconds after you used AI — you don't have to do anything. Open it like any note, or with the command palette: *AI usage*.
+- Each PC keeps its own numbers in the hidden folder `.mynotes` (`usage-<pc>.json`) and the note adds them all up — so it shows **all your PCs together**, without sync conflicts.
+- The costs are **estimates** from the token counts and the list prices My Notes knows. Your provider's usage page is the exact bill (Anthropic Console, platform.openai.com, platform.deepseek.com). Calls with a model whose price My Notes doesn't know are counted but not in the total.
+- Counting started with v68 — AI used before that isn't in the note. (Each thread answer still has its own small cost line, and Find notes and Organize show the cost of the current session at the top.)
 
 ## 19. Ask your notes
 
