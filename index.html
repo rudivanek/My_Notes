@@ -885,7 +885,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v69-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v70-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -916,6 +916,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button id="trashBtn" title="Trash — restore deleted notes or delete them permanently">Trash</button>
       <button id="tidyBtn" title="Go through notes that are missing tags or importance, with AI suggestions">✨ Tidy up</button>
       <button id="fnBtn" title="Find notes — ask in your own words; refine or change the results with words (Ctrl+Shift+F)">Find</button>
+      <button id="ntBtn" title="Notes table — every note on one line: sort, move, label, pin, archive (Ctrl+Alt+L)"></button>
       <button id="kcBtn" title="Cleanup"><span class="kcn"></span></button>
       <button id="vorgBtn" title="Organize vault — AI suggests a tidier folder structure; you tick what to do; one button undoes it">Organize</button>
       <input type="file" id="fileIn" accept=".md,text/markdown" multiple hidden>
@@ -7576,7 +7577,7 @@ $('aiBtn').title = 'AI suggestions: tags, importance, folder, summary (right-cli
 $('aiBtn').onclick = () => { const n = cur(); if (!n) return; if (S.ai && S.ai.path === n.path){ S.ai = null; renderEditor(); } else aiOpen(n); };
 $('tidyBtn').onclick = () => { if (!S.root && !S.demo) return toast('Open your vault first'); aiTidy(null); };
 $('vorgBtn').onclick = () => vorgOpen();
-$('fnBtn').onclick = () => fnOpen();
+$('fnBtn').onclick = () => fnOpen(); $('ntBtn').onclick = () => ntIsOpen() ? ntClose() : ntOpen(); $('ntBtn').innerHTML = UI('sheet') || UI('table');
 $('kcBtn').onclick = () => kcOpen(); $('kcBtn').insertAdjacentHTML('afterbegin', UI('hourglass'));
 ['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); if (kcIsOpen()) kcClose(); if (ntIsOpen()) ntClose(); } }, true));
 $('scroll').addEventListener('click', async e => {

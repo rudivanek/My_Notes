@@ -4,6 +4,9 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v70-2026-11-18
+**Notes table button at the bottom left.** A table icon next to **Find** opens (and closes) the Notes table — same as Ctrl+Alt+L.
+
 ## v69-2026-11-18
 **Notes table — every note on one line.** Open it with **Notes table** at the top of Find notes, **Ctrl+Alt+L**, or the palette. Each line shows **Created · Edited · Note · Folder · Tags · Importance · Keep · Pin · Archive** (and **Words** if you turn it on), and every one of them can be changed right there:
 - **Sort** by Created, Edited, Note, Folder, Importance or Words — click the column title, click again for the other direction.

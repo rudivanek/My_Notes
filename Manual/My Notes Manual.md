@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v69 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v70 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -90,7 +90,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Search with a sentence right in the sidebar | type it, then **✨ Search with AI** or **Alt+Enter** |
 | Find notes about a subject, even in other words or languages | Find notes → **Search by meaning: Set up** |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
-| See every note on one line and change dates, folder, labels, pin or archive | **Ctrl+Alt+L** → [Notes table](#notes-table-every-note-on-one-line) |
+| See every note on one line and change dates, folder, labels, pin or archive | table icon at the bottom left or **Ctrl+Alt+L** → [Notes table](#notes-table-every-note-on-one-line) |
 | Color text or highlight it | Select it → **A** or the marker in the formatting bar, or right-click the selection → [Text color and highlight](#text-color-and-highlight) |
 | See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
 | Mark a note or folder as important or temporary | **Keep** buttons in the note, or right-click → **Mark as Key / Temp** → [Key, Temp and Archive](#key-temp-and-archive) |
@@ -408,7 +408,7 @@ The start screen shows these and more as **examples — click one** to put it in
 **Privacy and cost.** For searching, the AI sees only **your request** and your folder and tag names — never the text of your notes. (Search by meaning is the exception you turn on yourself: it sends each note's text once to OpenAI to build the index.) The search itself runs in the app over every note, free and fast. Only summaries send note text (the first ~1,600 characters of each). Without AI set up, Find notes still works as a plain search: words joined by `&` or *and* must all appear.
 
 ### Notes table (every note on one line)
-Open it with **Notes table** at the top of [Find notes](#find-notes-ask-in-your-own-words), **Ctrl+Alt+L**, or the palette: *Notes table*. You see all your notes as a list, one line each, and you can change everything right there — no need to open the notes.
+Open it with the **table icon** at the bottom left (next to Find), **Notes table** at the top of [Find notes](#find-notes-ask-in-your-own-words), **Ctrl+Alt+L**, or the palette: *Notes table*. You see all your notes as a list, one line each, and you can change everything right there — no need to open the notes.
 
 | Column | What you can do |
 | --- | --- |
