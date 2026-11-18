@@ -858,7 +858,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v65-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v66-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -3142,7 +3142,7 @@ const IMP_RANK = {high:3, medium:2, low:1, '':0};
 const NCOLL = new Intl.Collator(undefined, { sensitivity:'base', numeric:true }), NCOLL_N = new Intl.Collator(undefined, { numeric:true });
 const DTF = {}, dtf = (k, o) => DTF[k] || (DTF[k] = new Intl.DateTimeFormat(undefined, o));   // v23: re-using formatters is ~50x faster
 const UI = (name, extra) => (QNEditor.iconSvg(name) || '').replace('class="lic"', 'class="uic' + (extra ? ' ' + extra : '') + '"');
-const CTX_ICONS = { '↗':'external-link', '✎':'pencil', '📌':'pin', '🎨':'palette', '📁':'folder-input', '⧉':'copy', '🖨':'printer', '📄':'file-down', '🔗':'link', '🗑':'trash', '🔒':'lock', '🕘':'history', '⇥':'table', '⚙':'settings', '📂':'folder-open', '⟳':'refresh-cw', '💬':'message-circle-question-mark', '✂':'scissors',
+const CTX_ICONS = { '📦':'archive', '↩':'archive-restore', '⭐':'star', '⏳':'hourglass', '—':'circle-minus', '⌖':'crosshair', '⤢':'maximize-2', '↗':'external-link', '✎':'pencil', '📌':'pin', '🎨':'palette', '📁':'folder-input', '⧉':'copy', '🖨':'printer', '📄':'file-down', '🔗':'link', '🗑':'trash', '🔒':'lock', '🕘':'history', '⇥':'table', '⚙':'settings', '📂':'folder-open', '⟳':'refresh-cw', '💬':'message-circle-question-mark', '✂':'scissors',
   '▶':'play', '▢':'group', '≡':'align-start-vertical', '⫷':'align-horizontal-justify-start', '⫠':'align-vertical-justify-start', '↔':'align-horizontal-space-around', '↕':'align-vertical-space-around', '✨':'sparkles', '🗺':'waypoints', '⇄':'arrow-left-right', '⤢':'scan', '🔑':'key-round', '×':'x', '→':'arrow-right', '⊗':'circle-x', '⊞':'chevrons-up-down', '⊟':'chevrons-down-up', '＋':'plus', '🌐':'globe', '📅':'calendar' };
 
 /* ---------- frontmatter ---------- */
@@ -6024,7 +6024,7 @@ async function askSave(){
    note: the 3 you use most (counted on this PC, recent use weighs more; recalculated when the app starts, so buttons don't
    jump around) + a "⋯" menu with everything else. "Customize buttons…" pins actions so they always show. */
 const NA_DEF = { n: ['Suggest tags & more', 'Pin', 'Lock note…'], b: ['Pin'] };
-const naKey = l => ({ 'Unpin':'Pin', 'Locked note…':'Lock note…' })[l] || l;
+const naKey = l => ({ 'Unpin':'Pin', 'Locked note…':'Lock note…', 'Restore':'Archive', 'Remove ⭐ Key':'Mark as Key', 'Remove ⏳ Temp':'Mark as Temp' })[l] || l;
 const naOk = it => it && it !== '-' && !it.head && !it.imp && typeof it.run === 'function' && it.label && !/^\s/.test(it.label) && it.label !== 'Open';
 function naGet(k, d){ try { return JSON.parse(localStorage.getItem(k) || '') || d; } catch(e){ return d; } }
 function naSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
@@ -6050,7 +6050,7 @@ function naRender(box, kind, all, target){
   if (!box) return;
   const items = all.filter(naOk), shown = naShown(kind, items);
   const btns = shown.map(k => items.find(it => naKey(it.label) === k)).filter(Boolean);
-  box.innerHTML = btns.map((it, i) => `<button class="nabtn${(naKey(it.label) === 'Pin' && it.label === 'Unpin') || (naKey(it.label) === 'Lock note…' && target && target.locked) ? ' on' : ''}" data-na="${i}" title="${esc(it.label.replace(/…$/, ''))}">${naIcon(it)}</button>`).join('')
+  box.innerHTML = btns.map((it, i) => `<button class="nabtn${(naKey(it.label) === 'Pin' && it.label === 'Unpin') || (naKey(it.label) === 'Lock note…' && target && target.locked) || /^(Restore|Remove )/.test(it.label) ? ' on' : ''}" data-na="${i}" title="${esc(it.label.replace(/…$/, ''))}">${naIcon(it)}</button>`).join('')
     + `<button class="nabtn namore" data-namore="1" title="More actions">${UI('ellipsis')}</button>`;
   box.onclick = e => {
     const b = e.target.closest('[data-na]');
@@ -9713,7 +9713,7 @@ function noteMenuAll(n){
     { imp: n },
     ...(!n.external && !n.locked ? [keepOf(n) === 'key' ? { icon:'—', label:'Remove ⭐ Key', run: async () => { setNoteKeep(n, ''); await writeNote(n); renderAll(); } } : { icon:'⭐', label:'Mark as Key', run: async () => { setNoteKeep(n, 'key'); await writeNote(n); renderAll(); } },
       keepOf(n) === 'temp' ? { icon:'—', label:'Remove ⏳ Temp', run: async () => { setNoteKeep(n, ''); await writeNote(n); renderAll(); } } : { icon:'⏳', label:'Mark as Temp', run: async () => { setNoteKeep(n, 'temp'); await writeNote(n); renderAll(); } }] : []),
-    ...(!n.external ? [inArchive(n.folder) ? { icon:'↩', label:'Restore', hint:'to ' + (n.folder === archiveRoot() ? 'vault root' : n.folder.slice(archiveRoot().length + 1)), run: guard(() => restoreNote(n)) } : { icon:'📦', label:'Archive', hint:'→ ' + archiveRoot(), run: guard(() => archiveNote(n)) }] : []),
+    ...(!n.external ? [inArchive(n.folder) ? { icon:'↩', label:'Restore', hint:'to ' + (n.folder === archiveRoot() ? 'vault root' : n.folder.slice(archiveRoot().length + 1)), run: guard(async () => { await restoreNote(n); renderAll(); }) } : { icon:'📦', label:'Archive', hint:'→ ' + archiveRoot(), run: guard(async () => { await archiveNote(n); renderAll(); }) }] : []),
     { icon:'🎨', label:'Change icon…', run: () => changeIcon(n.path, n.name) },
     { icon:'📁', label:'Move to folder…', run: guard(async () => { const v = await ask('Move “' + n.name + '” to', `<select name="folder">${folderOptions(n.folder)}</select>`, 'Move'); if (v) await moveNote(n, v.folder); }) },
     { icon:'⧉', label:'Duplicate', run: guard(async () => { const c = await createNote(n.name + ' copy', serialize(n), n.folder); openPath(c.path); }) },

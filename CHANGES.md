@@ -4,6 +4,12 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v66-2026-11-18
+- The **Archive** button next to the note title (it appears there once you use it often) now has a **line icon** like the other buttons, instead of the 📦 emoji — and it **toggles**: in an archived note it shows highlighted and puts the note back (Restore).
+- Same for **Mark as Key / Mark as Temp** there: line icons (star, hourglass), highlighted when the note has that label; clicking again removes it.
+- Line icons also in the right-click menus for Archive, Restore, Key, Temp, Show only this folder.
+- Fix: archiving or restoring from the ⋯ menu now updates the note's buttons right away.
+
 ## v65-2026-11-18
 - **Archive button in every note**, right after the Keep buttons: one click moves the note into ARCHIVE (keeping its folder path). In an archived note the same button says **Restore** and puts it back.
 
