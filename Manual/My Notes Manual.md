@@ -12,7 +12,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 
 ![The main screen](images/overview.png)
 
-*This manual is for version v61 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
+*This manual is for version v69 (November 2026). Read it inside the app any time: **Manual** at the bottom left of the sidebar (or the command palette: *Open the manual*). The version number shows in tiny text at the top right of the sidebar. What changed in each version: see `CHANGES.md` in the app folder.*
 
 ### Intro video (1 minute)
 [![Watch the 1-minute intro video](images/intro-video.png)](https://rudivanek.github.io/My_Notes/Manual/My%20Notes%20-%20intro.mp4)
@@ -90,6 +90,7 @@ On top of plain notes, My Notes gives you tables like Notion, mind maps, a link 
 | Search with a sentence right in the sidebar | type it, then **✨ Search with AI** or **Alt+Enter** |
 | Find notes about a subject, even in other words or languages | Find notes → **Search by meaning: Set up** |
 | Find notes by asking in your own words (and change them with words) | **Find** at the bottom left or **Ctrl+Shift+F** → [Find notes](#find-notes-ask-in-your-own-words) |
+| See every note on one line and change dates, folder, labels, pin or archive | **Ctrl+Alt+L** → [Notes table](#notes-table-every-note-on-one-line) |
 | Color text or highlight it | Select it → **A** or the marker in the formatting bar, or right-click the selection → [Text color and highlight](#text-color-and-highlight) |
 | See when a note was created and last edited | under the note title → [Created and last edited](#created-and-last-edited) |
 | Mark a note or folder as important or temporary | **Keep** buttons in the note, or right-click → **Mark as Key / Temp** → [Key, Temp and Archive](#key-temp-and-archive) |
@@ -405,6 +406,31 @@ The start screen shows these and more as **examples — click one** to put it in
 - Locked notes are never changed. Deleting is not possible here — move notes to an archive folder instead.
 
 **Privacy and cost.** For searching, the AI sees only **your request** and your folder and tag names — never the text of your notes. (Search by meaning is the exception you turn on yourself: it sends each note's text once to OpenAI to build the index.) The search itself runs in the app over every note, free and fast. Only summaries send note text (the first ~1,600 characters of each). Without AI set up, Find notes still works as a plain search: words joined by `&` or *and* must all appear.
+
+### Notes table (every note on one line)
+Open it with **Notes table** at the top of [Find notes](#find-notes-ask-in-your-own-words), **Ctrl+Alt+L**, or the palette: *Notes table*. You see all your notes as a list, one line each, and you can change everything right there — no need to open the notes.
+
+| Column | What you can do |
+| --- | --- |
+| **Created / Edited** | the dates. "—" means the created date isn't known yet; it is saved the next time you edit the note. |
+| **Note** | **hover** to read the first lines · **click** to open · **double-click** to rename |
+| **Folder** | click to move the note to another folder, or type a new folder name |
+| **Tags** | **×** removes a tag, **+** adds one (tags written in the text show in *italics* — change those in the note) |
+| **Importance** | ● High / Medium / Low — click the one that is on to clear it |
+| **Keep** | ⭐ Key · — Normal · ⏳ Temp |
+| **Pin** | pin to the top of the sidebar, or unpin |
+| **Archive** | move into the archive, or restore to where it was |
+| **Words** | how long the note is (off at first — turn it on with **Columns**) |
+| 🗑 | move to the Trash |
+
+- **Sort:** click a column title (Created, Edited, Note, Folder, Importance, Words); click again for the other direction. The arrow shows which way.
+- **Filter:** type in the box (name, folder or `#tag`), or use the quick filters: All · ⭐ Key · ⏳ Temp · 📌 Pinned · Not archived · Archived.
+- **Change many at once:** tick the notes (Shift+click ticks a range; the box in the header ticks all you see) and use the bar at the bottom: **Move to…**, importance, **Keep**, **#+ Tag**, **Pin / Unpin**, **Archive / Restore**, **Delete**.
+- **Undo** (top right, or Ctrl+Z) takes back the last change, one step at a time. Deleted notes come back from the **Trash** (bottom left) instead.
+- **Columns** shows or hides columns; remembered on this PC. **CSV** downloads the list (only the columns you see) for Excel.
+- **Keyboard:** ↑ ↓ move the line, **Space** ticks it, **Enter** opens the note, **Esc** clears the ticks and then closes the table.
+- **Only some notes:** in Find notes, after a search, **Edit in table** opens just the notes you found. The ✕ next to their name at the top shows all notes again.
+- Locked notes can be moved and archived, but not labelled or tagged — unlock them first.
 
 ### Jump to a note (Ctrl+O)
 The fastest way to open a note when you roughly know its name. It searches names only (tables too), forgives typos, understands initials, puts recently opened notes first, and also understands `folder:` and `tag:`. If nothing fits, **Enter** creates a note with that name.
@@ -873,6 +899,8 @@ Changes apply immediately and sync to your other PCs through the vault.
 | Ctrl+K | Search |
 | Ctrl+O | Jump to a note by name |
 | Ctrl+J | Ask your notes (AI) |
+| Ctrl+Shift+F | Find notes |
+| Ctrl+Alt+L | Notes table (every note on one line) |
 | Ctrl+Alt+N | New note |
 | Ctrl+D | Today's daily note |
 | Ctrl+\\ | Hide / show the sidebar |

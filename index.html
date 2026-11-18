@@ -154,6 +154,27 @@ body.sideresizing{cursor:col-resize;user-select:none}
 .fntab a{color:var(--text);cursor:pointer;text-decoration:none;font-weight:500}.fntab a:hover{color:var(--accent);text-decoration:underline}
 .fnd{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}.fnn{white-space:nowrap}.fnn .dot{margin-right:6px}.fnm{color:var(--muted);font-size:12.5px;max-width:380px}.fns{max-width:420px}
 .fntag{font-size:12px;color:var(--muted)}.fnmore{margin:8px 10px}
+#ntPage{position:absolute;inset:0;z-index:41;display:none;flex-direction:column;background:var(--bg);padding:18px 26px 12px;gap:8px;outline:none}
+.ntbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#ntQ{flex:1;min-width:200px;padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-size:13.5px}
+#ntQ:focus{outline:none;border-color:var(--accent)}.ntquick button{font-size:12.5px;white-space:nowrap}
+.ntlist{flex:1;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.nttab td{vertical-align:middle;padding:4px 8px;white-space:nowrap}.nttab th{padding:7px 8px}.nttab .nt-chk{width:26px;text-align:center}
+.nttab td.nt-name{white-space:normal;min-width:180px;max-width:340px}.ntname{cursor:pointer;font-weight:500;display:inline-flex;gap:4px;align-items:center}.ntname:hover{color:var(--accent);text-decoration:underline}
+.ntname .uic{width:12px;height:12px;margin:0}.nt-created,.nt-edited,.nt-words{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px}.nt-words{text-align:right}
+.nttab tr.sel td{background:color-mix(in srgb,var(--accent) 9%,var(--bg))}.nttab tr.cur td{box-shadow:inset 0 1px 0 var(--accent),inset 0 -1px 0 var(--accent)}.nttab tr.ktemp .ntname{opacity:.8}
+.nttab button{border:1px solid transparent;background:none;color:var(--muted);border-radius:6px;cursor:pointer;font:inherit;font-size:12.5px;padding:2px 4px;display:inline-flex;align-items:center;gap:4px}
+.nttab button:hover{border-color:var(--line);color:var(--text)}.nttab button .uic{width:13px;height:13px;margin:0}
+.ntfold{max-width:190px;overflow:hidden;text-overflow:ellipsis}.ntfold .uic{opacity:.5}
+.ntdot{opacity:.35}.ntdot.on{opacity:1;border-color:var(--line)!important}.ntk{opacity:.4}.ntk.on{opacity:1;border-color:var(--line)!important;background:color-mix(in srgb,var(--accent) 7%,var(--bg))!important;color:var(--text)!important}
+.ntpin.on,.ntarch.on{color:var(--accent)!important}.ntdel:hover{color:#c0392b!important}
+.nt-tags{white-space:normal!important;max-width:220px}.nttab .nt-pin,.nttab .nt-arch,.nttab .nt-del{width:34px;text-align:center}.nttag{display:inline-flex;align-items:center;font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--line) 40%,transparent);border-radius:5px;padding:0 0 0 5px;margin:1px 3px 1px 0}
+.nttag.inl{padding-right:5px;font-style:italic}.nttag button{padding:0 4px!important;font-size:12px!important}.ntadd{opacity:.5}.ntadd:hover{opacity:1}
+.ntren{font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--accent);border-radius:5px;width:100%;background:var(--bg);color:var(--text)}
+.ntsel{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;min-height:32px}.ntsel.on{padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 8%,var(--bg))}
+.ntsel .sp{flex:1}.ntsel .ghost{display:inline-flex;align-items:center;gap:4px}.ntsel .ghost .uic{width:13px;height:13px;margin:0}.ntgrp{display:inline-flex;gap:2px;padding:0 4px;border-left:1px solid var(--line)}
+.ntonly{display:inline-flex;align-items:center;gap:3px;color:var(--accent)}.ntonly button{padding:0 4px}
+#ntTip{position:fixed;z-index:60;width:380px;max-height:200px;overflow:hidden;display:none;background:var(--bg);border:1px solid var(--line);border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:9px 12px;font-size:12.5px;pointer-events:none}
+#ntTip b{display:block;margin-bottom:4px}#ntTip div{white-space:pre-wrap;color:var(--muted);line-height:1.45}
 .semstat{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}.semstat .ghost{padding:2px 8px;font-size:12px}
 .semdot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}.semdot.on{background:#16a34a}
 .aisrgo{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:13px}.aisrgo .uic{width:14px;height:14px;margin:0}.aisrgo span:first-of-type{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -864,7 +885,7 @@ mark,#ed .cm-hit{background:#FBE3A1;color:inherit;border-radius:3px;padding:0 1p
       <button class="icon-btn clipbtn" id="clipBtn" title="Clip a web page into a note">🌐</button>
       <button class="icon-btn" id="todayBtn" title="Today’s daily note (Ctrl+D)">📅</button>
       <button class="primary" id="newBtn" title="New note (Ctrl+N)">+ New</button>
-      <span class="appver" id="appVer" title="My Notes version">v68-2026-11-18</span>
+      <span class="appver" id="appVer" title="My Notes version">v69-2026-11-18</span>
     </div>
     <div class="searchbox"><input class="search" id="search" placeholder="Search…  (Ctrl+K)   try folder: tag: edited:7d" autocomplete="off" spellcheck="false"><button id="searchSave" title="Save this search">☆</button><button id="searchClear" title="Clear search">×</button></div>
     <div class="filters">
@@ -7557,7 +7578,7 @@ $('tidyBtn').onclick = () => { if (!S.root && !S.demo) return toast('Open your v
 $('vorgBtn').onclick = () => vorgOpen();
 $('fnBtn').onclick = () => fnOpen();
 $('kcBtn').onclick = () => kcOpen(); $('kcBtn').insertAdjacentHTML('afterbegin', UI('hourglass'));
-['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); if (kcIsOpen()) kcClose(); } }, true));
+['list', 'tabbar'].forEach(id => $(id).addEventListener('click', e => { if (e.target.closest('.item[data-p], .tab, [data-p]')){ if (vorgIsOpen() && !VORG.busy) vorgClose(); if (fnIsOpen() && !FN.busy) fnClose(); if (kcIsOpen()) kcClose(); if (ntIsOpen()) ntClose(); } }, true));
 $('scroll').addEventListener('click', async e => {
   if (e.target.closest('[data-aihint]')){ e.preventDefault(); return aiOpen(cur()); }
   const box = e.target.closest('#aip'); if (!box) return;
@@ -10814,6 +10835,221 @@ async function vorgLogUndo(J, back, miss, failed){
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && vorgIsOpen() && !VORG.busy && !document.querySelector('#askBg[style*="grid"]')) vorgClose(); });
 
+/* ---------- v69: Notes table — every note on one line, every option one click away ----------
+   Created · Edited · Note (hover = preview, double-click = rename) · Folder (click = move) · Tags · Importance ·
+   Keep (⭐ / — / ⏳) · Pin · Archive/Restore · Words · Delete. Sort by any date or name, filter, tick many rows and
+   change them together, Undo, choose columns, keyboard, export CSV. Opens from Find notes, the palette, or with
+   the results of a Find search ("Edit these in the table"). */
+const NT_COLS = [['created', 'Created'], ['edited', 'Edited'], ['name', 'Note'], ['folder', 'Folder'], ['tags', 'Tags'], ['importance', 'Importance'], ['keep', 'Keep'], ['pin', 'Pin'], ['archive', 'Archive'], ['words', 'Words'], ['del', 'Delete']];
+const NT = { sort:{ by:'edited', dir:'desc' }, q:'', quick:'', sel:new Set(), show:300, cur:-1, only:null, onlyLabel:'', undo:[], words:new Map(), last:-1 };
+function ntCols(){ try { const c = JSON.parse(localStorage.getItem('qn-ntcols') || 'null'); if (Array.isArray(c) && c.length) return new Set(c); } catch(e){} return new Set(NT_COLS.map(c => c[0]).filter(c => c !== 'words')); }
+function ntSetCols(set){ localStorage.setItem('qn-ntcols', JSON.stringify([...set])); }
+const ntCreated = n => noteCreatedProp(n) || 0;
+function ntWords(n){ const k = n.path + ':' + (n.mtime || 0); if (NT.words.has(k)) return NT.words.get(k); const w = n.locked ? 0 : ((n.body || '').match(/[\p{L}\p{N}]+/gu) || []).length; NT.words.set(k, w); return w; }
+function ntRows(){
+  const q = fold(NT.q.trim()), parts = q ? q.split(/\s+/) : [];
+  let rows = [...S.notes.values()].filter(n => !n.external && (!NT.only || NT.only.has(n.path)));
+  if (NT.quick === 'key') rows = rows.filter(n => keepOf(n) === 'key');
+  else if (NT.quick === 'temp') rows = rows.filter(n => keepOf(n) === 'temp');
+  else if (NT.quick === 'arch') rows = rows.filter(n => inArchive(n.folder));
+  else if (NT.quick === 'pin') rows = rows.filter(n => isPinnedAny('n', n.path));
+  else if (NT.quick === 'noarch') rows = rows.filter(n => !inArchive(n.folder));
+  if (parts.length) rows = rows.filter(n => { const h = fold(n.name + ' ' + n.folder + ' ' + allTags(n).map(t => '#' + t).join(' ')); return parts.every(p => h.includes(p)); });
+  const s = NT.sort, d = s.dir === 'asc' ? 1 : -1;
+  const key = { created: n => ntCreated(n) || -1, edited: n => n.mtime || 0, name: n => n.name, folder: n => n.folder + '/' + n.name, words: n => ntWords(n), importance: n => IMP_RANK[n.importance] || 0 }[s.by] || (n => n.mtime || 0);
+  rows.sort((a, b) => { const x = key(a), y = key(b); if (s.by === 'created' && (x < 0) !== (y < 0)) return x < 0 ? 1 : -1; return (typeof x === 'string' ? NCOLL.compare(x, y) : x - y) * d || NCOLL.compare(a.name, b.name); });
+  return rows;
+}
+function ntOpen(only, label){
+  if (!S.root && !S.demo) return toast('Open your vault first');
+  hideCtx && hideCtx(); vorgIsOpen() && vorgClose(); fnIsOpen() && fnClose(); kcIsOpen() && kcClose();
+  NT.only = only ? new Set(only) : null; NT.onlyLabel = label || ''; NT.sel.clear(); NT.show = 300; NT.cur = -1;
+  let pg = $('ntPage');
+  if (!pg){ pg = document.createElement('div'); pg.id = 'ntPage'; pg.tabIndex = -1; document.querySelector('main.main').appendChild(pg);
+    pg.addEventListener('click', ntClick); pg.addEventListener('dblclick', ntDbl); pg.addEventListener('input', ntInput); pg.addEventListener('keydown', ntKeys);
+    pg.addEventListener('mouseover', ntHover); pg.addEventListener('mouseout', e => { if (!e.relatedTarget || !e.relatedTarget.closest('.ntname')) ntTip(null); }); }
+  pg.style.display = 'flex'; ntRender(); setTimeout(() => pg.focus(), 30);
+}
+function ntClose(){ const pg = $('ntPage'); if (pg) pg.style.display = 'none'; ntTip(null); }
+const ntIsOpen = () => { const pg = $('ntPage'); return !!(pg && pg.style.display === 'flex'); };
+const ntDate = t => t ? fnDay(t) : '';
+function ntRender(keepScroll){
+  const pg = $('ntPage'); if (!pg) return;
+  const list = pg.querySelector('.ntlist'), top = keepScroll && list ? list.scrollTop : 0;
+  const rows = ntRows(); NT.rowsNow = rows;
+  for (const p of [...NT.sel]) if (!S.notes.has(p)) NT.sel.delete(p);
+  const cols = ntCols(), C = c => cols.has(c), s = NT.sort, arrow = by => s.by === by ? (s.dir === 'asc' ? ' ↑' : ' ↓') : '';
+  const th = (c, label, by) => C(c) ? `<th class="nt-${c}${by ? ' srt' : ''}" ${by ? `data-ntsort="${by}"` : ''}>${label}${by ? arrow(by) : ''}</th>` : '';
+  const shown = rows.slice(0, NT.show), allSel = shown.length && shown.every(n => NT.sel.has(n.path));
+  const qb = (k, l) => `<button class="${NT.quick === k ? 'on' : ''}" data-ntquick="${k}">${l}</button>`;
+  const row = (n, i) => {
+    const k = keepOf(n), arch = inArchive(n.folder), pin = isPinnedAny('n', n.path), cr = ntCreated(n);
+    return `<tr data-p="${esc(n.path)}" class="${NT.sel.has(n.path) ? 'sel' : ''} ${i === NT.cur ? 'cur' : ''} ${k === 'temp' ? 'ktemp' : ''}">
+      <td class="nt-chk"><input type="checkbox" data-ntsel="${i}" ${NT.sel.has(n.path) ? 'checked' : ''}></td>
+      ${C('created') ? `<td class="nt-created" title="${cr ? 'Saved in the note' : 'Not known yet — saved the next time you edit the note'}">${cr ? ntDate(cr) : '—'}</td>` : ''}
+      ${C('edited') ? `<td class="nt-edited">${ntDate(n.mtime)}</td>` : ''}
+      ${C('name') ? `<td class="nt-name"><span class="ntname" data-ntopen="1" title="Click: open · double-click: rename">${n.locked ? UI('lock') : ''}${esc(n.name)}</span></td>` : ''}
+      ${C('folder') ? `<td class="nt-folder"><button class="ntfold" data-ntfolder="1" title="Move to another folder">${esc(n.folder || 'Vault root')} ${UI('chevron-down')}</button></td>` : ''}
+      ${C('tags') ? `<td class="nt-tags">${n.tags.map(t => `<span class="nttag">#${esc(t)}<button data-ntuntag="${esc(t)}" title="Remove tag">×</button></span>`).join('')}${allTags(n).filter(t => !n.tags.includes(t)).map(t => `<span class="nttag inl" title="In the text — remove it there">#${esc(t)}</span>`).join('')}<button class="ntadd" data-nttag="1" title="Add a tag">+</button></td>` : ''}
+      ${C('importance') ? `<td class="nt-imp">${['high', 'medium', 'low'].map(v => `<button class="ntdot ${n.importance === v ? 'on' : ''}" data-ntimp="${v}" title="${v[0].toUpperCase() + v.slice(1)}"><span class="dot ${v}"></span></button>`).join('')}</td>` : ''}
+      ${C('keep') ? `<td class="nt-keep">${[['key', '⭐', '⭐ Key'], ['', '—', 'Normal'], ['temp', '⏳', '⏳ Temp']].map(([v, l, t]) => `<button class="ntk ${k === v ? 'on' : ''}" data-ntkeep="${v}" title="${t}">${l}</button>`).join('')}</td>` : ''}
+      ${C('pin') ? `<td class="nt-pin"><button class="ntpin ${pin ? 'on' : ''}" data-ntpin="1" title="${pin ? 'Unpin' : 'Pin to the top of the sidebar'}">${UI('pin')}</button></td>` : ''}
+      ${C('archive') ? `<td class="nt-arch"><button class="ntarch ${arch ? 'on' : ''}" data-ntarch="1" title="${arch ? 'Restore to where it was' : 'Move into ' + esc(archiveRoot())}">${UI(arch ? 'archive-restore' : 'archive')}</button></td>` : ''}
+      ${C('words') ? `<td class="nt-words">${ntWords(n).toLocaleString()}</td>` : ''}
+      ${C('del') ? `<td class="nt-del"><button class="ntdel" data-ntdel="1" title="Move to the Trash">${UI('trash')}</button></td>` : ''}
+    </tr>`;
+  };
+  const n = NT.sel.size;
+  pg.innerHTML = `<div class="orghead">${UI('table')}<b>Notes table</b><span class="orgsub">${rows.length.toLocaleString()} note${rows.length === 1 ? '' : 's'}${NT.only ? ` · <span class="ntonly">${esc(NT.onlyLabel || 'from Find')} <button class="ghost" data-ntall="1" title="Show all notes">✕</button></span>` : ''}</span><span class="sp"></span>
+      ${NT.undo.length ? `<button class="ghost" data-ntundo="1" title="Take back: ${esc(NT.undo[NT.undo.length - 1].label)}">${UI('undo-2')} Undo</button>` : ''}
+      <button class="ghost" data-ntcols="1" title="Show or hide columns">${UI('columns-3')} Columns</button>
+      <button class="ghost" data-ntcsv="1" title="Download this list as a CSV file (Excel)">${UI('file-down')} CSV</button>
+      <button class="ghost" data-ntclose="1" title="Back to your notes (Esc)">✕ Close</button></div>
+    <div class="ntbar"><input id="ntQ" placeholder="Filter by name, folder or #tag…" value="${esc(NT.q)}" autocomplete="off">
+      <div class="seg ntquick">${qb('', 'All')}${qb('key', '⭐ Key')}${qb('temp', '⏳ Temp')}${qb('pin', '📌 Pinned')}${qb('noarch', 'Not archived')}${qb('arch', 'Archived')}</div></div>
+    <div class="ntlist"><table class="fntab nttab"><thead><tr><th class="nt-chk"><input type="checkbox" data-ntselall="1" ${allSel ? 'checked' : ''} title="Tick all shown"></th>
+      ${th('created', 'Created', 'created')}${th('edited', 'Edited', 'edited')}${th('name', 'Note', 'name')}${th('folder', 'Folder', 'folder')}${th('tags', 'Tags')}${th('importance', 'Importance', 'importance')}${th('keep', 'Keep')}${th('pin', 'Pin')}${th('archive', 'Archive')}${th('words', 'Words', 'words')}${th('del', '')}</tr></thead>
+      <tbody>${shown.map(row).join('')}</tbody></table>${rows.length > NT.show ? `<button class="ghost fnmore" data-ntmore="1">Show ${Math.min(300, rows.length - NT.show)} more of ${rows.length - NT.show}</button>` : ''}${rows.length ? '' : '<div class="vorgmuted" style="padding:16px">No notes match.</div>'}</div>
+    <div class="ntsel ${n ? 'on' : ''}">${n ? `<b>${n} selected</b>
+      <button class="ghost" data-ntb="move">${UI('folder-input')} Move to…</button>
+      <span class="ntgrp">${['high', 'medium', 'low'].map(v => `<button class="ghost ntdot" data-ntb="imp:${v}" title="${v}"><span class="dot ${v}"></span></button>`).join('')}<button class="ghost" data-ntb="imp:" title="No importance">○</button></span>
+      <span class="ntgrp"><button class="ghost" data-ntb="keep:key">⭐ Key</button><button class="ghost" data-ntb="keep:">— Normal</button><button class="ghost" data-ntb="keep:temp">⏳ Temp</button></span>
+      <button class="ghost" data-ntb="tag">#+ Tag</button>
+      <button class="ghost" data-ntb="pin">${UI('pin')} Pin</button><button class="ghost" data-ntb="unpin">Unpin</button>
+      <button class="ghost" data-ntb="arch">${UI('archive')} Archive</button><button class="ghost" data-ntb="restore">${UI('archive-restore')} Restore</button>
+      <button class="ghost ntdel" data-ntb="del">${UI('trash')} Delete</button>
+      <span class="sp"></span><button class="ghost" data-ntb="clear">Clear selection</button>` : `<span class="vorgmuted">Tick notes (Shift+click for a range) to change many at once · ↑↓ move · Space tick · Enter open · Esc close</span>`}</div>`;
+  if (top){ const l = pg.querySelector('.ntlist'); if (l) l.scrollTop = top; }
+}
+/* ----- changes, with undo ----- */
+async function ntChange(notes, label, fn, opts){
+  opts = opts || {};
+  notes = notes.filter(n => n && !n.external); if (!notes.length) return;
+  const locked = notes.filter(n => n.locked && !opts.lockedOk); if (locked.length && !opts.lockedOk){ notes = notes.filter(n => !n.locked); if (!notes.length) return toast('Locked notes can’t be changed here — unlock them first'); }
+  await flushAll();
+  const step = { label, items:[] };
+  const run = async () => {
+    for (const n of notes){
+      const from = n.path, before = n.locked ? null : serialize(n);
+      try { await fn(n); step.items.push({ from, to:n.path, before }); } catch(e){ toast(n.name + ': ' + e.message, 6000); }
+    }
+  };
+  if (notes.length > 4 || opts.busy) await busyWhile(label + '…', run); else await run();
+  if (step.items.length){ NT.undo.push(step); if (NT.undo.length > 30) NT.undo.shift(); }
+  renderSidebar(); kcBadge(); ntRender(true);
+}
+async function ntUndo(){
+  const st = NT.undo.pop(); if (!st) return;
+  await flushAll();
+  await busyWhile('Undo: ' + st.label + '…', async () => {
+    for (const x of [...st.items].reverse()){
+      const n = S.notes.get(x.to); if (!n) continue;
+      if (x.from !== x.to){ await fnEnsureFolder(parentOf(x.from)); await moveNote(n, parentOf(x.from)); if (n.name !== x.from.split('/').pop().replace(/\.md$/, '')) await renameNote(n, x.from.split('/').pop().replace(/\.md$/, '')); }
+      if (x.before != null){ Object.assign(n, parse(x.before)); n._noCreated = true; try { await writeNote(n); } finally { delete n._noCreated; } }
+    }
+  });
+  toast('Undone: ' + st.label, 3000); renderAll(); ntRender(true);
+}
+const ntSetPin = async (n, on) => { if (isPinnedAny('n', n.path) !== on) togglePin('n', n.path); n.pinned = on; await writeNote(n); };
+async function ntPickFolder(cur, title){
+  const v = await ask(title || 'Move to', `<label>Folder</label><select name="folder">${folderOptions(cur || '')}</select><label>…or a new folder</label><input name="nf" placeholder="e.g. PROJECTS/New idea" autocomplete="off">`, 'Move');
+  if (!v) return null;
+  const f = (v.nf || '').trim() ? vorgClean(v.nf) : v.folder;
+  return f == null ? null : f;
+}
+async function ntAddTag(){ const v = await ask('Add a tag', '<label>Tag</label><input name="t" placeholder="e.g. elena" autocomplete="off">', 'Add'); return v && clean(String(v.t || '').replace(/^#/, '')) || null; }
+/* ----- events ----- */
+const ntNoteOf = el => { const tr = el.closest('tr[data-p]'); return tr ? S.notes.get(tr.dataset.p) : null; };
+async function ntClick(e){
+  const t = e.target, n = ntNoteOf(t);
+  if (t.closest('[data-ntclose]')) return ntClose();
+  if (t.closest('[data-ntall]')){ NT.only = null; return ntRender(); }
+  if (t.closest('[data-ntundo]')) return ntUndo();
+  if (t.closest('[data-ntmore]')){ NT.show += 300; return ntRender(true); }
+  if (t.closest('[data-ntcsv]')) return ntCsv();
+  if (t.closest('[data-ntcols]')){
+    const r = t.closest('[data-ntcols]').getBoundingClientRect(), cols = ntCols();
+    return showCtx(r.left - 120, r.bottom + 4, [{ head:'Columns' }, ...NT_COLS.map(([c, l]) => ({ icon: cols.has(c) ? '✓' : ' ', label: l || c, run: () => { const s = ntCols(); s.has(c) ? s.delete(c) : s.add(c); if (!s.has('name')) s.add('name'); ntSetCols(s); ntRender(true); } }))]);
+  }
+  const qk = t.closest('[data-ntquick]'); if (qk){ NT.quick = qk.dataset.ntquick; NT.show = 300; return ntRender(); }
+  const so = t.closest('[data-ntsort]'); if (so){ const by = so.dataset.ntsort; NT.sort = { by, dir: NT.sort.by === by && NT.sort.dir === 'desc' ? 'asc' : (by === 'name' || by === 'folder') && NT.sort.by !== by ? 'asc' : 'desc' }; return ntRender(); }
+  if (t.closest('[data-ntselall]')){ const shown = (NT.rowsNow || []).slice(0, NT.show); const on = t.checked; shown.forEach(x => on ? NT.sel.add(x.path) : NT.sel.delete(x.path)); return ntRender(true); }
+  const cb = t.closest('[data-ntsel]');
+  if (cb){ const i = +cb.dataset.ntsel, rows = NT.rowsNow || [];
+    if (e.shiftKey && NT.last >= 0){ const [a, b] = [Math.min(NT.last, i), Math.max(NT.last, i)]; for (let j = a; j <= b; j++) rows[j] && (cb.checked ? NT.sel.add(rows[j].path) : NT.sel.delete(rows[j].path)); }
+    else cb.checked ? NT.sel.add(rows[i].path) : NT.sel.delete(rows[i].path);
+    NT.last = i; NT.cur = i; return ntRender(true); }
+  const bb = t.closest('[data-ntb]'); if (bb) return ntBulk(bb.dataset.ntb);
+  if (!n) return;
+  if (t.closest('[data-ntopen]')){ if (e.detail > 1) return; clearTimeout(NT.openT); NT.openT = setTimeout(() => { ntClose(); S.current = n.path; if (!S.tabs.includes(n.path)) S.tabs.push(n.path); renderAll(); }, 260); return; }
+  if (t.closest('[data-ntfolder]')){ const f = await ntPickFolder(n.folder, 'Move “' + n.name + '” to'); if (f != null && f !== n.folder) await ntChange([n], 'Move to ' + (f || 'vault root'), async x => { await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true }); return; }
+  const imp = t.closest('[data-ntimp]'); if (imp){ const v = imp.dataset.ntimp; return ntChange([n], 'Importance', async x => { x.importance = x.importance === v ? '' : v; await writeNote(x); }); }
+  const kp = t.closest('[data-ntkeep]'); if (kp) return ntChange([n], 'Keep label', async x => { setNoteKeep(x, kp.dataset.ntkeep); await writeNote(x); });
+  if (t.closest('[data-ntpin]')) return ntChange([n], 'Pin', async x => ntSetPin(x, !isPinnedAny('n', x.path)));
+  if (t.closest('[data-ntarch]')) return ntChange([n], inArchive(n.folder) ? 'Restore' : 'Archive', async x => { const a = archiveRoot(), f = inArchive(x.folder) ? (x.folder === a ? '' : x.folder.slice(a.length + 1)) : a + (x.folder ? '/' + x.folder : ''); await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true });
+  const ut = t.closest('[data-ntuntag]'); if (ut) return ntChange([n], 'Remove #' + ut.dataset.ntuntag, async x => { x.tags = x.tags.filter(z => z !== ut.dataset.ntuntag); await writeNote(x); });
+  if (t.closest('[data-nttag]')){ const tg = await ntAddTag(); if (tg) await ntChange([n], 'Add #' + tg, async x => { if (!x.tags.includes(tg)) x.tags = [...x.tags, tg]; await writeNote(x); }); return; }
+  if (t.closest('[data-ntdel]')){ if (await confirmIt('Move “' + n.name + '” to the Trash? (Restore it from the Trash, bottom left.)', 'Move to Trash')){ await trashNote(n); renderSidebar(); ntRender(true); } return; }
+  const tr = t.closest('tr[data-p]'); if (tr){ NT.cur = (NT.rowsNow || []).findIndex(x => x.path === tr.dataset.p); pgMark(); }
+}
+function pgMark(){ document.querySelectorAll('#ntPage tr.cur').forEach(x => x.classList.remove('cur')); const r = (NT.rowsNow || [])[NT.cur]; if (!r) return; const tr = [...document.querySelectorAll('#ntPage tr[data-p]')].find(x => x.dataset.p === r.path); if (tr){ tr.classList.add('cur'); tr.scrollIntoView({ block:'nearest' }); } }
+async function ntBulk(a){
+  const notes = [...NT.sel].map(p => S.notes.get(p)).filter(Boolean); if (!notes.length && a !== 'clear') return;
+  const N = notes.length + ' note' + (notes.length === 1 ? '' : 's');
+  if (a === 'clear'){ NT.sel.clear(); return ntRender(true); }
+  if (a === 'move'){ const f = await ntPickFolder('', 'Move ' + N + ' to'); if (f != null) await ntChange(notes, 'Move ' + N + ' to ' + (f || 'vault root'), async x => { if (x.folder === f) return; await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true }); return; }
+  if (a.startsWith('imp:')){ const v = a.slice(4); return ntChange(notes, 'Importance of ' + N, async x => { x.importance = v; await writeNote(x); }); }
+  if (a.startsWith('keep:')){ const v = a.slice(5); return ntChange(notes, 'Keep label of ' + N, async x => { setNoteKeep(x, v); await writeNote(x); }); }
+  if (a === 'tag'){ const tg = await ntAddTag(); if (tg) await ntChange(notes, 'Add #' + tg + ' to ' + N, async x => { if (!x.tags.includes(tg)){ x.tags = [...x.tags, tg]; await writeNote(x); } }); return; }
+  if (a === 'pin' || a === 'unpin') return ntChange(notes, (a === 'pin' ? 'Pin ' : 'Unpin ') + N, async x => ntSetPin(x, a === 'pin'));
+  if (a === 'arch') return ntChange(notes.filter(x => !inArchive(x.folder)), 'Archive ' + N, async x => { const f = archiveRoot() + (x.folder ? '/' + x.folder : ''); await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true });
+  if (a === 'restore') return ntChange(notes.filter(x => inArchive(x.folder)), 'Restore ' + N, async x => { const ar = archiveRoot(), f = x.folder === ar ? '' : x.folder.slice(ar.length + 1); await fnEnsureFolder(f); await moveNote(x, f); }, { lockedOk:true, busy:true });
+  if (a === 'del'){ if (!await confirmIt('Move ' + N + ' to the Trash? You can restore them from the Trash (bottom left). Undo here can’t bring them back.', 'Move to Trash')) return;
+    await busyWhile('Moving ' + N + ' to the Trash…', async () => { S._bulk = true; try { for (const x of notes) await trashNote(x); } finally { S._bulk = false; } });
+    NT.sel.clear(); renderSidebar(); toast(N + ' moved to the Trash', 4000); return ntRender(true); }
+}
+function ntDbl(e){
+  const nm = e.target.closest('[data-ntopen]'); if (!nm) return; clearTimeout(NT.openT);
+  const n = ntNoteOf(nm); if (!n) return; if (n.locked) return toast('Unlock the note first');
+  const td = nm.parentElement; td.innerHTML = `<input class="ntren" value="${esc(n.name)}">`; const inp = td.querySelector('input'); inp.focus(); inp.select();
+  const done = async ok => { if (inp._done) return; inp._done = true; const v = inp.value.trim(); if (ok && v && v !== n.name){ await ntChange([n], 'Rename to ' + v, async x => { if (!await renameNote(x, v)) throw new Error('could not rename'); }); } else ntRender(true); };
+  inp.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); done(true); } if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); done(false); } });
+  inp.addEventListener('blur', () => done(true));
+}
+function ntInput(e){ if (e.target.id === 'ntQ'){ NT.q = e.target.value; NT.show = 300; clearTimeout(NT.qt); NT.qt = setTimeout(() => { ntRender(); const i = $('ntQ'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 200); } }
+function ntKeys(e){
+  if (e.target.matches('input:not([type=checkbox]), textarea')) { if (e.key === 'Escape' && e.target.id === 'ntQ'){ e.target.blur(); } return; }
+  const rows = NT.rowsNow || [];
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); NT.cur = Math.max(0, Math.min(Math.min(rows.length, NT.show) - 1, (NT.cur < 0 ? -1 : NT.cur) + (e.key === 'ArrowDown' ? 1 : -1))); pgMark(); }
+  else if (e.key === ' ' && rows[NT.cur]){ e.preventDefault(); const p = rows[NT.cur].path; NT.sel.has(p) ? NT.sel.delete(p) : NT.sel.add(p); NT.last = NT.cur; ntRender(true); pgMark(); }
+  else if (e.key === 'Enter' && rows[NT.cur]){ e.preventDefault(); const p = rows[NT.cur].path; ntClose(); S.current = p; if (!S.tabs.includes(p)) S.tabs.push(p); renderAll(); }
+  else if (e.key === 'Escape'){ e.preventDefault(); if (NT.sel.size){ NT.sel.clear(); ntRender(true); } else ntClose(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && NT.undo.length){ e.preventDefault(); ntUndo(); }
+}
+// hover the name: the first lines of the note
+function ntHover(e){
+  const nm = e.target.closest('.ntname'); if (!nm){ return; }
+  const n = ntNoteOf(nm); if (!n) return;
+  clearTimeout(NT.tipT); NT.tipT = setTimeout(() => {
+    const txt = n.locked ? '🔒 Locked note' : (n.body || '').replace(/%%[\s\S]*?%%/g, '').replace(/<[^>]+>/g, '').split('\n').map(l => l.trim()).filter(Boolean).slice(0, 7).join('\n').slice(0, 500) || '(empty note)';
+    const r = nm.getBoundingClientRect(); ntTip({ x:r.left, y:r.bottom + 6, title:n.name, txt });
+  }, 350);
+}
+function ntTip(o){
+  let el = $('ntTip'); clearTimeout(NT.tipT);
+  if (!o){ if (el) el.style.display = 'none'; return; }
+  if (!el){ el = document.createElement('div'); el.id = 'ntTip'; document.body.appendChild(el); }
+  el.innerHTML = `<b>${esc(o.title)}</b><div>${esc(o.txt)}</div>`; el.style.display = 'block';
+  const w = 380, x = Math.min(o.x, innerWidth - w - 12), y = o.y + 180 > innerHeight ? o.y - 200 : o.y;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+}
+function ntCsv(){
+  const cols = NT_COLS.filter(([c]) => ntCols().has(c) && c !== 'del'), q = v => { v = String(v == null ? '' : v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const val = (n, c) => c === 'created' ? ntDate(ntCreated(n)) : c === 'edited' ? ntDate(n.mtime) : c === 'name' ? n.name : c === 'folder' ? n.folder : c === 'tags' ? allTags(n).map(t => '#' + t).join(' ') : c === 'importance' ? n.importance : c === 'keep' ? keepOf(n) : c === 'pin' ? (isPinnedAny('n', n.path) ? 'yes' : '') : c === 'archive' ? (inArchive(n.folder) ? 'archived' : '') : c === 'words' ? ntWords(n) : '';
+  const lines = [cols.map(c => q(c[1])).join(','), ...(NT.rowsNow || []).map(n => cols.map(([c]) => q(val(n, c))).join(','))];
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv' })); a.download = 'My Notes – notes table ' + fnDay(Date.now()) + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
 /* ---------- v60: Find notes — a search you talk to ----------
    1. You type what you want in your own words. The AI turns ONLY your words (plus folder and tag names) into a precise search.
    2. The app searches every note itself (free, fast, complete) and shows a table.
@@ -11194,6 +11430,7 @@ async function fnRender(){
   let undoRun = null; try { const l = (await idbGet(fnKey())) || []; undoRun = [...l].reverse().find(r => !r.undone); } catch(e){}
   const head = `<div class="orghead">${UI('text-search')}<b>Find notes</b><span class="orgsub">ask in your own words${FN.usage ? ' · ' + esc(usageLine(FN.usage).replace(/\*/g, '')) : ''}</span><span class="sp"></span>
     ${undoRun ? `<button class="ghost" data-fn="undo" title="Put the notes back as they were before: ${esc(undoRun.what)}">${UI('undo-2')} Undo last change (${undoRun.items.length})</button>` : ''}
+    <button class="ghost" data-fn="table" title="Every note on one line — sort, move, label, archive (Ctrl+Alt+L)">${UI('table')} Notes table</button>
     <button class="ghost" data-fn="close" title="Back to your notes (Esc)">✕ Close</button></div>
     <div class="fnbar"><textarea id="fnQ" rows="1" placeholder="${FN.spec ? 'Refine (“only from October”) or change (“add tag #elena”)… — or ask something new' : 'e.g. all notes which have elena & must do'}">${esc(FN.spec ? '' : FN.q)}</textarea>
       <button class="primary" data-fn="go" ${FN.busy ? 'disabled' : ''}>${FN.busy ? '…' : UI('arrow-right')}${FN.busy ? '' : (FN.spec ? ' Go' : ' Search')}</button></div>
@@ -11235,7 +11472,8 @@ async function fnRender(){
   pg.innerHTML = head + ex + `<div class="fnund">${UI('sparkles')} <b>Understood:</b> ${esc(FN.explain || fnExplain(sp))}${sp.local ? '' : ` <span class="vorgmuted">· ${esc(fnExplain(sp))}</span>`}</div>${sim}${sp.about && FN.semOff ? `<div class="fnsim">${UI('info')} Searched “${esc(sp.about)}” by its key words. Turn on <b>search by meaning</b> (above) to also find notes that say it in other words.</div>` : ''}
     <div class="orgbar"><span class="orgseln">${FN.rows.length} note${FN.rows.length === 1 ? '' : 's'}${FN.busy && FN.sumAll ? ' · summarizing ' + FN.sumDone + ' / ' + FN.sumAll : ''}</span><span class="sp"></span>
       ${est && est.n ? `<button class="ghost" data-fn="sum" title="AI writes one sentence per note — you see the price first">${UI('sparkles')} Add summaries (~${est.usd < 0.01 ? '<$0.01' : '$' + est.usd.toFixed(2)})</button>` : ''}
-      <button class="ghost" data-fn="save" ${FN.rows.length ? '' : 'disabled'}>${UI('file-plus')} Save as note</button></div>
+      <button class="ghost" data-fn="save" ${FN.rows.length ? '' : 'disabled'}>${UI('file-plus')} Save as note</button>
+      <button class="ghost" data-fn="totable" ${FN.rows.length ? '' : 'disabled'} title="Open just these notes in the Notes table — move, label, pin or archive them">${UI('table')} Edit in table</button></div>
     <div class="fnlist">${FN.rows.length ? `<table class="fntab"><thead><tr>${cols.map(c => `<th ${colSort[c] ? `data-sort="${colSort[c]}" class="srt"` : ''}>${esc(FN_COLS[c])}${colSort[c] && s.by === colSort[c] ? (s.dir === 'asc' ? ' ↑' : ' ↓') : ''}</th>`).join('')}</tr></thead>
       <tbody>${shown.map(r => `<tr>${cols.map(c => val(r, c)).join('')}</tr>`).join('')}</tbody></table>${FN.rows.length > FN.show ? `<button class="ghost fnmore" data-fn="more">Show ${Math.min(300, FN.rows.length - FN.show)} more of ${FN.rows.length - FN.show}</button>` : ''}`
       : `<div class="vorgmuted" style="padding:18px">No notes match. Try fewer words, <b>Similar words too</b>, or remove a folder or date.</div>`}</div>`;
@@ -11262,6 +11500,8 @@ function fnClick(e){
   if (v === 'ex'){ FN.showEx = !FN.showEx; return fnRender(); }
   if (v === 'sum') return fnSummaries();
   if (v === 'save') return fnSaveNote();
+  if (v === 'table') return ntOpen();
+  if (v === 'totable') return ntOpen(FN.rows.map(r => r.n.path), 'Find: ' + (FN.lastQ || FN.q || 'results').slice(0, 40));
   if (v === 'more'){ FN.show += 300; return fnRender(); }
   if (v === 'undo') return fnUndo();
   if (v === 'apply') return fnApplyChange();
@@ -11269,7 +11509,9 @@ function fnClick(e){
   if (v === 'call' || v === 'cnone'){ FN.change.items.forEach(x => { if (x.ok) x.on = v === 'call'; }); return fnRender(); }
 }
 document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'l'){ e.preventDefault(); ntIsOpen() ? ntClose() : ntOpen(); return; }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f' && !e.altKey){ e.preventDefault(); fnIsOpen() ? fnClose() : fnOpen(); }
+  else if (e.key === 'Escape' && ntIsOpen() && !e.target.closest('#ntPage') && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]') && $('ctx').style.display !== 'block'){ ntClose(); }
   else if (e.key === 'Escape' && fnIsOpen() && !FN.busy && !document.querySelector('#askBg[style*="grid"], #askBg[style*="flex"]')) fnClose();
 });
 
@@ -11689,6 +11931,7 @@ function cmdList(){
     ['AI', 'Tidy up: notes missing tags or importance', '', true, () => $('tidyBtn').click()],
     ['AI', 'Organize vault: AI suggests a tidier folder structure…', '', true, () => vorgOpen()],
     ['Find', 'Find notes: ask in your own words…', 'Ctrl+Shift+F', true, () => fnOpen()],
+    ['Find', 'Notes table: every note on one line (sort, move, label, archive)…', 'Ctrl+Alt+L', true, () => ntOpen()],
     ['AI', 'AI usage: tokens and cost per month (note)', '', !!S.root && !S.demo, async () => { clearTimeout(USG.timer); await usageFlush().catch(() => {}); await usageWriteNote(); const n = S.notes.get(USAGE_NOTE + '.md'); if (n){ S.current = n.path; if (!S.tabs.includes(n.path)) S.tabs.push(n.path); renderAll(); } }],
     ['Note', 'New ⏳ temp note', 'Ctrl+Alt+T', true, () => newTempNote()],
     ['Note', 'Cleanup: old temp notes and unused Key notes…', '', true, () => kcOpen()],

@@ -4,6 +4,19 @@ Every version has a number and a date, for example **v39-2026-11-11**. It shows 
 
 ---
 
+## v69-2026-11-18
+**Notes table — every note on one line.** Open it with **Notes table** at the top of Find notes, **Ctrl+Alt+L**, or the palette. Each line shows **Created · Edited · Note · Folder · Tags · Importance · Keep · Pin · Archive** (and **Words** if you turn it on), and every one of them can be changed right there:
+- **Sort** by Created, Edited, Note, Folder, Importance or Words — click the column title, click again for the other direction.
+- **Hover a note's name** to see its first lines. Click to open it, double-click to rename it.
+- **Folder:** click to move the note to another folder, or type a new one.
+- **Tags:** × removes a tag, **+** adds one. Importance ● High / Medium / Low, Keep ⭐ / — / ⏳, Pin, Archive / Restore, and 🗑 Delete (to the Trash).
+- **Filter box** (name, folder or #tag) and quick filters: All · ⭐ Key · ⏳ Temp · 📌 Pinned · Not archived · Archived.
+- **Change many at once:** tick notes (Shift+click for a range) and use the bar at the bottom: Move to…, importance, Keep, add tag, Pin/Unpin, Archive/Restore, Delete.
+- **Undo** takes back the last changes, one step at a time (deleted notes come back from the Trash instead).
+- **Columns** shows or hides columns (remembered on this PC). **CSV** downloads the list for Excel.
+- **Keyboard:** ↑↓ move, Space ticks, Enter opens, Esc clears the ticks and then closes.
+- From Find notes, **Edit in table** opens just the notes you found.
+
 ## v68-2026-11-18
 **AI usage note — tokens and cost per month.** The note **AI usage** (vault root) is updated by itself a few seconds after any AI use: per month, each feature's calls, tokens in/out and estimated cost, plus cost by model and by PC. Each PC keeps its own numbers in `.mynotes/usage-<pc>.json`; the note adds up all your PCs. Palette: *AI usage*. Costs are estimates from token counts and list prices — your provider's usage page is the exact bill. Counting starts with this version.
 
