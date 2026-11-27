@@ -215,6 +215,7 @@ select.field{appearance:auto}
 #toast button{color:#F2B593;font-weight:700;white-space:nowrap}
 .prog{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin:2px 4px 10px}
 .prog i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.errpre{white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,monospace;background:var(--card,#f4f4f4);padding:10px;border-radius:10px;max-height:45vh;overflow:auto;margin:8px 0}
 </style>
 </head>
 <body>
@@ -244,7 +245,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v41-2026-11-12';
+const VERSION = 'v42-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -470,15 +471,28 @@ async function api(url, opt, tries){
   if ((r.status === 429 || r.status >= 500) && tries < 3){ const ra = +r.headers.get('Retry-After') || (1 + tries * 2); await sleep(ra * 1000); return api(url, opt, tries + 1); }
   return r;
 }
-async function dErr(r){ const txt = await r.text().catch(() => ''); let j; try { j = JSON.parse(txt); } catch(e){ j = { error_summary: txt }; } const e = new Error(j.error_summary || ('Dropbox error ' + r.status)); e.status = r.status; e.j = j; return e; }
+async function dErr(r, where){ const txt = await r.text().catch(() => ''); let j; try { j = JSON.parse(txt); } catch(e){ j = { error_summary: txt }; } const e = new Error(j.error_summary || ('Dropbox error ' + r.status)); e.status = r.status; e.j = j; e.where = where || ''; e.reqId = r.headers.get('X-Dropbox-Request-Id') || ''; e.raw = txt.slice(0, 1500); return e; }
+// v42: the full Dropbox answer is kept, so "Sync problem: other/" can be looked into (Settings → Last sync problem → Copy details)
+function errDetails(e, extra){
+  return ['My Notes Mobile ' + VERSION, new Date().toString(), 'Account: ' + (cfg.account || '?'), 'Notes folder: ' + (cfg.vault || '?'),
+    'Call: ' + (e.where || '?'), 'Status: ' + (e.status || '?'), 'Request id: ' + (e.reqId || '?'), 'Message: ' + (e.message || e), 'Answer: ' + (e.raw || JSON.stringify(e.j || {})), extra || ''].filter(Boolean).join('\n');
+}
+function keepErr(e, extra){ const d = errDetails(e, extra); S.lastErr = d; ls.set('lastErr', { at:Date.now(), text:d }); return d; }
+function showErr(){
+  const le = ls.get('lastErr'); if (!le) return toast('No sync problem saved');
+  const sh = sheet(`<div class="sh-t">Last sync problem</div><div class="card"><small>${esc(ago(le.at))}</small></div><pre class="errpre">${esc(le.text)}</pre><button class="act" data-e="copy">${ic('share')} Copy details</button><button class="act" data-e="retry">${ic('refresh')} Try again</button>`, { tall:true });
+  sh.onclick = async e => { const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.e === 'copy'){ try { await navigator.clipboard.writeText(le.text); toast('Copied — paste it into the chat with Claude'); } catch(err){ toast('Could not copy — take a screenshot instead'); } }
+    if (b.dataset.e === 'retry'){ closeSheet(); await sync(); if (S.sync === 'ok') toast('Up to date'); } };
+}
 async function rpc(ep, args){
   const r = await api(API + ep, args === null ? { headers:{} } : { headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(args) });
-  if (!r.ok) throw await dErr(r);
+  if (!r.ok) throw await dErr(r, ep + (args && args.path != null ? ' ' + args.path : ''));
   return r.json();
 }
 async function download(path){
   const r = await api(CONTENT + 'files/download', { headers:{ 'Dropbox-API-Arg':hdrJson({ path }) } });
-  if (!r.ok) throw await dErr(r);
+  if (!r.ok) throw await dErr(r, 'files/download ' + path);
   const meta = JSON.parse(r.headers.get('Dropbox-API-Result') || '{}');
   const text = new TextDecoder('utf-8', { ignoreBOM:true }).decode(await r.arrayBuffer());   // keep a BOM if the file has one
   return { meta, text };
@@ -486,7 +500,7 @@ async function download(path){
 async function upload(path, text, mode, autorename){
   const arg = { path, mode, autorename:!!autorename, mute:true, strict_conflict:true, client_modified:new Date().toISOString().replace(/\.\d+Z$/, 'Z') };
   const r = await api(CONTENT + 'files/upload', { headers:{ 'Content-Type':'application/octet-stream', 'Dropbox-API-Arg':hdrJson(arg) }, body:new TextEncoder().encode(text) });
-  if (!r.ok) throw await dErr(r);
+  if (!r.ok) throw await dErr(r, 'files/upload ' + path + ' (' + (typeof mode === 'string' ? mode : mode['.tag']) + ', ' + text.length + ' chars)');
   return r.json();
 }
 const full = p => (cfg.vault || '') + '/' + p;
@@ -522,7 +536,7 @@ async function sync(opts){
     let changed = 0;
     try {
       setSync('busy');
-      await pushAll();
+      let bad = await pushAll();
       let cursor = opts.full ? null : await metaGet('cursor');
       if (cursor){
         try { let r; do { r = await rpc('files/list_folder/continue', { cursor }); changed += await applyDelta(r.entries); cursor = r.cursor; } while (r.has_more); }
@@ -536,8 +550,9 @@ async function sync(opts){
       await metaSet('cursor', cursor);
       await metaSet('folders', [...S.folders]); await metaSet('files', [...S.files]);
       ls.set('lastSync', Date.now());
-      await pushAll();          // edits made while we were downloading
-      setSync('ok');
+      bad = (await pushAll()) || bad;          // edits made while we were downloading
+      if (bad){ const k = [...S.notes.values()].filter(n => n.dirty && n.pushErr).length; setSync('err', bad.message); toast(k + (k === 1 ? ' note' : ' notes') + ' couldn’t be saved to Dropbox: ' + bad.message, 'Details', showErr, 9000); }
+      else setSync('ok');
     } catch(e){ syncError(e); }
     finally { S.syncP = null; S.prog = null; if (changed) refresh(); else if (S.tab === 'recent' || S.tab === 'folders') renderMain(); }
   })();
@@ -548,7 +563,7 @@ function syncError(e){
   if (e instanceof NeedAuth){ setSync('auth'); toast('Dropbox needs you to sign in again', 'Sign in', () => showSetup()); return; }
   if (e instanceof TypeError || !navigator.onLine){ setSync('off', 'Offline — changes are kept on this phone and sync later'); return; }
   if (e.status === 409 && /not_found/.test(e.message)){ setSync('err'); toast('The notes folder was not found in Dropbox', 'Choose folder', () => showSetup(2)); return; }
-  setSync('err', e.message); toast('Sync problem: ' + e.message);
+  keepErr(e); setSync('err', e.message); toast('Sync problem: ' + e.message, 'Details', showErr, 9000);
 }
 async function applyFull(entries){
   const seen = new Set(), get = [];
@@ -613,7 +628,14 @@ async function fetchMany(list){
   reindex();
 }
 function updateProg(){ const p = document.querySelector('.prog i'), t = document.querySelector('.progt'); if (p && S.prog){ p.style.width = (100 * S.prog.done / S.prog.all) + '%'; if (t) t.textContent = 'Getting your notes… ' + S.prog.done + ' of ' + S.prog.all; } }
-async function pushAll(){ for (const n of [...S.notes.values()]) if (n.dirty) await pushOne(n); }
+async function pushAll(){   // v42: a note Dropbox refuses no longer blocks the sync — the others still go up and the PC's notes still come down
+  let bad = null;
+  for (const n of [...S.notes.values()]) if (n.dirty){
+    try { await pushOne(n); n.pushErr = ''; }
+    catch(e){ if (e instanceof NeedAuth || e instanceof TypeError || !navigator.onLine) throw e; n.pushErr = e.message; keepErr(e, 'Note: ' + n.path); bad = bad || e; }
+  }
+  return bad;
+}
 async function pushOne(n){
   if (n._pushing) return n._pushing;
   n._pushing = (async () => {
@@ -627,7 +649,15 @@ async function pushOne(n){
         }
         meta = await upload(full(n.path), text, { '.tag':'update', update:n.rev }, false);
       } else {
-        meta = await upload(full(n.path), text, 'add', true);
+        try { meta = await upload(full(n.path), text, 'add', true); }
+        catch(e){
+          if (e instanceof NeedAuth || e instanceof TypeError || e.status === 429 || e.status >= 500) throw e;
+          // v42: Dropbox refused the new note: try once more with a plain file name, in the main notes folder if needed
+          const plain = (n.name || 'Shared').normalize('NFC').replace(/[^\p{L}\p{N} _.,()-]/gu, '').replace(/\s+/g, ' ').trim().replace(/[. ]+$/, '').slice(0, 60) || 'Shared note';
+          const alt = (n.folder ? n.folder + '/' : '') + plain + '.md';
+          try { meta = await upload(full(alt), text, 'add', true); }
+          catch(e2){ meta = await upload(full(plain + ' ' + stamp() + '.md'), text, 'add', true); }
+        }
         const r = relOf(meta);
         if (r && r.pl !== n.pl){ S.notes.delete(n.pl); await idbDel(n.pl); if (S.cur === n.pl) S.cur = r.pl; n.pl = r.pl; n.path = r.path; S.notes.set(n.pl, n); derive(n); reindex(); }
       }
@@ -786,7 +816,7 @@ function row(n, hl){
   return `<button class="row${n.importance ? ' imp-' + n.importance : ''}" data-open="${esc(n.pl)}">
     <div class="r-t">${n.locked ? ic('lock') : ''}${n.isMap ? ic('map') : ''}${n.pinned ? ic('pin') : ''}<span>${esc(n.name)}</span></div>
     ${s ? `<div class="r-s">${s}</div>` : ''}
-    <div class="r-m">${n.folder ? `<span class="fd">${esc(n.folder)}</span>` : ''}<span>${esc(ago(n.mtime))}</span>${n.dirty ? '<span class="pend">not synced yet</span>' : ''}</div></button>`;
+    <div class="r-m">${n.folder ? `<span class="fd">${esc(n.folder)}</span>` : ''}<span>${esc(ago(n.mtime))}</span>${n.dirty ? `<span class="pend">${n.pushErr ? 'Dropbox refused it — see Settings' : 'not synced yet'}</span>` : ''}</div></button>`;
 }
 function renderMain(){
   document.querySelectorAll('#nav .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
@@ -1153,6 +1183,7 @@ function settings(){
   const sh = sheet(`<div class="sh-t">Settings</div>
     <div class="lbl">Dropbox</div>
     <div class="card">${esc(cfg.account || 'Connected')}<small>Notes folder: ${esc(cfg.vault || '—')}</small><small>${notes.length} notes on this phone${pend ? ' · ' + pend + ' waiting to sync' : ''} · last sync ${last ? esc(ago(last)) : 'never'}</small></div>
+    ${ls.get('lastErr') && S.sync === 'err' ? `<button class="act danger" data-s="err">${ic('cloudoff')} Last sync problem — details</button>` : ''}
     <button class="act" data-s="sync">${ic('refresh')} Sync now</button>
     <button class="act" data-s="folder">${ic('folder')} Choose another notes folder</button>
     <div class="lbl">New notes go to</div>
@@ -1173,6 +1204,7 @@ function settings(){
     if (b.dataset.th){ cfg.theme = b.dataset.th; saveCfg(); applyTheme(); sh.querySelectorAll('#setTh button').forEach(x => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.sz){ cfg.size = b.dataset.sz; saveCfg(); applyTheme(); sh.querySelectorAll('#setSz button').forEach(x => x.classList.toggle('on', x === b)); return; }
     const s = b.dataset.s;
+    if (s === 'err'){ closeSheet(); setTimeout(showErr, 260); return; }
     if (s === 'sync'){ closeSheet(); await sync(); if (S.sync === 'ok') toast('Up to date'); }
     else if (s === 'folder'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); setTimeout(() => showSetup(2), 250); }
     else if (s === 'redownload'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); await resetCache(); sync({ full:true }); }

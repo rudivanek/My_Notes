@@ -1,7 +1,7 @@
 // My Notes Mobile service worker: lets the app start offline. It only stores the app's own
 // files — never your notes (those live in the app's own database on the phone) and never
 // anything from Dropbox.
-const CACHE = 'my-notes-mobile-v41-2026-11-12';
+const CACHE = 'my-notes-mobile-v42-2026-11-26';
 const FILES = ['./', './manifest.webmanifest', '../icon-192.png', '../icon-512.png', '../icon-maskable-512.png'];
 const PAGE = new URL('./', self.registration.scope).href;
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
