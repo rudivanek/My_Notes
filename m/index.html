@@ -217,6 +217,8 @@ select.field{appearance:auto}
 .prog{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin:2px 4px 10px}
 .prog i{display:block;height:100%;background:var(--accent);transition:width .2s}
 .errpre{white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,monospace;background:var(--card,#f4f4f4);padding:10px;border-radius:10px;max-height:45vh;overflow:auto;margin:8px 0}
+.tkrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}.tkchip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;color:var(--muted)}.tkchip svg{width:15px;height:15px}.tkchip.on{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6;font-weight:600}
+#tkMore{display:flex;gap:6px;align-items:center;flex-wrap:wrap}#tkMore.hidden{display:none}#edDue{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font:inherit;font-size:13px;background:var(--soft,#f3f1ee);color:inherit}.tkq{border:0;background:var(--soft,#f3f1ee);border-radius:8px;padding:5px 8px;font:inherit;font-size:12px;color:inherit}
 </style>
 </head>
 <body>
@@ -246,7 +248,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v45-2026-11-26';
+const VERSION = 'v46-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -990,7 +992,8 @@ function openEditor(pl, opts){
   page.innerHTML = `<div class="pbar"><button class="ib" data-act="edclose" aria-label="Close">${ic(isNew ? 'x' : 'back')}</button><div class="mid" id="edState">${isNew ? 'New note' : 'Saved'}</div>
       <button class="done" data-act="eddone">${isNew ? 'Save' : 'Done'}</button></div>
     <div class="edhead">${isNew ? `<input id="edTitle" placeholder="Title" value="${esc(opts.title || '')}" enterkeyhint="next" autocomplete="off">
-      <button class="fsel fpick" id="edFolder">${ic('folder')} <span>${esc(ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder')}</span></button>`
+      <button class="fsel fpick" id="edFolder">${ic('folder')} <span>${esc(ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder')}</span></button>
+      <div class="tkrow"><button class="tkchip${opts.task ? ' on' : ''}" id="edTask">${ic('checksq')} Task</button><span id="tkMore" class="${opts.task ? '' : 'hidden'}"><input type="date" id="edDue"><button class="tkq" data-qd="0">Today</button><button class="tkq" data-qd="1">Tomorrow</button><button class="tkq" data-qd="7">+1 week</button></span></div>`
       : `<input value="${esc(n.name)}" readonly tabindex="-1"><div class="edsub">${esc(n.folder || 'Main folder')}</div>`}</div>
     <textarea id="edTa" placeholder="${isNew ? 'Write something…' : ''}" spellcheck="true" autocapitalize="sentences"></textarea>
     <div class="kbar">
@@ -1001,6 +1004,7 @@ function openEditor(pl, opts){
     </div>`;
   const ta = $('edTa'); ta.value = ED.orig;
   ta.addEventListener('input', edInput);
+  if (isNew){ ED.task = !!opts.task; if (ED.task) ED.folder = taskFolder(); edTaskWire(); }   // v46: tasks
   if (isNew){ const t = $('edTitle'); t.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ta.focus(); } }); $('edFolder').onclick = e => { e.preventDefault(); pickFolder(ED.folder, f => { ED.folder = f; const b = $('edFolder'); if (b) b.querySelector('span').textContent = f ? f.split('/').join(' › ') : 'Main folder'; }); }; }
   pushLayer(closeEditor);
   page.classList.add('on');
@@ -1025,10 +1029,24 @@ async function edCreate(){
   const ta = $('edTa'); let title = ($('edTitle').value || '').trim(), body = ta.value;
   if (!title && !body.trim()) return true;          // nothing written: just close
   if (!title){ const first = body.trim().split('\n')[0].replace(/^#+\s*|[*_`>\[\]]/g, '').trim(); title = first.slice(0, 60) || ('Note ' + stamp().replace(/-(\d\d)$/, ':$1')); }
+  if (ED.task){   // v46: a task = a note with type: task (the PC's “My Tasks” table and board show it)
+    const due = ($('edDue') && $('edDue').value) || '';
+    body = '---\ntype: task\nstatus: to do\n' + (due ? 'due: ' + due + '\n' : '') + '---\n' + body;
+  }
   const n = await createNote(title, body, ED.folder);
-  toast('Saved to ' + (n.folder || 'the main folder'));
+  toast(ED.task ? 'Task saved' + (($('edDue') && $('edDue').value) ? ' · due ' + $('edDue').value : '') : 'Saved to ' + (n.folder || 'the main folder'));
   ED.created = n;
   return true;
+}
+function taskFolder(){ const t = [...S.folders].find(f => /^tasks$/i.test(f)); return t || 'TASKS'; }
+function edTaskWire(){
+  const b = $('edTask'); if (!b) return;
+  const d = new Date(), z = x => String(x).padStart(2, '0'), day = k => { const x = new Date(); x.setDate(x.getDate() + k); return x.getFullYear() + '-' + z(x.getMonth() + 1) + '-' + z(x.getDate()); };
+  b.onclick = e => { e.preventDefault(); ED.task = !ED.task; b.classList.toggle('on', ED.task); $('tkMore').classList.toggle('hidden', !ED.task);
+    ED.folder = ED.task ? taskFolder() : defaultFolder(); const fs = $('edFolder'); if (fs) fs.querySelector('span').textContent = ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder';
+    if (ED.task && !$('edTitle').value) $('edTitle').placeholder = 'What needs doing?'; };
+  if (ED.task){ const fs = $('edFolder'); if (fs) fs.querySelector('span').textContent = ED.folder.split('/').join(' › '); }
+  $('tkMore').onclick = e => { const q = e.target.closest('[data-qd]'); if (!q) return; e.preventDefault(); $('edDue').value = day(+q.dataset.qd); };
 }
 function sanitizeName(s){ return String(s).replace(/[\\/:*?"<>|#^\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 120).replace(/[. ]+$/, '') || 'Untitled'; }
 async function createNote(title, body, folder){
@@ -1356,7 +1374,10 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => { if (e.target.id === 'q'){ S.query = e.target.value; runSearch(); } });
 document.addEventListener('keydown', e => { if (e.target.id === 'lockPw' && e.key === 'Enter') document.querySelector('[data-act=unlock]').click(); });
 $('sheetBg').addEventListener('click', e => { if (e.target === $('sheetBg')) closeSheet(); });
-$('fab').onclick = () => openEditor(null, {});
+$('fab').onclick = () => { if (S._fabLong){ S._fabLong = false; return; } openEditor(null, {}); };
+{ let t = null; const f = $('fab');   // v46: press and hold + → new task
+  f.addEventListener('touchstart', () => { t = setTimeout(() => { S._fabLong = true; if (navigator.vibrate) navigator.vibrate(15); openEditor(null, { task:true }); }, 450); }, { passive:true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach(ev => f.addEventListener(ev, () => clearTimeout(t), { passive:true })); }
 $('syncBtn').onclick = async () => {
   if (S.sync === 'auth') return showSetup(1);
   if (S.sync === 'off' && !navigator.onLine) return toast('Offline — your changes are kept on this phone and sync later');
@@ -1396,6 +1417,7 @@ async function boot(){
   if (!signedIn() || !cfg.vault){ if (shared) ls.set('pendingShare', shared); showSetup(); return; }
   if (shared) openShared(shared);
   else if (doCmd === 'new') openEditor(null, {});
+  else if (doCmd === 'task') openEditor(null, { task:true });
   else if (doCmd === 'search') setTab('search');
   sync();
 }
