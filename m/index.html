@@ -563,7 +563,7 @@ async function sync(opts){
       }
       await metaSet('cursor', cursor);
       await metaSet('folders', [...S.folders]); await metaSet('files', [...S.files]);
-      ls.set('lastSync', Date.now()); remIndexSoonM(); setTimeout(remCheckM, 2000);
+      ls.set('lastSync', Date.now()); await quickFinishM(); remIndexSoonM(); setTimeout(remCheckM, 2000);
       bad = (await pushAll()) || bad;          // edits made while we were downloading
       if (bad && scopeErr(bad)){ setSync('err', bad.message); toast('Your Dropbox app is missing the permission ' + scopeErr(bad) + ' — add it in the Dropbox App Console, then Settings → Sign in to Dropbox again', 'Details', showErr, 15000); }
       else if (bad){ const k = [...S.notes.values()].filter(n => n.dirty && n.pushErr).length; setSync('err', bad.message); toast(k + (k === 1 ? ' note' : ' notes') + ' couldn’t be saved to Dropbox: ' + bad.message, 'Details', showErr, 9000); }
@@ -1067,6 +1067,18 @@ function remCheckM(){
   ls.set('remseen', seen);
 }
 setInterval(remCheckM, 60000); if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { const pl = e.data && e.data.openNote; if (pl && S.notes.has(pl)) openNote(pl); }); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(remCheckM, 4000); });
+// v49: a task written with "quick: <what you typed>" (the PC's Ctrl+Alt+K window) — fill in date, project… from the words (the PC also tidies the name)
+async function quickFinishM(){
+  for (const n of [...S.notes.values()]){
+    const raw = unq(String((n.props || {}).quick || '')).trim(); if (!raw || n.locked || (n.mtime && Date.now() - n.mtime < 180000)) continue;   // give the PC 3 minutes to do it first (it also tidies the name)
+    const q = QA.parse(raw, tkProjects()); let t = n.text;
+    const put = (k, v, quote) => { if (v && !(n.props || {})[k]) t = setFm(t, k, [k + ': ' + (quote ? '"' + v + '"' : v)]); };
+    put('due', q.due); put('remind', q.remind, true); put('repeat', q.repeat, true); put('project', q.project, true); if (!n.importance) put('importance', q.importance);
+    if (!(n.props || {}).type) t = setFm(t, 'type', ['type: task']); if (!(n.props || {}).status) t = setFm(t, 'status', ['status: to do']);
+    t = setFm(t, 'quick', null);
+    await saveText(n, t);
+  }
+}
 let REMW = null;
 function remIndexSoonM(){ clearTimeout(REMW); REMW = setTimeout(() => remIndexWriteM().catch(e => console.warn('[MNM] reminders.json', e)), 5000); }
 async function remIndexWriteM(){
