@@ -246,7 +246,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v43-2026-11-26';
+const VERSION = 'v44-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -478,6 +478,7 @@ function errDetails(e, extra){
   return ['My Notes Mobile ' + VERSION, new Date().toString(), 'Account: ' + (cfg.account || '?'), 'Notes folder: ' + (cfg.vault || '?'),
     'Call: ' + (e.where || '?'), 'Status: ' + (e.status || '?'), 'Request id: ' + (e.reqId || '?'), 'Message: ' + (e.message || e), 'Answer: ' + (e.raw || JSON.stringify(e.j || {})), extra || ''].filter(Boolean).join('\n');
 }
+const scopeErr = e => { const t = (e && (e.raw || '')) + ''; const m = t.match(/required scope '([^']+)'/); return m ? m[1] : ''; };
 function keepErr(e, extra){ const d = errDetails(e, extra); S.lastErr = d; ls.set('lastErr', { at:Date.now(), text:d }); return d; }
 function showErr(){
   const le = ls.get('lastErr'); if (!le) return toast('No sync problem saved');
@@ -552,7 +553,8 @@ async function sync(opts){
       await metaSet('folders', [...S.folders]); await metaSet('files', [...S.files]);
       ls.set('lastSync', Date.now());
       bad = (await pushAll()) || bad;          // edits made while we were downloading
-      if (bad){ const k = [...S.notes.values()].filter(n => n.dirty && n.pushErr).length; setSync('err', bad.message); toast(k + (k === 1 ? ' note' : ' notes') + ' couldn’t be saved to Dropbox: ' + bad.message, 'Details', showErr, 9000); }
+      if (bad && scopeErr(bad)){ setSync('err', bad.message); toast('Your Dropbox app is missing the permission ' + scopeErr(bad) + ' — add it in the Dropbox App Console, then Settings → Sign in to Dropbox again', 'Details', showErr, 15000); }
+      else if (bad){ const k = [...S.notes.values()].filter(n => n.dirty && n.pushErr).length; setSync('err', bad.message); toast(k + (k === 1 ? ' note' : ' notes') + ' couldn’t be saved to Dropbox: ' + bad.message, 'Details', showErr, 9000); }
       else setSync('ok');
     } catch(e){ syncError(e); }
     finally { S.syncP = null; S.prog = null; if (changed) refresh(); else if (S.tab === 'recent' || S.tab === 'folders') renderMain(); }
@@ -1205,6 +1207,7 @@ function settings(){
     <div class="card">${esc(cfg.account || 'Connected')}<small>Notes folder: ${esc(cfg.vault || '—')}</small><small>${notes.length} notes on this phone${pend ? ' · ' + pend + ' waiting to sync' : ''} · last sync ${last ? esc(ago(last)) : 'never'}</small></div>
     ${ls.get('lastErr') && S.sync === 'err' ? `<button class="act danger" data-s="err">${ic('cloudoff')} Last sync problem — details</button>` : ''}
     <button class="act" data-s="sync">${ic('refresh')} Sync now</button>
+    <button class="act" data-s="relogin">${ic('cloudok')} Sign in to Dropbox again <small style="margin-left:auto;color:var(--muted)">keeps your notes</small></button>
     <button class="act" data-s="folder">${ic('folder')} Choose another notes folder</button>
     <div class="lbl">New notes go to</div>
     <button class="act" data-s="nf">${ic('folder')} <span>${esc(nf ? nf.split('/').join(' › ') : 'Main folder')}</span><small style="margin-left:auto;color:var(--muted)">Change</small></button>
@@ -1224,6 +1227,7 @@ function settings(){
     if (b.dataset.sz){ cfg.size = b.dataset.sz; saveCfg(); applyTheme(); sh.querySelectorAll('#setSz button').forEach(x => x.classList.toggle('on', x === b)); return; }
     const s = b.dataset.s;
     if (s === 'err'){ closeSheet(); setTimeout(showErr, 260); return; }
+    if (s === 'relogin'){ closeSheet(); connect(); return; }   // v44: new sign-in (e.g. after adding a permission in the Dropbox app console); notes and unsynced changes stay
     if (s === 'nf'){ closeSheet(); setTimeout(() => pickFolder(defaultFolder(), f => { cfg.newFolder = f; saveCfg(); toast('New notes go to ' + (f ? f.split('/').join(' › ') : 'the main folder')); setTimeout(settings, 300); }), 260); return; }
     if (s === 'sync'){ closeSheet(); await sync(); if (S.sync === 'ok') toast('Up to date'); }
     else if (s === 'folder'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); setTimeout(() => showSetup(2), 250); }
