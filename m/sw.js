@@ -1,7 +1,7 @@
 // My Notes Mobile service worker: lets the app start offline. It only stores the app's own
 // files — never your notes (those live in the app's own database on the phone) and never
 // anything from Dropbox.
-const CACHE = 'my-notes-mobile-v48-2026-11-27';
+const CACHE = 'my-notes-mobile-v49-2026-11-27';
 // v42: files are fetched past the phone's 10-minute web cache, so a new version arrives right away
 const FILES = ['./', './manifest.webmanifest', '../icon-192.png', '../icon-512.png', '../icon-maskable-512.png'];
 const PAGE = new URL('./', self.registration.scope).href;
@@ -25,4 +25,15 @@ self.addEventListener('fetch', e => {
     if (cached){ e.waitUntil(fresh); return cached; }
     return (await fresh) || new Response('My Notes Mobile is offline and not installed yet.', { status: 503 });
   })());
+});
+
+// v49: tap a reminder → open My Notes (and the task)
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const pl = e.notification.data && e.notification.data.pl;
+  e.waitUntil(self.clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
+    const c = list.find(x => 'focus' in x);
+    if (c){ if (pl) c.postMessage({ openNote: pl }); return c.focus(); }
+    return self.clients.openWindow('./' + (pl ? '#open=' + encodeURIComponent(pl) : ''));
+  }));
 });

@@ -228,6 +228,7 @@ select.field{appearance:auto}
 .tkch{display:flex;align-items:center;gap:8px;padding:2px 4px 10px;text-transform:capitalize}.tkch small{margin-left:auto;color:var(--muted)}.tkempty{color:var(--muted);text-align:center;padding:20px 0}
 .tkdue{display:flex;align-items:center;gap:10px;margin-bottom:8px}.tkdue input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:15px;background:var(--card);color:inherit}.tkdue span{font-weight:700;color:var(--accent,#b5532b);min-width:72px;text-align:right}
 #edPj{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:var(--soft,#f3f1ee);color:inherit;width:100%;margin-bottom:2px}#tkMore{width:100%}
+.qachips{display:flex;flex-wrap:wrap;gap:4px;width:100%;margin-top:4px}.qachips i{font-style:normal;background:var(--sel,#eee);border-radius:999px;padding:1px 8px;font-size:12px}.tk2{display:flex;gap:10px}.tk2>div{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -257,7 +258,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v48-2026-11-27';
+const VERSION = 'v49-2026-11-27';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -562,7 +563,7 @@ async function sync(opts){
       }
       await metaSet('cursor', cursor);
       await metaSet('folders', [...S.folders]); await metaSet('files', [...S.files]);
-      ls.set('lastSync', Date.now());
+      ls.set('lastSync', Date.now()); remIndexSoonM(); setTimeout(remCheckM, 2000);
       bad = (await pushAll()) || bad;          // edits made while we were downloading
       if (bad && scopeErr(bad)){ setSync('err', bad.message); toast('Your Dropbox app is missing the permission ' + scopeErr(bad) + ' — add it in the Dropbox App Console, then Settings → Sign in to Dropbox again', 'Details', showErr, 15000); }
       else if (bad){ const k = [...S.notes.values()].filter(n => n.dirty && n.pushErr).length; setSync('err', bad.message); toast(k + (k === 1 ? ' note' : ' notes') + ' couldn’t be saved to Dropbox: ' + bad.message, 'Details', showErr, 9000); }
@@ -875,6 +876,134 @@ function renderMain(){
   if (S.tab === 'search') runSearch();
 }
 
+/* v127: quick add in plain words + repeating tasks. The same code runs in My Notes on the PC and on the phone.
+   "Call Laura tomorrow #Sharpen !high every friday at 15:00" →
+   { name:'Call Laura', due:'2026-11-28', project:'Sharpen.Studio', importance:'high', repeat:'every friday', remind:'15:00' } */
+const QA = (() => {
+  const B = '(?<![\\p{L}\\p{N}])', E = '(?![\\p{L}\\p{N}])';
+  const re = (s, f) => new RegExp(s, 'iu' + (f || ''));
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const day0 = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const fromIso = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  // weekdays: 0 = Sunday. English, Spanish, German
+  const WD = [['sunday', 'sun', 'domingo', 'dom', 'sonntag', 'so'], ['monday', 'mon', 'lunes', 'lun', 'montag', 'mo'], ['tuesday', 'tue', 'tues', 'martes', 'mar', 'dienstag', 'di'],
+    ['wednesday', 'wed', 'miércoles', 'miercoles', 'mié', 'mie', 'mittwoch', 'mi'], ['thursday', 'thu', 'thur', 'thurs', 'jueves', 'jue', 'donnerstag', 'do'],
+    ['friday', 'fri', 'viernes', 'vie', 'freitag', 'fr'], ['saturday', 'sat', 'sábado', 'sabado', 'sáb', 'sab', 'samstag', 'sa']];
+  const WD_NAME = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  // short German/Spanish 2-letter forms only count after "every/cada/jeden", never alone (too easy to hit by accident)
+  const wdAlt = full => WD.map(a => a.filter(w => full ? w.length > 1 : w.length > 3)).flat().sort((a, b) => b.length - a.length).join('|');
+  const wdOf = w => { w = String(w).toLowerCase(); return WD.findIndex(a => a.includes(w)); };
+  const nextWd = (from, wd, strict) => { let d = day0(from); for (let i = 0; i < 8; i++){ if (d.getDay() === wd && !(strict && i === 0)) return d; d = add(d, 1); } return d; };
+  const EVERY = '(?:every|each|cada|todos\\s+los|todas\\s+las|jeden|jede|alle)';
+  const UNITS = { day:'day', days:'day', día:'day', dia:'day', días:'day', dias:'day', tag:'day', tage:'day',
+    week:'week', weeks:'week', semana:'week', semanas:'week', woche:'week', wochen:'week',
+    month:'month', months:'month', mes:'month', meses:'month', monat:'month', monate:'month',
+    year:'year', years:'year', año:'year', años:'year', ano:'year', anos:'year', jahr:'year', jahre:'year' };
+  const UNIT_ALT = Object.keys(UNITS).sort((a, b) => b.length - a.length).join('|');
+
+  /* ---- repeating: a plain rule like "every friday", "every 2 weeks", "every month on 1", "every weekday" ---- */
+  function repNext(rule, afterIso){   // the first date strictly after afterIso (or after yesterday when there is none)
+    const r = String(rule || '').toLowerCase().trim(); if (!r) return null;
+    const base = fromIso(afterIso) || add(day0(new Date()), -1);
+    let m;
+    if ((m = /^every\s+(\d+)?\s*(day|week|month|year)s?(?:\s+on\s+(\d{1,2}))?$/.exec(r))){
+      const k = +(m[1] || 1), u = m[2];
+      if (u === 'day') return iso(add(base, k));
+      if (u === 'week') return iso(add(base, 7 * k));
+      if (u === 'month'){ const dom = m[3] ? +m[3] : base.getDate(); const d = new Date(base.getFullYear(), base.getMonth() + k, 1); d.setDate(Math.min(dom, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); return iso(d); }
+      if (u === 'year'){ const d = new Date(base); d.setFullYear(d.getFullYear() + k); return iso(d); }
+    }
+    if (r === 'every weekday'){ let d = add(base, 1); while (d.getDay() === 0 || d.getDay() === 6) d = add(d, 1); return iso(d); }
+    if ((m = /^every\s+([a-z, ]+)$/.exec(r))){
+      const days = m[1].split(/[ ,]+/).map(wdOf).filter(x => x >= 0); if (!days.length) return null;
+      let d = add(base, 1); for (let i = 0; i < 8; i++){ if (days.includes(d.getDay())) return iso(d); d = add(d, 1); }
+    }
+    return null;
+  }
+  // the first date ON or after today (for a new repeating task with no date)
+  const repFirst = rule => /^every\s+(\d+\s+)?(day|week|month|year)s?$/i.test(String(rule || '').trim()) ? iso(day0(new Date())) : repNext(rule, iso(add(day0(new Date()), -1)));   // plain 'every month' starts today
+
+  function parse(text, projects){
+    let s = ' ' + String(text || '') + ' ';
+    const out = { name:'', due:'', project:'', importance:'', repeat:'', remind:'', chips:[] };
+    const cut = (rx, fn) => { s = s.replace(rx, (...a) => { const r = fn(...a); return r === false ? a[0] : ' '; }); };
+    const today = day0(new Date());
+
+    // project: #word, #word_with_underscores, #"two words"
+    cut(re('(?:^|\\s)#(?:"([^"]+)"|([\\p{L}\\p{N}][\\p{L}\\p{N}._\\-]*))', 'g'), (_, q, w) => {
+      if (out.project) return false;
+      const raw = (q || w).replace(/_/g, ' ').trim(), low = raw.toLowerCase(), list = projects || [];
+      out.project = list.find(p => p.toLowerCase() === low) || list.find(p => p.toLowerCase().startsWith(low)) || list.find(p => p.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').startsWith(low.replace(/[^\p{L}\p{N}]/gu, ''))) || raw;
+    });
+    // importance: !high !h !!! · !medium !m !! · !low !l · !1 !2 !3 · !alta !media !baja · !hoch !mittel !niedrig
+    cut(re('(?:^|\\s)(!!!|!!|!(?:high|h|1|alta|hoch|urgent|urgente))' + E, 'g'), (_, t) => { if (out.importance) return false; out.importance = t === '!!' ? 'medium' : 'high'; });
+    cut(re('(?:^|\\s)!(?:medium|med|m|2|media|mittel)' + E, 'g'), () => { if (out.importance) return false; out.importance = 'medium'; });
+    cut(re('(?:^|\\s)!(?:low|l|3|baja|niedrig)' + E, 'g'), () => { if (out.importance) return false; out.importance = 'low'; });
+
+    // reminder time: at 15:00 · at 3pm · 3:30pm · a las 15:00 · um 15 uhr · @15:00
+    cut(re(B + '(?:(?:at|a\\s+las|a\\s+la|um)\\s+|@)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|uhr)' + E, 'g'), (_, h, mi, ap) => {
+      if (out.remind) return false; h = +h; mi = +(mi || 0); ap = ap.toLowerCase();
+      if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0; if (h > 23 || mi > 59) return false;
+      out.remind = String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0'); });
+    cut(re(B + '(?:(?:at|a\\s+las|a\\s+la|um)\\s+|@)(\\d{1,2}):(\\d{2})' + E, 'g'), (_, h, mi) => { if (out.remind || +h > 23 || +mi > 59) return false; out.remind = String(+h).padStart(2, '0') + ':' + mi; });
+    cut(re(B + '(\\d{1,2}):(\\d{2})' + E, 'g'), (_, h, mi) => { if (out.remind || +h > 23 || +mi > 59) return false; out.remind = String(+h).padStart(2, '0') + ':' + mi; });
+
+    // repeating
+    const setRep = r => { out.repeat = r; };
+    cut(re(B + '(?:every\\s+day|each\\s+day|cada\\s+d[ií]a|todos\\s+los\\s+d[ií]as|jeden\\s+tag)' + E, 'g'), () => { if (out.repeat) return false; setRep('every day'); });
+    cut(re(B + '(?:every\\s+weekday|on\\s+weekdays|entre\\s+semana|werktags)' + E, 'g'), () => { if (out.repeat) return false; setRep('every weekday'); });
+    // every 1st (of the month) · every 15th · el día 1 de cada mes · on the 1st of every month
+    cut(re(B + '(?:' + EVERY + '\\s+(?:the\\s+)?|on\\s+the\\s+|el\\s+(?:d[ií]a\\s+)?|am\\s+)(\\d{1,2})(?:st|nd|rd|th|\\.|º)?(?:\\s+(?:of\\s+(?:the|every|each)\\s+month|of\\s+the\\s+month|de\\s+cada\\s+mes|del\\s+mes|jeden\\s+monats|each\\s+month|every\\s+month))' + E, 'g'), (_, d) => { if (out.repeat || +d < 1 || +d > 31) return false; setRep('every month on ' + (+d)); });
+    cut(re(B + EVERY + '\\s+(?:the\\s+)?(\\d{1,2})(?:st|nd|rd|th|\\.|º)' + E, 'g'), (_, d) => { if (out.repeat || +d < 1 || +d > 31) return false; setRep('every month on ' + (+d)); });
+    // every 2 weeks · cada 3 días · alle 2 Wochen · every month · every week
+    cut(re(B + EVERY + '\\s+(?:(\\d+|other|two|dos|zwei)\\s+)?(' + UNIT_ALT + ')' + E, 'g'), (_, k, u) => {
+      if (out.repeat) return false; const n = !k ? 1 : /other|two|dos|zwei/i.test(k) ? 2 : +k; const unit = UNITS[u.toLowerCase()]; if (!unit) return false;
+      setRep('every ' + (n > 1 ? n + ' ' + unit + 's' : unit)); });
+    // every monday (and friday) · cada lunes · jeden Montag
+    cut(re(B + EVERY + '\\s+((?:' + wdAlt(true) + ')(?:(?:\\s*,\\s*|\\s+(?:and|y|und|&)\\s+)(?:' + wdAlt(true) + '))*)' + E, 'g'), (_, list) => {
+      if (out.repeat) return false; const ds = [...new Set(list.split(/\s*,\s*|\s+(?:and|y|und|&)\s+/i).map(wdOf).filter(x => x >= 0))]; if (!ds.length) return false;
+      setRep('every ' + ds.sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)).map(d => WD_NAME[d]).join(', ')); });
+
+    // due date
+    const setDue = d => { out.due = iso(d); };
+    cut(re(B + '(?:day\\s+after\\s+tomorrow|pasado\\s+ma[ñn]ana|[üu]bermorgen)' + E, 'g'), () => { if (out.due) return false; setDue(add(today, 2)); });
+    cut(re(B + '(?:today|tonight|hoy|heute)' + E, 'g'), () => { if (out.due) return false; setDue(today); });
+    cut(re(B + '(?:tomorrow|tmrw|tmr|ma[ñn]ana|morgen)' + E, 'g'), () => { if (out.due) return false; setDue(add(today, 1)); });
+    cut(re(B + '(?:in|en|dentro\\s+de|in\\s+a)\\s+(\\d+|a|an|one|un|una|einer?|two|dos|zwei)\\s+(' + UNIT_ALT + ')' + E, 'g'), (_, k, u) => {
+      if (out.due) return false; const n = /^(a|an|one|un|una|eine?r?)$/i.test(k) ? 1 : /two|dos|zwei/i.test(k) ? 2 : +k; const unit = UNITS[u.toLowerCase()]; if (!unit) return false;
+      const d = new Date(today); if (unit === 'day') d.setDate(d.getDate() + n); else if (unit === 'week') d.setDate(d.getDate() + 7 * n); else if (unit === 'month') d.setMonth(d.getMonth() + n); else d.setFullYear(d.getFullYear() + n); setDue(d); });
+    cut(re('(?:^|\\s)\\+(\\d{1,3})d?' + E, 'g'), (_, k) => { if (out.due) return false; setDue(add(today, +k)); });
+    cut(re(B + '(?:next\\s+week|la\\s+pr[óo]xima\\s+semana|pr[óo]xima\\s+semana|n[äa]chste\\s+woche)' + E, 'g'), () => { if (out.due) return false; setDue(nextWd(today, 1, true)); });
+    cut(re(B + '(?:this\\s+weekend|weekend|este\\s+fin\\s+de\\s+semana|fin\\s+de\\s+semana|wochenende)' + E, 'g'), () => { if (out.due) return false; setDue(nextWd(today, 6)); });
+    cut(re(B + '(?:end\\s+of\\s+(?:the\\s+)?month|fin\\s+de\\s+mes|monatsende)' + E, 'g'), () => { if (out.due) return false; setDue(new Date(today.getFullYear(), today.getMonth() + 1, 0)); });
+    cut(re(B + '(?:(?:next|el\\s+pr[óo]ximo|pr[óo]ximo|n[äa]chsten?|this|on|el|este|am)\\s+)?(' + wdAlt(false) + ')' + E, 'g'), (all, w) => {
+      if (out.due) return false; const wd = wdOf(w); if (wd < 0) return false; setDue(nextWd(today, wd, /next|pr[óo]ximo|n[äa]chst/i.test(all))); });
+    // 28/11 · 28/11/26 · 28.11. · 28-11-2026
+    cut(re(B + '(\\d{1,2})(?:[\\/\\-](\\d{1,2})(?:[\\/\\-](\\d{2}|\\d{4}))?|\\.(\\d{1,2})(?:\\.(\\d{2}|\\d{4})|\\.(?!\\d)))' + E, 'g'), (_, d, mo, y, mo2, y2) => { mo = mo || mo2; y = y || y2;
+      if (out.due) return false; let yy = y ? +y : today.getFullYear(); if (yy < 100) yy += 2000;
+      const dt = new Date(yy, +mo - 1, +d); if (dt.getMonth() !== +mo - 1 || dt.getDate() !== +d) return false;
+      if (!y && dt < today) dt.setFullYear(dt.getFullYear() + 1);   // "3/2" in December means next year
+      setDue(dt); });
+
+    // daily / weekly / monthly / yearly only count as the LAST word ("Pay rent monthly") — "Weekly review" keeps its name
+    for (const [w, r] of [['daily|diario|diariamente|t[äa]glich', 'every day'], ['weekdays|d[ií]as\\s+laborables', 'every weekday'], ['weekly|semanal(?:mente)?|w[öo]chentlich', 'every week'], ['monthly|mensual(?:mente)?|monatlich', 'every month'], ['yearly|annually|anual(?:mente)?|j[äa]hrlich', 'every year']])
+      cut(re(B + '(?:' + w + ')\\s*$'), () => { if (out.repeat) return false; setRep(r); });
+
+    if (out.repeat && !out.due) out.due = repFirst(out.repeat) || '';
+    // what's left is the task's name (the little words left hanging at the end go too: "Call Laura on", "pay rent by")
+    out.name = s.replace(/\s+/g, ' ').trim().replace(/\s+(?:on|at|by|for|el|la|los|a|en|para|am|um|bis|due|vence)$/i, '').replace(/^[,;:\-–\s]+|[,;:\-–\s]+$/g, '').trim();
+    const DAYN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    if (out.due){ const d = fromIso(out.due); out.chips.push('📅 ' + DAYN[d.getDay()] + ' ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0')); }
+    if (out.remind) out.chips.push('⏰ ' + out.remind);
+    if (out.repeat) out.chips.push('↻ ' + out.repeat);
+    if (out.project) out.chips.push('# ' + out.project);
+    if (out.importance) out.chips.push('● ' + out.importance);
+    return out;
+  }
+  return { parse, repNext, repFirst, iso };
+})();
+
 /* ---------- v47: Tasks — every note with "type: task" (same as the PC's My Tasks table and board) ---------- */
 const TK_STATUS = ['to do', 'doing', 'waiting', 'done'];
 const tkDay = k => { const d = new Date(); d.setDate(d.getDate() + (k || 0)); return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); };
@@ -891,7 +1020,7 @@ function tkCard(t, board){
   return `<div class="tk${t.st === 'done' ? ' done' : ''}${board ? ' kb' : ''}" data-tk="${esc(t.n.pl)}">
     <button class="tkdone" data-tkdone="${esc(t.n.pl)}" aria-label="${t.st === 'done' ? 'Mark as not done' : 'Mark as done'}">${t.st === 'done' ? '✓' : ''}</button>
     <div class="tkb"><div class="tkn">${t.n.importance ? `<i class="dot ${t.n.importance}"></i>` : ''}${esc(t.n.name)}</div>
-    <div class="tkm">${t.due ? `<span class="tkd${over ? ' over' : isToday ? ' today' : ''}">${over ? 'Overdue · ' : isToday ? 'Today · ' : ''}${tkDmy(t.due)}</span>` : ''}${t.pj ? `<span class="tkp">${esc(t.pj)}</span>` : ''}${!board && t.st !== 'to do' && t.st !== 'done' ? `<span class="tks">${esc(t.st)}</span>` : ''}</div></div></div>`;
+    <div class="tkm">${t.due ? `<span class="tkd${over ? ' over' : isToday ? ' today' : ''}">${over ? 'Overdue · ' : isToday ? 'Today · ' : ''}${tkDmy(t.due)}${t.n.props.remind ? ' · ' + esc(unq(String(t.n.props.remind))) : ''}${t.n.props.repeat ? ' ↻' : ''}</span>` : ''}${t.pj ? `<span class="tkp">${esc(t.pj)}</span>` : ''}${!board && t.st !== 'to do' && t.st !== 'done' ? `<span class="tks">${esc(t.st)}</span>` : ''}</div></div></div>`;
 }
 function tasksHtml(){
   const v = S.tview || (S.tview = ls.get('tview', 'today')), all = tkList(), today = tkDay(0), wk = tkDay(7);
@@ -915,19 +1044,76 @@ function tasksHtml(){
   if (done.length && v === 'all') h += `<button class="more" data-act="tkShowDone">${S.tkShowDone ? 'Hide' : 'Show'} done (${done.length})</button>` + (S.tkShowDone ? done.map(t => tkCard(t)).join('') : '');
   return { h, sub: open.length + ' open' + (nToday ? ' · ' + nToday + ' due' : '') };
 }
-async function tkSet(n, key, val){ await saveText(n, setFm(n.text, key, val ? [key + ': ' + val] : null)); }
+/* v49: reminders on the phone — while the app is open (or was just opened): a notification at a task's time on its due day,
+   and once a day "3 tasks due today · 1 overdue". A phone can't wake a web app by itself, so the morning email and the
+   PC also remind you. The list of open tasks due soon is kept in .mynotes/reminders.json (the PC writes the same). */
+function remTasksM(){ return tkList().filter(t => t.st !== 'done' && /^\d{4}-\d{2}-\d{2}$/.test(t.due)).map(t => ({ name: t.n.name, path: t.n.path, due: t.due, remind: unq(String(t.n.props.remind || '')), status: t.st, project: t.pj || '', importance: t.n.importance || '', repeat: unq(String(t.n.props.repeat || '')) }))
+  .sort((a, b) => (a.due + (a.remind || '99')).localeCompare(b.due + (b.remind || '99'))); }
+async function remNotifyM(body, pl){
+  try { if ('Notification' in window && Notification.permission === 'granted'){ const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg && reg.showNotification){ await reg.showNotification('My Notes', { body, tag: pl || 'mn-rem', icon: 'icon-192.png', data: { pl } }); return; } new Notification('My Notes', { body }); return; } } catch(e){}
+  toast('⏰ ' + body, pl ? 'Open' : '', pl ? () => openNote(pl) : null, 12000);
+}
+function remCheckM(){
+  if (!S.notes.size) return;
+  const now = new Date(), today = tkDay(0), hm = z2(now.getHours()) + ':' + z2(now.getMinutes());
+  const seen = ls.get('remseen', {}) || {}; for (const k of Object.keys(seen)) if (!k.includes(today)) delete seen[k];
+  const all = remTasksM(); let fired = 0;
+  for (const t of all){ if (t.due !== today || !t.remind || t.remind > hm) continue; const k = 'r|' + t.path + '|' + today + '|' + t.remind; if (seen[k]) continue; seen[k] = 1;
+    if ((now.getHours() * 60 + now.getMinutes()) - (+t.remind.slice(0, 2) * 60 + +t.remind.slice(3)) > 90) continue;
+    remNotifyM(t.name + ' — ' + t.remind + (t.project ? ' · ' + t.project : ''), t.path.toLowerCase()); fired++; }
+  const mk = 'm|' + today;
+  if (hm >= '09:00' && !seen[mk] && !fired){ seen[mk] = 1; const d = all.filter(t => t.due === today).length, o = all.filter(t => t.due < today).length;
+    if (d || o) remNotifyM((d ? d + ' task' + (d === 1 ? '' : 's') + ' due today' : '') + (d && o ? ' · ' : '') + (o ? o + ' overdue' : '')); }
+  ls.set('remseen', seen);
+}
+setInterval(remCheckM, 60000); if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { const pl = e.data && e.data.openNote; if (pl && S.notes.has(pl)) openNote(pl); }); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(remCheckM, 4000); });
+let REMW = null;
+function remIndexSoonM(){ clearTimeout(REMW); REMW = setTimeout(() => remIndexWriteM().catch(e => console.warn('[MNM] reminders.json', e)), 5000); }
+async function remIndexWriteM(){
+  if (!signedIn() || !cfg.vault || !navigator.onLine) return;
+  const today = tkDay(0), soon = tkDay(14), list = remTasksM().filter(t => t.due <= soon);
+  const key = JSON.stringify(list); if (key === ls.get('remlast', '')) return;   // unchanged — don't upload
+  const data = { app: 'My Notes', note: 'Open tasks due in the next 14 days or overdue. Written by My Notes for the morning email and reminders — no need to edit.', updated: new Date().toISOString(), today, overdue: list.filter(t => t.due < today).length, dueToday: list.filter(t => t.due === today).length, tasks: list };
+  await upload(full('.mynotes/reminders.json'), JSON.stringify(data, null, 1), 'overwrite');
+  ls.set('remlast', key);
+}
+async function tkSet(n, key, val){
+  const wasDone = String(n.props.status || '').toLowerCase() === 'done';
+  await saveText(n, setFm(n.text, key, val ? [key + ': ' + val] : null));
+  if (key === 'status' && val === 'done' && !wasDone && n.props.repeat) await tkRepeatNext(n);   // v49
+  remIndexSoonM();
+}
+// v49: a repeating task marked done → the next one is made with the next date (the done one loses "repeat")
+async function tkRepeatNext(n){
+  const rule = unq(String(n.props.repeat || '')).trim(); if (!rule) return;
+  const today = tkDay(0), from = unq(String(n.props.due || '')).slice(0, 10);
+  let next = QA.repNext(rule, from || today); while (next && next < today) next = QA.repNext(rule, next);
+  if (!next) return toast('“' + rule + '” isn’t a repeat I understand');
+  const base = n.name.replace(/\s+\(done [\d.]+\)$/, '').replace(/\s+\d+$/, '').replace(/\s+\d{2}\.\d{2}\.\d{2}$/, '');
+  const folder = n.path.includes('/') ? n.path.slice(0, n.path.lastIndexOf('/')) : '';
+  const free = !S.notes.has(((folder ? folder + '/' : '') + base + '.md').toLowerCase());
+  const pj = unq(String(n.props.project || '')).replace(/^\[\[|\]\]$/g, ''), rm = unq(String(n.props.remind || ''));
+  const fm = '---\ntype: task\nstatus: to do\ndue: ' + next + '\n' + (rm ? 'remind: "' + rm + '"\n' : '') + 'repeat: "' + rule + '"\n' + (pj ? 'project: "' + pj + '"\n' : '') + (n.importance ? 'importance: ' + n.importance + '\n' : '') + 'created: ' + tkDay(0) + 'T' + z2(new Date().getHours()) + ':' + z2(new Date().getMinutes()) + '\n---\n';
+  const m = await createNote(free ? base : base + ' ' + tkDmy(next).replace(/\//g, '.'), fm, folder);
+  await saveText(n, setFm(setFm(n.text, 'repeat', null), 'repeated', ['repeated: "' + m.name + '"']));
+  toast('↻ Next one: ' + m.name + ' · ' + tkDmy(next), '', null, 5000);
+}
 function tkMenu(n){   // v48: edit a task — status, due date (calendar or quick), project, importance
   const st = unq(String(n.props.status || 'to do')).toLowerCase(), due = unq(String(n.props.due || '')).slice(0, 10), pj = unq(String(n.props.project || '')).replace(/^\[\[|\]\]$/g, '');
   const sh = sheet(`<div class="sh-t">${esc(n.name)}</div>
     <div class="lbl">Status</div><div class="seg">${TK_STATUS.map(x => `<button data-tst="${x}" class="${x === st ? 'on' : ''}">${x}</button>`).join('')}</div>
     <div class="lbl">Due</div><div class="tkdue"><input type="date" id="tkDue" value="${esc(due)}"><span id="tkDueTxt">${due ? tkDmy(due) : 'no date'}</span></div>
     <div class="seg">${[['Today', 0], ['Tomorrow', 1], ['+1 week', 7]].map(([l, k]) => `<button data-tdue="${k}">${l}</button>`).join('')}<button data-tdue="x">None</button></div>
+    <div class="tk2"><div><div class="lbl">Reminder</div><input type="time" class="field" id="tkRm" value="${esc(unq(String(n.props.remind || '')))}"></div>
+      <div><div class="lbl">Repeat</div><input class="field" id="tkRp" list="tkRpList" placeholder="e.g. every friday" value="${esc(unq(String(n.props.repeat || '')))}" autocomplete="off" enterkeyhint="done"><datalist id="tkRpList">${['every day', 'every weekday', 'every week', 'every monday', 'every friday', 'every 2 weeks', 'every month', 'every month on 1', 'every year'].map(x => `<option value="${x}">`).join('')}</datalist></div></div>
     <div class="lbl">Project</div><input class="field" id="tkPj" list="tkPjList" placeholder="any project — type or pick" value="${esc(pj)}" autocomplete="off" enterkeyhint="done">${tkProjList()}
     <div class="lbl">Importance</div><div class="seg">${['high', 'medium', 'low'].map(x => `<button data-timp="${x}" class="${n.importance === x ? 'on' : ''}">${x}</button>`).join('')}<button data-timp="x">—</button></div>
     <button class="act" data-topen="1" style="margin-top:12px">${ic('book')} Open the task</button>`, { tall:true });
   const done = () => { renderMain(); };
   $('tkDue').addEventListener('change', async e => { await tkSet(n, 'due', e.target.value || ''); $('tkDueTxt').textContent = e.target.value ? tkDmy(e.target.value) : 'no date'; done(); });
   const savePj = async () => { const v = $('tkPj').value.replace(/"/g, '').trim(); if (v === pj) return; await saveText(n, setFm(n.text, 'project', v ? ['project: "' + v + '"'] : null)); done(); };
+  $('tkRm').addEventListener('change', async e => { await saveText(n, setFm(n.text, 'remind', e.target.value ? ['remind: "' + e.target.value + '"'] : null)); remIndexSoonM(); done(); });
+  $('tkRp').addEventListener('change', async e => { const v = e.target.value.replace(/"/g, '').trim(); await saveText(n, setFm(n.text, 'repeat', v ? ['repeat: "' + v + '"'] : null)); remIndexSoonM(); done(); });
   $('tkPj').addEventListener('change', savePj); $('tkPj').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } });
   sh.onclick = async e => { const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tst){ await tkSet(n, 'status', b.dataset.tst); sh.querySelectorAll('[data-tst]').forEach(x => x.classList.toggle('on', x === b)); done(); toast('Moved to ' + b.dataset.tst); return; }
@@ -1065,7 +1251,7 @@ function openEditor(pl, opts){
       <button class="done" data-act="eddone">${isNew ? 'Save' : 'Done'}</button></div>
     <div class="edhead">${isNew ? `<input id="edTitle" placeholder="Title" value="${esc(opts.title || '')}" enterkeyhint="next" autocomplete="off">
       <button class="fsel fpick" id="edFolder">${ic('folder')} <span>${esc(ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder')}</span></button>
-      <div class="tkrow"><button class="tkchip${opts.task ? ' on' : ''}" id="edTask">${ic('checksq')} Task</button><span id="tkMore" class="${opts.task ? '' : 'hidden'}"><input id="edPj" list="tkPjList" placeholder="Project (any)" autocomplete="off">${tkProjList()}<input type="date" id="edDue"><button class="tkq" data-qd="0">Today</button><button class="tkq" data-qd="1">Tomorrow</button><button class="tkq" data-qd="7">+1 week</button></span></div>`
+      <div class="tkrow"><button class="tkchip${opts.task ? ' on' : ''}" id="edTask">${ic('checksq')} Task</button><span id="tkMore" class="${opts.task ? '' : 'hidden'}"><input id="edPj" list="tkPjList" placeholder="Project (any)" autocomplete="off">${tkProjList()}<input type="date" id="edDue"><button class="tkq" data-qd="0">Today</button><button class="tkq" data-qd="1">Tomorrow</button><button class="tkq" data-qd="7">+1 week</button><span id="qaChips" class="qachips"></span></span></div>`
       : `<input value="${esc(n.name)}" readonly tabindex="-1"><div class="edsub">${esc(n.folder || 'Main folder')}</div>`}</div>
     <textarea id="edTa" placeholder="${isNew ? 'Write something…' : ''}" spellcheck="true" autocapitalize="sentences"></textarea>
     <div class="kbar">
@@ -1102,13 +1288,16 @@ async function edCreate(){
   if (!title && !body.trim()) return true;          // nothing written: just close
   if (!title){ const first = body.trim().split('\n')[0].replace(/^#+\s*|[*_`>\[\]]/g, '').trim(); title = first.slice(0, 60) || ('Note ' + stamp().replace(/-(\d\d)$/, ':$1')); }
   if (ED.task){   // v46: a task = a note with type: task (the PC's “My Tasks” table and board show it)
-    const due = ($('edDue') && $('edDue').value) || '';
-    const pj = (($('edPj') && $('edPj').value) || '').replace(/"/g, '').trim();
-    body = '---\ntype: task\nstatus: to do\n' + (due ? 'due: ' + due + '\n' : '') + (pj ? 'project: "' + pj + '"\n' : '') + '---\n' + body;
+    const q = QA.parse(title, tkProjects()); if (q.name) title = q.name;   // v49: plain words — "Call Laura tomorrow #Sharpen !high at 15:00"
+    const due = ($('edDue') && $('edDue').value) || q.due;
+    const pj = (($('edPj') && $('edPj').value) || q.project || '').replace(/"/g, '').trim();
+    body = '---\ntype: task\nstatus: to do\n' + (due ? 'due: ' + due + '\n' : '') + (q.remind ? 'remind: "' + q.remind + '"\n' : '') + (q.repeat ? 'repeat: "' + q.repeat + '"\n' : '') + (pj ? 'project: "' + pj + '"\n' : '') + (q.importance ? 'importance: ' + q.importance + '\n' : '') + '---\n' + body;
+    ED.qaDue = due;
   }
   const n = await createNote(title, body, ED.folder);
-  toast(ED.task ? 'Task saved' + (($('edDue') && $('edDue').value) ? ' · due ' + $('edDue').value : '') : 'Saved to ' + (n.folder || 'the main folder'));
+  toast(ED.task ? 'Task saved' + (ED.qaDue ? ' · due ' + tkDmy(ED.qaDue) : '') : 'Saved to ' + (n.folder || 'the main folder'));
   ED.created = n;
+  if (ED.task){ remIndexSoonM(); if ('Notification' in window && Notification.permission === 'default' && /remind:/.test(body)) setTimeout(() => toast('Get a notification at the task’s time?', 'Turn on', () => Notification.requestPermission()), 1500); }
   return true;
 }
 function taskFolder(){ const t = [...S.folders].find(f => /^tasks$/i.test(f)); return t || 'TASKS'; }
@@ -1117,8 +1306,10 @@ function edTaskWire(){
   const d = new Date(), z = x => String(x).padStart(2, '0'), day = k => { const x = new Date(); x.setDate(x.getDate() + k); return x.getFullYear() + '-' + z(x.getMonth() + 1) + '-' + z(x.getDate()); };
   b.onclick = e => { e.preventDefault(); ED.task = !ED.task; b.classList.toggle('on', ED.task); $('tkMore').classList.toggle('hidden', !ED.task);
     ED.folder = ED.task ? taskFolder() : defaultFolder(); const fs = $('edFolder'); if (fs) fs.querySelector('span').textContent = ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder';
-    if (ED.task && !$('edTitle').value) $('edTitle').placeholder = 'What needs doing?'; };
+    if (ED.task && !$('edTitle').value) $('edTitle').placeholder = 'e.g. Call Laura tomorrow #Sharpen !high at 15:00'; };
   if (ED.task){ const fs = $('edFolder'); if (fs) fs.querySelector('span').textContent = ED.folder.split('/').join(' › '); }
+  { const t = $('edTitle'), live = () => { const c = $('qaChips'); if (!c) return; if (!ED.task){ c.innerHTML = ''; return; } const q = QA.parse(t.value, tkProjects()); c.innerHTML = q.chips.map(x => `<i>${esc(x)}</i>`).join(''); };
+    if (t){ t.addEventListener('input', live); t.placeholder = ED.task ? 'e.g. Call Laura tomorrow #Sharpen !high at 15:00' : t.placeholder; } }
   $('tkMore').onclick = e => { const q = e.target.closest('[data-qd]'); if (!q) return; e.preventDefault(); $('edDue').value = day(+q.dataset.qd); };
 }
 function sanitizeName(s){ return String(s).replace(/[\\/:*?"<>|#^\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 120).replace(/[. ]+$/, '') || 'Untitled'; }
