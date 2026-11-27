@@ -171,6 +171,7 @@ a{color:var(--accent)}
 .kbar .sep{width:1px;background:var(--line);margin:6px 4px;flex:0 0 auto}
 .fsel{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:6px 0 8px;border-bottom:1px solid var(--line)}
 .fsel select{border:0;background:var(--soft);border-radius:8px;padding:5px 8px;font-size:13px;font-weight:600;max-width:70%}
+.fpick{width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;font:inherit;font-size:13px}.fpick span{background:var(--soft);border-radius:8px;padding:5px 8px;font-weight:600;color:var(--text,inherit)}.fprow.on{background:var(--soft)}
 
 /* ---------- bottom sheet ---------- */
 #sheetBg{position:fixed;inset:0;background:rgba(20,15,10,.38);z-index:30;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .18s}
@@ -245,7 +246,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v42-2026-11-26';
+const VERSION = 'v43-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -987,7 +988,7 @@ function openEditor(pl, opts){
   page.innerHTML = `<div class="pbar"><button class="ib" data-act="edclose" aria-label="Close">${ic(isNew ? 'x' : 'back')}</button><div class="mid" id="edState">${isNew ? 'New note' : 'Saved'}</div>
       <button class="done" data-act="eddone">${isNew ? 'Save' : 'Done'}</button></div>
     <div class="edhead">${isNew ? `<input id="edTitle" placeholder="Title" value="${esc(opts.title || '')}" enterkeyhint="next" autocomplete="off">
-      <div class="fsel">${ic('folder')} <select id="edFolder">${folders.map(f => `<option value="${esc(f)}"${f === ED.folder ? ' selected' : ''}>${esc(f || 'Main folder')}</option>`).join('')}</select></div>`
+      <button class="fsel fpick" id="edFolder">${ic('folder')} <span>${esc(ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder')}</span></button>`
       : `<input value="${esc(n.name)}" readonly tabindex="-1"><div class="edsub">${esc(n.folder || 'Main folder')}</div>`}</div>
     <textarea id="edTa" placeholder="${isNew ? 'Write something…' : ''}" spellcheck="true" autocapitalize="sentences"></textarea>
     <div class="kbar">
@@ -998,7 +999,7 @@ function openEditor(pl, opts){
     </div>`;
   const ta = $('edTa'); ta.value = ED.orig;
   ta.addEventListener('input', edInput);
-  if (isNew){ const t = $('edTitle'); t.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ta.focus(); } }); $('edFolder').onchange = e => { ED.folder = e.target.value; }; }
+  if (isNew){ const t = $('edTitle'); t.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ta.focus(); } }); $('edFolder').onclick = e => { e.preventDefault(); pickFolder(ED.folder, f => { ED.folder = f; const b = $('edFolder'); if (b) b.querySelector('span').textContent = f ? f.split('/').join(' › ') : 'Main folder'; }); }; }
   pushLayer(closeEditor);
   page.classList.add('on');
   setTimeout(() => { if (isNew && !opts.title && !opts.body) $('edTitle').focus(); else { ta.focus(); const p = opts.cursorEnd || !isNew ? ta.value.length : 0; try { ta.setSelectionRange(p, p); } catch(e){} } }, 230);
@@ -1176,6 +1177,25 @@ function pickNote(cb){
   sh.onclick = e => { const b = e.target.closest('[data-pk]'); if (!b) return; const n = S.notes.get(b.dataset.pk); closeSheet(); setTimeout(() => cb(n), 260); };
 }
 
+/* v43: folder picker with search — likely folders first (Inbox, main folder, where you wrote lately), full paths */
+function pickFolder(cur, cb){
+  const all = [...S.folders].sort((a, b) => a.localeCompare(b, undefined, { sensitivity:'base' }));
+  const recent = []; for (const n of sortRecent([...S.notes.values()])) { if (n.folder && !recent.includes(n.folder)) recent.push(n.folder); if (recent.length >= 5) break; }
+  const inbox = all.find(f => /^inbox$/i.test(f));
+  const top = [...new Set([cur, inbox, '', ...recent].filter(f => f != null && (f === '' || S.folders.has(f))))];
+  const sh = sheet(`<div class="sh-t">Choose a folder</div><div class="sbox"><label>${ic('search')}<input id="fpQ" placeholder="Search folders" autocomplete="off"></label></div><div id="fpRes"></div>`, { tall:true });
+  const row = f => `<button class="act fprow${f === cur ? ' on' : ''}" data-fp="${esc(f)}">${ic('folder')}<span>${esc(f ? f.split('/').pop() : 'Main folder')}${f && f.includes('/') ? `<small style="display:block;color:var(--muted);font-size:12px">${esc(f.split('/').slice(0, -1).join(' › '))}</small>` : ''}</span>${f === cur ? '<small style="margin-left:auto;color:var(--accent)">✓</small>' : ''}</button>`;
+  const draw = () => {
+    const q = $('fpQ').value.trim().toLowerCase();
+    if (!q){ $('fpRes').innerHTML = `<div class="lbl">Suggested</div>` + top.map(row).join('') + `<div class="lbl">All folders</div>` + all.filter(f => !top.includes(f)).map(row).join(''); return; }
+    const words = q.split(/\s+/), hit = all.filter(f => { const l = f.toLowerCase(); return words.every(w => l.includes(w)); });
+    hit.sort((a, b) => (b.split('/').pop().toLowerCase().startsWith(words[0]) - a.split('/').pop().toLowerCase().startsWith(words[0])) || a.length - b.length);
+    $('fpRes').innerHTML = hit.slice(0, 80).map(row).join('') || '<div class="card"><small>No folder matches “' + esc(q) + '”.</small></div>';
+  };
+  draw(); $('fpQ').addEventListener('input', draw);
+  sh.onclick = e => { const b = e.target.closest('[data-fp]'); if (!b) return; const f = b.dataset.fp; closeSheet(); setTimeout(() => cb(f), 260); };
+}
+
 /* ---------- settings ---------- */
 function settings(){
   const notes = [...S.notes.values()], pend = notes.filter(n => n.dirty).length, last = ls.get('lastSync', 0);
@@ -1187,7 +1207,7 @@ function settings(){
     <button class="act" data-s="sync">${ic('refresh')} Sync now</button>
     <button class="act" data-s="folder">${ic('folder')} Choose another notes folder</button>
     <div class="lbl">New notes go to</div>
-    <select class="field" id="setNf">${folders.map(f => `<option value="${esc(f)}"${f === nf ? ' selected' : ''}>${esc(f || 'Main folder')}</option>`).join('')}</select>
+    <button class="act" data-s="nf">${ic('folder')} <span>${esc(nf ? nf.split('/').join(' › ') : 'Main folder')}</span><small style="margin-left:auto;color:var(--muted)">Change</small></button>
     <div class="lbl">Look</div>
     <div class="seg" id="setTh">${[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button data-th="${v}" class="${cfg.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="seg" id="setSz">${[['s', 'Small text'], ['m', 'Medium'], ['l', 'Large']].map(([v, l]) => `<button data-sz="${v}" class="${cfg.size === v ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -1198,13 +1218,13 @@ function settings(){
     <button class="act" data-s="redownload">${ic('refresh')} Download all notes again</button>
     <button class="act danger" data-s="signout">${ic('cloudoff')} Disconnect Dropbox</button>
     <div class="ver">My Notes Mobile ${VERSION}</div>`, { tall:true });
-  $('setNf').onchange = e => { cfg.newFolder = e.target.value; saveCfg(); };
   sh.onclick = async e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.th){ cfg.theme = b.dataset.th; saveCfg(); applyTheme(); sh.querySelectorAll('#setTh button').forEach(x => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.sz){ cfg.size = b.dataset.sz; saveCfg(); applyTheme(); sh.querySelectorAll('#setSz button').forEach(x => x.classList.toggle('on', x === b)); return; }
     const s = b.dataset.s;
     if (s === 'err'){ closeSheet(); setTimeout(showErr, 260); return; }
+    if (s === 'nf'){ closeSheet(); setTimeout(() => pickFolder(defaultFolder(), f => { cfg.newFolder = f; saveCfg(); toast('New notes go to ' + (f ? f.split('/').join(' › ') : 'the main folder')); setTimeout(settings, 300); }), 260); return; }
     if (s === 'sync'){ closeSheet(); await sync(); if (S.sync === 'ok') toast('Up to date'); }
     else if (s === 'folder'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); setTimeout(() => showSetup(2), 250); }
     else if (s === 'redownload'){ closeSheet(); if (pend) return toast('Wait until your changes are synced'); await resetCache(); sync({ full:true }); }
