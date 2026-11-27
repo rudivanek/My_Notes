@@ -219,6 +219,13 @@ select.field{appearance:auto}
 .errpre{white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,monospace;background:var(--card,#f4f4f4);padding:10px;border-radius:10px;max-height:45vh;overflow:auto;margin:8px 0}
 .tkrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}.tkchip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;color:var(--muted)}.tkchip svg{width:15px;height:15px}.tkchip.on{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6;font-weight:600}
 #tkMore{display:flex;gap:6px;align-items:center;flex-wrap:wrap}#tkMore.hidden{display:none}#edDue{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font:inherit;font-size:13px;background:var(--soft,#f3f1ee);color:inherit}.tkq{border:0;background:var(--soft,#f3f1ee);border-radius:8px;padding:5px 8px;font:inherit;font-size:12px;color:inherit}
+.tkseg{display:flex;gap:4px;background:var(--soft,#efece6);border-radius:12px;padding:3px;margin:10px 0 12px}.tkseg button{flex:1;border:0;background:none;border-radius:9px;padding:7px 4px;font:600 13px var(--sans);color:var(--muted)}.tkseg button.on{background:var(--card);color:var(--ink,inherit);box-shadow:var(--shadow)}
+.tk{display:flex;gap:12px;align-items:flex-start;background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}.tk.done .tkn{text-decoration:line-through;opacity:.55}
+.tkdone{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);background:none;color:#fff;font-size:14px;line-height:1;display:grid;place-items:center;margin-top:1px}.tk.done .tkdone{background:#16a34a;border-color:#16a34a}
+.tkb{flex:1;min-width:0}.tkn{font-size:15px;line-height:1.35;display:flex;gap:6px;align-items:baseline}.tkn .dot{flex:none;width:8px;height:8px;border-radius:50%;display:inline-block}.dot.high{background:#dc2626}.dot.medium{background:#d97706}.dot.low{background:#9ca3af}
+.tkm{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--muted)}.tkd.over{color:#dc2626;font-weight:700}.tkd.today{color:#ea580c;font-weight:700}.tkp{background:#eef2ff;color:#4338ca;border-radius:6px;padding:0 6px}.tks{background:#f3f4f6;border-radius:6px;padding:0 6px}
+.tkboard{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:0 16px 8px;-webkit-overflow-scrolling:touch}.tkcol{flex:0 0 84%;scroll-snap-align:start;background:var(--soft,#efece6);border-radius:16px;padding:10px;min-height:200px}
+.tkch{display:flex;align-items:center;gap:8px;padding:2px 4px 10px;text-transform:capitalize}.tkch small{margin-left:auto;color:var(--muted)}.tkempty{color:var(--muted);text-align:center;padding:20px 0}
 </style>
 </head>
 <body>
@@ -233,8 +240,8 @@ select.field{appearance:auto}
     <button class="tab" data-tab="recent"></button>
     <button class="tab" data-tab="folders"></button>
     <button id="fab" aria-label="New note"></button>
+    <button class="tab" data-tab="tasks"></button>
     <button class="tab" data-tab="search"></button>
-    <button class="tab" data-tab="tags"></button>
   </nav>
 </div>
 <section class="page" id="noteV"></section>
@@ -248,7 +255,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v46-2026-11-26';
+const VERSION = 'v47-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -812,7 +819,7 @@ function backAll(){ if (layers.length) history.go(-layers.length); }
 window.addEventListener('popstate', e => { const to = (e.state && e.state.mnm) || 0; while (layers.length > to){ const f = layers.pop(); f(); } });
 
 /* ---------- main tabs ---------- */
-const TABS = { recent:['clock', 'Recent'], folders:['folder', 'Folders'], search:['search', 'Search'], tags:['tag', 'Tags'] };
+const TABS = { recent:['clock', 'Recent'], folders:['folder', 'Folders'], tasks:['checksq', 'Tasks'], search:['search', 'Search'], tags:['tag', 'Tags'] };   // v47: Tasks in the bar; Tags live in Search
 function refresh(){ if (S.tab === 'search') runSearch(); else renderMain(); if (S.cur && $('noteV').classList.contains('on') && !$('editV').classList.contains('on')) showNote(S.cur, true); }
 function setTab(t){ S.tab = t; $('main').scrollTop = 0; renderMain(); if (t === 'search') setTimeout(() => { const q = $('q'); if (q && !S.query) q.focus(); }, 60); }
 function sortRecent(list){ return list.sort((a, b) => (b.mtime || 0) - (a.mtime || 0)); }
@@ -853,6 +860,8 @@ function renderMain(){
     if (!subs.length && !here.length) h += `<div class="empty">${ic('folder')}<div>This folder is empty.</div></div>`;
   } else if (S.tab === 'search'){
     h += `<div class="sbox"><label>${ic('search')}<input id="q" type="search" placeholder="Search your notes" value="${esc(S.query)}" enterkeyhint="search" autocomplete="off"></label></div><div id="sres"></div>`;
+  } else if (S.tab === 'tasks'){
+    const r = tasksHtml(); h += r.h; sub = r.sub;
   } else if (S.tab === 'tags'){
     const cnt = new Map(); for (const n of notes) for (const t of n.tags) cnt.set(t, (cnt.get(t) || 0) + 1);
     const list = [...cnt].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -862,6 +871,53 @@ function renderMain(){
   $('ttl').innerHTML = esc(ttl) + (sub ? `<small>${esc(sub)}</small>` : '');
   m.innerHTML = h;
   if (S.tab === 'search') runSearch();
+}
+
+/* ---------- v47: Tasks — every note with "type: task" (same as the PC's My Tasks table and board) ---------- */
+const TK_STATUS = ['to do', 'doing', 'waiting', 'done'];
+const tkDay = k => { const d = new Date(); d.setDate(d.getDate() + (k || 0)); return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); };
+const tkDmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1].slice(2) : ''; };
+function tkList(){ return [...S.notes.values()].filter(n => !n.locked && String(n.props.type || '').toLowerCase() === 'task').map(n => ({ n, st: unq(String(n.props.status || 'to do')).toLowerCase(), due: unq(String(n.props.due || '')).slice(0, 10), pj: unq(String(n.props.project || '')).replace(/^\[\[|\]\]$/g, '') })); }
+function tkCard(t, board){
+  const today = tkDay(0), over = t.due && t.due < today && t.st !== 'done', isToday = t.due === today;
+  return `<div class="tk${t.st === 'done' ? ' done' : ''}${board ? ' kb' : ''}" data-tk="${esc(t.n.pl)}">
+    <button class="tkdone" data-tkdone="${esc(t.n.pl)}" aria-label="${t.st === 'done' ? 'Mark as not done' : 'Mark as done'}">${t.st === 'done' ? '✓' : ''}</button>
+    <div class="tkb"><div class="tkn">${t.n.importance ? `<i class="dot ${t.n.importance}"></i>` : ''}${esc(t.n.name)}</div>
+    <div class="tkm">${t.due ? `<span class="tkd${over ? ' over' : isToday ? ' today' : ''}">${over ? 'Overdue · ' : isToday ? 'Today · ' : ''}${tkDmy(t.due)}</span>` : ''}${t.pj ? `<span class="tkp">${esc(t.pj)}</span>` : ''}${!board && t.st !== 'to do' && t.st !== 'done' ? `<span class="tks">${esc(t.st)}</span>` : ''}</div></div></div>`;
+}
+function tasksHtml(){
+  const v = S.tview || (S.tview = ls.get('tview', 'today')), all = tkList(), today = tkDay(0), wk = tkDay(7);
+  const open = all.filter(t => t.st !== 'done');
+  const byDue = (a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : a.n.name.localeCompare(b.n.name);
+  const nToday = open.filter(t => t.due && t.due <= today).length;
+  let h = `<div class="tkseg">${[['today', 'Today' + (nToday ? ' ' + nToday : '')], ['week', 'Week'], ['all', 'All'], ['board', 'Board']].map(([k, l]) => `<button data-tview="${k}" class="${v === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (!all.length) return { h: h + `<div class="empty">${ic('checksq')}<div>No tasks yet.<br>Press and hold <b>+</b> to add one.</div></div>`, sub:'' };
+  if (v === 'board'){
+    const cols = [...TK_STATUS]; for (const t of all) if (!cols.includes(t.st)) cols.splice(cols.length - 1, 0, t.st);
+    h += `<div class="tkboard">${cols.map(c => { const l = all.filter(t => t.st === c).sort(byDue);
+      return `<div class="tkcol"><div class="tkch"><b>${esc(c)}</b><small>${l.length}</small></div>${l.map(t => tkCard(t, true)).join('') || '<div class="tkempty">—</div>'}</div>`; }).join('')}</div><div class="hint" style="text-align:center">Swipe for the other columns · tap a card to move it</div>`;
+    return { h, sub: open.length + ' open' };
+  }
+  const list = v === 'today' ? open.filter(t => t.due && t.due <= today) : v === 'week' ? open.filter(t => t.due && t.due <= wk) : open;
+  list.sort(byDue);
+  if (v === 'all'){ const groups = new Map(); for (const t of list){ const g = t.pj || 'No project'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(t); }
+    for (const [g, l] of [...groups].sort((a, b) => a[0] === 'No project' ? 1 : b[0] === 'No project' ? -1 : a[0].localeCompare(b[0]))) h += `<div class="sect">${esc(g)}</div>` + l.map(t => tkCard(t)).join(''); }
+  else h += list.map(t => tkCard(t)).join('') || `<div class="empty">${ic('checksq')}<div>${v === 'today' ? 'Nothing due today 🎉' : 'Nothing due this week'}</div></div>`;
+  const done = all.filter(t => t.st === 'done');
+  if (done.length && v === 'all') h += `<button class="more" data-act="tkShowDone">${S.tkShowDone ? 'Hide' : 'Show'} done (${done.length})</button>` + (S.tkShowDone ? done.map(t => tkCard(t)).join('') : '');
+  return { h, sub: open.length + ' open' + (nToday ? ' · ' + nToday + ' due' : '') };
+}
+async function tkSet(n, key, val){ await saveText(n, setFm(n.text, key, val ? [key + ': ' + val] : null)); }
+function tkMenu(n){
+  const st = String(n.props.status || 'to do').toLowerCase();
+  const sh = sheet(`<div class="sh-t">${esc(n.name)}</div>
+    <div class="lbl">Move to</div><div class="seg">${TK_STATUS.map(x => `<button data-tst="${x}" class="${x === st ? 'on' : ''}">${x}</button>`).join('')}</div>
+    <div class="lbl">Due</div><div class="seg">${[['Today', 0], ['Tomorrow', 1], ['+1 week', 7]].map(([l, k]) => `<button data-tdue="${k}">${l}</button>`).join('')}<button data-tdue="x">None</button></div>
+    <button class="act" data-topen="1" style="margin-top:12px">${ic('book')} Open the task</button>`);
+  sh.onclick = async e => { const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tst){ await tkSet(n, 'status', b.dataset.tst); closeSheet(); renderMain(); toast('Moved to ' + b.dataset.tst); return; }
+    if (b.dataset.tdue){ await tkSet(n, 'due', b.dataset.tdue === 'x' ? '' : tkDay(+b.dataset.tdue)); closeSheet(); renderMain(); return; }
+    if (b.dataset.topen){ closeSheet(); setTimeout(() => openNote(n.pl), 260); } };
 }
 
 /* ---------- search ---------- */
@@ -888,7 +944,7 @@ function runSearch(){
   const q = S.query.trim(), notes = [...S.notes.values()];
   if (!q){
     const cnt = new Map(); for (const n of notes) for (const t of n.tags) cnt.set(t, (cnt.get(t) || 0) + 1);
-    const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 14);
+    const top = [...cnt].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));   // v47: all tags here (the Tags tab made room for Tasks)
     box.innerHTML = (top.length ? `<div class="sect">Tags</div><div class="chips">${top.map(([t]) => `<button class="chip" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : '')
       + `<div class="hint">Search words in titles and text. Narrow it down with <code>tag:idea</code> or <code>folder:Inbox</code>. Use quotes for an exact phrase.</div>`;
     return;
@@ -1346,6 +1402,9 @@ function openShared(p){
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
   const t = e.target;
+  { const td = t.closest('[data-tkdone]'); if (td){ const n = S.notes.get(td.dataset.tkdone); if (n){ const was = String(n.props.status || '').toLowerCase() === 'done'; await tkSet(n, 'status', was ? 'to do' : 'done'); renderMain(); if (!was) toast('Done ✓', 'Undo', async () => { await tkSet(n, 'status', 'to do'); renderMain(); }); } return; } }
+  { const tv = t.closest('[data-tview]'); if (tv){ S.tview = tv.dataset.tview; ls.set('tview', S.tview); renderMain(); return; } }
+  { const tk = t.closest('[data-tk]'); if (tk){ const n = S.notes.get(tk.dataset.tk); if (n){ if (tk.classList.contains('kb')) tkMenu(n); else openNote(n.pl); } return; } }
   const op = t.closest('[data-open]'); if (op){ openNote(op.dataset.open); return; }
   const tg = t.closest('[data-tag]'); if (tg && !t.closest('#sheet')){ e.preventDefault(); backAll(); S.query = 'tag:' + tg.dataset.tag; setTab('search'); return; }
   const fd = t.closest('[data-fold]'); if (fd){ const prev = S.fpath, nx = fd.dataset.fold; if (nx.length > prev.length) pushLayer(() => { S.fpath = prev; renderMain(); }); S.fpath = nx; $('main').scrollTop = 0; renderMain(); return; }
@@ -1360,6 +1419,7 @@ document.addEventListener('click', async e => {
   else if (act === 'pin' && n) togglePin(n);
   else if (act === 'edit' && n) openEditor(n.pl);
   else if (act === 'moreRecent'){ S.recentN += 100; renderMain(); }
+  else if (act === 'tkShowDone'){ S.tkShowDone = !S.tkShowDone; renderMain(); }
   else if (act === 'unlock' && n){
     const pw = $('lockPw').value; if (!pw) return;
     a.disabled = true; a.textContent = 'Unlocking…';
