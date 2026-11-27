@@ -246,7 +246,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v44-2026-11-26';
+const VERSION = 'v45-2026-11-26';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -1311,6 +1311,13 @@ function openShared(p){
   let title = (p.title || '').trim(), text = (p.text || '').trim(), url = (p.url || '').trim();
   if (url && !text.includes(url)) text = (text ? text + '\n\n' : '') + url;
   if (!url){ const m = text.match(/https?:\/\/\S+/); if (m) url = m[0]; }
+  if (/^(x|x\.com|twitter|twitter\.com)$/i.test(title)) title = '';   // v45: the X app sends just "X" as title
+  const xm = url.match(/^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/\d+/i);
+  const hasText = !!text.replace(/https?:\/\/\S+/g, '').trim();
+  if (xm && !hasText && (!title || /^https?:/.test(title))){   // v45: X only shares the link → "X post by @user YYYY-MM-DD", like the PC clipper
+    const d = new Date(), z = x => String(x).padStart(2, '0');
+    title = 'X post by @' + xm[1] + ' ' + d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  }
   if (!title || /^https?:/.test(title)){
     const firstLine = text.replace(/https?:\/\/\S+/g, '').trim().split('\n')[0] || '';
     title = firstLine.split(/\s+/).slice(0, 9).join(' ').replace(/[.:,;!?…]+$/, '') || (url ? url.replace(/^https?:\/\/(www\.)?/, '').split(/[/?#]/)[0] : 'Shared');
