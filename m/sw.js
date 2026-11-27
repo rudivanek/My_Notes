@@ -1,10 +1,11 @@
 // My Notes Mobile service worker: lets the app start offline. It only stores the app's own
 // files — never your notes (those live in the app's own database on the phone) and never
 // anything from Dropbox.
-const CACHE = 'my-notes-mobile-v42-2026-11-26';
+const CACHE = 'my-notes-mobile-v42b-2026-11-26';
+// v42: files are fetched past the phone's 10-minute web cache, so a new version arrives right away
 const FILES = ['./', './manifest.webmanifest', '../icon-192.png', '../icon-512.png', '../icon-maskable-512.png'];
 const PAGE = new URL('./', self.registration.scope).href;
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache:'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('my-notes-mobile-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
@@ -16,7 +17,7 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const cache = await caches.open(CACHE), key = isPage ? PAGE : url.origin + url.pathname;
     const cached = await cache.match(key);
-    const fresh = fetch(e.request).then(async r => {
+    const fresh = fetch(isPage ? new Request(e.request.url, { cache:'no-store', credentials:'same-origin' }) : e.request).then(async r => {
       if (!r.ok) return null;
       if (isPage){ const t = await r.clone().text(); if (!t.includes('<title>My Notes Mobile</title>')) return null; }
       await cache.put(key, r.clone()); return r;

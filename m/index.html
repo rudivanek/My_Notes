@@ -1343,7 +1343,11 @@ async function boot(){
   applyTheme();
   document.querySelectorAll('#nav .tab').forEach(b => { const [i, l] = TABS[b.dataset.tab]; b.innerHTML = ic(i) + l; });
   $('fab').innerHTML = ic('plus'); $('setBtn').innerHTML = ic('sliders'); setSync('ok');
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).then(reg => {   // v42: a new version → offer to load it
+    const had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !S.newVerShown){ S.newVerShown = true; toast('A new version of My Notes is ready', 'Load it', () => location.reload(), 15000); } });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {});
   const q = new URLSearchParams(location.search);
   let shared = null;
   if (q.has('share') || q.has('text') || q.has('url')) shared = { title:q.get('title') || '', text:q.get('text') || '', url:q.get('url') || '' };
