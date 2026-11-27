@@ -226,6 +226,8 @@ select.field{appearance:auto}
 .tkm{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--muted)}.tkd.over{color:#dc2626;font-weight:700}.tkd.today{color:#ea580c;font-weight:700}.tkp{background:#eef2ff;color:#4338ca;border-radius:6px;padding:0 6px}.tks{background:#f3f4f6;border-radius:6px;padding:0 6px}
 .tkboard{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:0 16px 8px;-webkit-overflow-scrolling:touch}.tkcol{flex:0 0 84%;scroll-snap-align:start;background:var(--soft,#efece6);border-radius:16px;padding:10px;min-height:200px}
 .tkch{display:flex;align-items:center;gap:8px;padding:2px 4px 10px;text-transform:capitalize}.tkch small{margin-left:auto;color:var(--muted)}.tkempty{color:var(--muted);text-align:center;padding:20px 0}
+.tkdue{display:flex;align-items:center;gap:10px;margin-bottom:8px}.tkdue input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:15px;background:var(--card);color:inherit}.tkdue span{font-weight:700;color:var(--accent,#b5532b);min-width:72px;text-align:right}
+#edPj{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:var(--soft,#f3f1ee);color:inherit;width:100%;margin-bottom:2px}#tkMore{width:100%}
 </style>
 </head>
 <body>
@@ -255,7 +257,7 @@ select.field{appearance:auto}
 /* My Notes Mobile — a phone version of My Notes that works on the same notes folder,
    reached through Dropbox. Single file, no libraries. Notes are cached on the phone
    (IndexedDB) so it opens instantly and works offline; changes sync when online. */
-const VERSION = 'v47-2026-11-26';
+const VERSION = 'v48-2026-11-27';
 const DEFAULT_APP_KEY = '';           // optional: a Dropbox app key to prefill on the setup screen
 const HIST_EVERY = 10 * 60000;        // like the desktop: keep an old version at most every 10 minutes per note
 
@@ -877,6 +879,12 @@ function renderMain(){
 const TK_STATUS = ['to do', 'doing', 'waiting', 'done'];
 const tkDay = k => { const d = new Date(); d.setDate(d.getDate() + (k || 0)); return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); };
 const tkDmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1].slice(2) : ''; };
+function tkProjects(){   // v48: PROJECTS folders + projects already used on tasks (personal ones too)
+  const set = new Set([...S.folders].filter(f => /^projects?\/[^/]+$/i.test(f)).map(f => f.split('/')[1]));
+  for (const t of tkList()) if (t.pj) set.add(t.pj);
+  return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity:'base' }));
+}
+const tkProjList = () => `<datalist id="tkPjList">${tkProjects().map(x => `<option value="${esc(x)}">`).join('')}</datalist>`;
 function tkList(){ return [...S.notes.values()].filter(n => !n.locked && String(n.props.type || '').toLowerCase() === 'task').map(n => ({ n, st: unq(String(n.props.status || 'to do')).toLowerCase(), due: unq(String(n.props.due || '')).slice(0, 10), pj: unq(String(n.props.project || '')).replace(/^\[\[|\]\]$/g, '') })); }
 function tkCard(t, board){
   const today = tkDay(0), over = t.due && t.due < today && t.st !== 'done', isToday = t.due === today;
@@ -895,7 +903,7 @@ function tasksHtml(){
   if (v === 'board'){
     const cols = [...TK_STATUS]; for (const t of all) if (!cols.includes(t.st)) cols.splice(cols.length - 1, 0, t.st);
     h += `<div class="tkboard">${cols.map(c => { const l = all.filter(t => t.st === c).sort(byDue);
-      return `<div class="tkcol"><div class="tkch"><b>${esc(c)}</b><small>${l.length}</small></div>${l.map(t => tkCard(t, true)).join('') || '<div class="tkempty">—</div>'}</div>`; }).join('')}</div><div class="hint" style="text-align:center">Swipe for the other columns · tap a card to move it</div>`;
+      return `<div class="tkcol"><div class="tkch"><b>${esc(c)}</b><small>${l.length}</small></div>${l.map(t => tkCard(t, true)).join('') || '<div class="tkempty">—</div>'}</div>`; }).join('')}</div><div class="hint" style="text-align:center">Swipe for the other columns · tap a card to change it</div>`;
     return { h, sub: open.length + ' open' };
   }
   const list = v === 'today' ? open.filter(t => t.due && t.due <= today) : v === 'week' ? open.filter(t => t.due && t.due <= wk) : open;
@@ -908,16 +916,24 @@ function tasksHtml(){
   return { h, sub: open.length + ' open' + (nToday ? ' · ' + nToday + ' due' : '') };
 }
 async function tkSet(n, key, val){ await saveText(n, setFm(n.text, key, val ? [key + ': ' + val] : null)); }
-function tkMenu(n){
-  const st = String(n.props.status || 'to do').toLowerCase();
+function tkMenu(n){   // v48: edit a task — status, due date (calendar or quick), project, importance
+  const st = unq(String(n.props.status || 'to do')).toLowerCase(), due = unq(String(n.props.due || '')).slice(0, 10), pj = unq(String(n.props.project || '')).replace(/^\[\[|\]\]$/g, '');
   const sh = sheet(`<div class="sh-t">${esc(n.name)}</div>
-    <div class="lbl">Move to</div><div class="seg">${TK_STATUS.map(x => `<button data-tst="${x}" class="${x === st ? 'on' : ''}">${x}</button>`).join('')}</div>
-    <div class="lbl">Due</div><div class="seg">${[['Today', 0], ['Tomorrow', 1], ['+1 week', 7]].map(([l, k]) => `<button data-tdue="${k}">${l}</button>`).join('')}<button data-tdue="x">None</button></div>
-    <button class="act" data-topen="1" style="margin-top:12px">${ic('book')} Open the task</button>`);
+    <div class="lbl">Status</div><div class="seg">${TK_STATUS.map(x => `<button data-tst="${x}" class="${x === st ? 'on' : ''}">${x}</button>`).join('')}</div>
+    <div class="lbl">Due</div><div class="tkdue"><input type="date" id="tkDue" value="${esc(due)}"><span id="tkDueTxt">${due ? tkDmy(due) : 'no date'}</span></div>
+    <div class="seg">${[['Today', 0], ['Tomorrow', 1], ['+1 week', 7]].map(([l, k]) => `<button data-tdue="${k}">${l}</button>`).join('')}<button data-tdue="x">None</button></div>
+    <div class="lbl">Project</div><input class="field" id="tkPj" list="tkPjList" placeholder="any project — type or pick" value="${esc(pj)}" autocomplete="off" enterkeyhint="done">${tkProjList()}
+    <div class="lbl">Importance</div><div class="seg">${['high', 'medium', 'low'].map(x => `<button data-timp="${x}" class="${n.importance === x ? 'on' : ''}">${x}</button>`).join('')}<button data-timp="x">—</button></div>
+    <button class="act" data-topen="1" style="margin-top:12px">${ic('book')} Open the task</button>`, { tall:true });
+  const done = () => { renderMain(); };
+  $('tkDue').addEventListener('change', async e => { await tkSet(n, 'due', e.target.value || ''); $('tkDueTxt').textContent = e.target.value ? tkDmy(e.target.value) : 'no date'; done(); });
+  const savePj = async () => { const v = $('tkPj').value.replace(/"/g, '').trim(); if (v === pj) return; await saveText(n, setFm(n.text, 'project', v ? ['project: "' + v + '"'] : null)); done(); };
+  $('tkPj').addEventListener('change', savePj); $('tkPj').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } });
   sh.onclick = async e => { const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.tst){ await tkSet(n, 'status', b.dataset.tst); closeSheet(); renderMain(); toast('Moved to ' + b.dataset.tst); return; }
-    if (b.dataset.tdue){ await tkSet(n, 'due', b.dataset.tdue === 'x' ? '' : tkDay(+b.dataset.tdue)); closeSheet(); renderMain(); return; }
-    if (b.dataset.topen){ closeSheet(); setTimeout(() => openNote(n.pl), 260); } };
+    if (b.dataset.tst){ await tkSet(n, 'status', b.dataset.tst); sh.querySelectorAll('[data-tst]').forEach(x => x.classList.toggle('on', x === b)); done(); toast('Moved to ' + b.dataset.tst); return; }
+    if (b.dataset.tdue){ const v = b.dataset.tdue === 'x' ? '' : tkDay(+b.dataset.tdue); await tkSet(n, 'due', v); $('tkDue').value = v; $('tkDueTxt').textContent = v ? tkDmy(v) : 'no date'; done(); return; }
+    if (b.dataset.timp){ await tkSet(n, 'importance', b.dataset.timp === 'x' ? '' : b.dataset.timp); sh.querySelectorAll('[data-timp]').forEach(x => x.classList.toggle('on', x === b && b.dataset.timp !== 'x')); done(); return; }
+    if (b.dataset.topen){ await savePj(); closeSheet(); setTimeout(() => openNote(n.pl), 260); } };
 }
 
 /* ---------- search ---------- */
@@ -1049,7 +1065,7 @@ function openEditor(pl, opts){
       <button class="done" data-act="eddone">${isNew ? 'Save' : 'Done'}</button></div>
     <div class="edhead">${isNew ? `<input id="edTitle" placeholder="Title" value="${esc(opts.title || '')}" enterkeyhint="next" autocomplete="off">
       <button class="fsel fpick" id="edFolder">${ic('folder')} <span>${esc(ED.folder ? ED.folder.split('/').join(' › ') : 'Main folder')}</span></button>
-      <div class="tkrow"><button class="tkchip${opts.task ? ' on' : ''}" id="edTask">${ic('checksq')} Task</button><span id="tkMore" class="${opts.task ? '' : 'hidden'}"><input type="date" id="edDue"><button class="tkq" data-qd="0">Today</button><button class="tkq" data-qd="1">Tomorrow</button><button class="tkq" data-qd="7">+1 week</button></span></div>`
+      <div class="tkrow"><button class="tkchip${opts.task ? ' on' : ''}" id="edTask">${ic('checksq')} Task</button><span id="tkMore" class="${opts.task ? '' : 'hidden'}"><input id="edPj" list="tkPjList" placeholder="Project (any)" autocomplete="off">${tkProjList()}<input type="date" id="edDue"><button class="tkq" data-qd="0">Today</button><button class="tkq" data-qd="1">Tomorrow</button><button class="tkq" data-qd="7">+1 week</button></span></div>`
       : `<input value="${esc(n.name)}" readonly tabindex="-1"><div class="edsub">${esc(n.folder || 'Main folder')}</div>`}</div>
     <textarea id="edTa" placeholder="${isNew ? 'Write something…' : ''}" spellcheck="true" autocapitalize="sentences"></textarea>
     <div class="kbar">
@@ -1087,7 +1103,8 @@ async function edCreate(){
   if (!title){ const first = body.trim().split('\n')[0].replace(/^#+\s*|[*_`>\[\]]/g, '').trim(); title = first.slice(0, 60) || ('Note ' + stamp().replace(/-(\d\d)$/, ':$1')); }
   if (ED.task){   // v46: a task = a note with type: task (the PC's “My Tasks” table and board show it)
     const due = ($('edDue') && $('edDue').value) || '';
-    body = '---\ntype: task\nstatus: to do\n' + (due ? 'due: ' + due + '\n' : '') + '---\n' + body;
+    const pj = (($('edPj') && $('edPj').value) || '').replace(/"/g, '').trim();
+    body = '---\ntype: task\nstatus: to do\n' + (due ? 'due: ' + due + '\n' : '') + (pj ? 'project: "' + pj + '"\n' : '') + '---\n' + body;
   }
   const n = await createNote(title, body, ED.folder);
   toast(ED.task ? 'Task saved' + (($('edDue') && $('edDue').value) ? ' · due ' + $('edDue').value : '') : 'Saved to ' + (n.folder || 'the main folder'));
@@ -1404,7 +1421,7 @@ document.addEventListener('click', async e => {
   const t = e.target;
   { const td = t.closest('[data-tkdone]'); if (td){ const n = S.notes.get(td.dataset.tkdone); if (n){ const was = String(n.props.status || '').toLowerCase() === 'done'; await tkSet(n, 'status', was ? 'to do' : 'done'); renderMain(); if (!was) toast('Done ✓', 'Undo', async () => { await tkSet(n, 'status', 'to do'); renderMain(); }); } return; } }
   { const tv = t.closest('[data-tview]'); if (tv){ S.tview = tv.dataset.tview; ls.set('tview', S.tview); renderMain(); return; } }
-  { const tk = t.closest('[data-tk]'); if (tk){ const n = S.notes.get(tk.dataset.tk); if (n){ if (tk.classList.contains('kb')) tkMenu(n); else openNote(n.pl); } return; } }
+  { const tk = t.closest('[data-tk]'); if (tk){ const n = S.notes.get(tk.dataset.tk); if (n){ tkMenu(n); } return; } }
   const op = t.closest('[data-open]'); if (op){ openNote(op.dataset.open); return; }
   const tg = t.closest('[data-tag]'); if (tg && !t.closest('#sheet')){ e.preventDefault(); backAll(); S.query = 'tag:' + tg.dataset.tag; setTab('search'); return; }
   const fd = t.closest('[data-fold]'); if (fd){ const prev = S.fpath, nx = fd.dataset.fold; if (nx.length > prev.length) pushLayer(() => { S.fpath = prev; renderMain(); }); S.fpath = nx; $('main').scrollTop = 0; renderMain(); return; }
